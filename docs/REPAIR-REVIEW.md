@@ -48,6 +48,16 @@ No extra approval/capture/grant-entry controls were added. Normal submission, ex
 
 The proposed next technical checkpoint is the exact repaired source commit in evidence/checks.json plus its published PR head. The independent reviewer must read back that actual commit and assess R01–R04/A01 before the operator chooses when to begin local/native and human testing. This coding return does not self-accept the candidate.
 
-## Final coding-session result
+## Earlier consolidated coding-session result
 
 Tested implementation: 802a3a9c9b7a471dbbeeaf80b469eec67042a967. The final run passed 37 contract/recovery/HTTP/backup tests and 26 repaired shipped browser checks with zero page errors on Node 24.19.0, Playwright 1.62.1 and Chromium 153.0.8010.0, Linux x64. All three reports name that source commit; the manifest hashes 19 committed Git blobs. Five actual fixture-worker envelopes are redacted in repair-report.json. Documentation/evidence follow in a separate commit with unchanged runtime/test sources. Final independent review and operator testing remain pending.
+
+## Cold-reopen synchronization follow-up
+
+The independent review of head 0ca39d413fd0445135d82f50dab93c9ef9147338 accepted the substantive R01–R03/A01 repairs but reproduced a remaining R04 timing assumption at cold browser reopening. Its shipped Windows/Chrome harness failed initially, passed 26 checks unchanged on rerun, and passed 26 in a separate diagnostic copy with an explicit wait. That diagnostic is not claimed as a shipped pass. No corresponding product failure was established.
+
+The follow-up changes only scripts/browser-test.mjs. It reuses waitForCompleteBoard with the exact first iteration before the preserved six-card cold-reopen assertion. A controlled response barrier holds the later originals until a usable first image and saved feedback have been observed, then the helper requires the complete intended job/image set with decoded originals. Owner restart likewise waits for the exact second iteration and explicitly verifies six images before retaining all prior history/context assertions. There is no fixed sleep, weaker completion assertion, product workflow change or approval step.
+
+Current tested source: 19c24e1f9787fb62fdc9e5a0565d09a85ad7215d. The shipped npm run verify passes 37 contract/recovery tests and 28 browser checks with zero page errors. npm run evidence:repairs also completes with five redacted fixture-worker envelopes and unchanged human evidence. Regenerated reports and all 19 committed source/package hashes identify this source commit. Node 24.19.0, Playwright 1.62.1, Chromium 153.0.8010.0, Linux x64. The source diff from the earlier reviewed head is limited to the harness; subsequent publication changes evidence/designation documentation only.
+
+R04's remaining cold-reopen synchronization is corrected in the coding return, pending the remaining independent verification. R01–R03 and A01 keep their independent resolved dispositions. D01/D02 remain deferred and I01–I05 retain their declared limitations. The prior Windows execution is acknowledged; this new follow-up has not been rerun on Windows/macOS. Full operator installation/OS recovery, native workers/transport/concurrency, live push and human usefulness/acceptance remain unverified. No native image call, operator runtime change, merge or pilot was performed.

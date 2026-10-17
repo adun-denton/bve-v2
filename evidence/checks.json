@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-17T06:18:03.041Z",
-  "sourceCommit": "802a3a9c9b7a471dbbeeaf80b469eec67042a967",
+  "generatedAt": "2026-10-17T06:38:00.052Z",
+  "sourceCommit": "19c24e1f9787fb62fdc9e5a0565d09a85ad7215d",
   "sourceBytes": "committed Git blobs; no checkout line-ending conversion",
   "result": "passed",
   "command": "BVE_BROWSER_EXECUTABLE=/tmp/bve-repair-chromium npm run verify; npm run evidence:repairs",
@@ -18,7 +18,7 @@
     "failed": 0
   },
   "browser": {
-    "passed": 26,
+    "passed": 28,
     "failed": 0,
     "pageErrors": 0
   },
@@ -42,7 +42,7 @@
     "public/index.html": "32713a724ed33ac8f1d656cbd1c0eb5eeaa1b0e38f40517eedfda6150e2a60ef",
     "public/style.css": "a0de7109594f107eeac39bf3360814bf28d507dfd841c2e8fdf95b80dcb7eafe",
     "scripts/backup.mjs": "03e35c485d274004f5509538378d615302a1fa0c3734452bfe59843988259455",
-    "scripts/browser-test.mjs": "45d231512851a1034e7960ebeacec6fd5e287752b701b51bd8f9bd039bdbaa5e",
+    "scripts/browser-test.mjs": "f7c78ce98bd74be2f2ededdcaa894ec232ee1c14fb5dbec72af09cb173fb9589",
     "scripts/conductor.mjs": "3d338d84a4ec8a28a58d862e5b9a5f652f801e9e3ba1dd012d726ed36bc4a954",
     "scripts/repair-evidence.mjs": "56987c6a374c140370ebe49d7e50f9e207b275987125adc1542ce620b10bf4c8",
     "scripts/source-evidence.mjs": "cef02a145fd2e32561b32a88022ac724757aefa84e602d0f868772ca7a2acfcb",

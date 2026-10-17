@@ -1,18 +1,20 @@
 {
   "format": "bve-v2-candidate-v1",
   "status": "repair-review-pending-independent-review",
-  "implementationCommit": "802a3a9c9b7a471dbbeeaf80b469eec67042a967",
+  "implementationCommit": "19c24e1f9787fb62fdc9e5a0565d09a85ad7215d",
   "repository": "https://github.com/adun-denton/bve-v2",
   "branch": "codex/v2-candidate",
   "node": "24.x",
   "testedNode": "24.19.0",
   "contractsPassed": 37,
-  "browserChecksPassed": 26,
+  "browserChecksPassed": 28,
   "nativeWorkers": "unverified",
   "concurrency": "unverified; serial only",
   "liveNotifications": "unverified",
   "humanAcceptance": "unverified",
   "reviewedBaseline": "115a07a34bd35d84ac00e45253671db4bb254888",
   "operatorTesting": "not started; final independent review precedes operator decision",
-  "platformEvidence": "Linux repaired checkpoint; independent Windows baseline contract/diagnostic browser evidence acknowledged; repaired Windows/macOS rerun not executed"
+  "platformEvidence": "Earlier repair independently exercised on Windows Node 24.19.0 / Chrome 155: 37 contracts, shipped cold-reopen failure then 26-check rerun, and separate 26-check diagnostic. This follow-up verified on Linux; new Windows/macOS rerun not executed.",
+  "lastIndependentlyReviewedHead": "0ca39d413fd0445135d82f50dab93c9ef9147338",
+  "sourceChange": "scripts/browser-test.mjs only: complete cold-reopen and owner-restart waits; controlled delayed originals"
 }

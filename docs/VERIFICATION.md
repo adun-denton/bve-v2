@@ -53,4 +53,12 @@ The [repair evidence report](../evidence/repair-report.json) contains redacted p
 
 During the first pinned repair run, all 37 contract checks passed but the browser history navigation check timed out: polling could change selected state without invalidating the rendered board. That failed source checkpoint is f2e8d25e62c5f066e11ea9173d8b2076bee1344c. The final checkpoint includes the bounded render-signature fix and a deliberately held polling response regression, plus verification that supplied notes appear before child commissioning. Its reported final count supersedes the earlier development pass of 24 browser checks.
 
-Final repaired run: **37 contract tests passed; 26 shipped browser checks passed; zero page errors.** Source commit: 802a3a9c9b7a471dbbeeaf80b469eec67042a967. All 19 committed source/package blobs match the manifest. Native/OS integration and human acceptance remain outside these fixture claims.
+Earlier consolidated repair run: **37 contract tests passed; 26 shipped browser checks passed; zero page errors.** Source commit: 802a3a9c9b7a471dbbeeaf80b469eec67042a967. All 19 committed source/package blobs match the manifest. Native/OS integration and human acceptance remain outside these fixture claims.
+
+## Remaining cold-reopen correction
+
+The later independent Windows review of 0ca39d4 reproduced a cold-context six-card assertion race, followed by a passing unchanged rerun (26 checks) and a separately passing explicit-wait diagnostic (26 checks). That evidence does not establish unconditional success of the prior shipped harness or a product failure. The public report omits private review/check-out paths.
+
+The shipped harness now uses its existing iteration/job/loaded-original helper at cold reopening and owner restart. A controlled delayed-original cold boundary preserves usable progressive results before releasing later images, then retains the full six-image assertion. All earlier assertions and controlled second-iteration/polling cases remain.
+
+Current source 19c24e1f9787fb62fdc9e5a0565d09a85ad7215d: **37 contract checks passed, 28 unmodified shipped browser checks passed, zero page errors** on Linux x64, Node 24.19.0, Playwright 1.62.1 and Chromium 153.0.8010.0. Repair-evidence generation completed. Regenerated reports and 19 committed Git blob hashes name this exact source; the evidence/documentation head contains no subsequent source change. This new source has not been tested on Windows/macOS or with live image/notification integration. Remaining independent verification precedes any operator pilot.

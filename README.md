@@ -1,8 +1,8 @@
 # BVE V2
 
-**Consolidated repair checkpoint for final independent review.** [PR #1](https://github.com/adun-denton/bve-v2/pull/1) remains draft and unmerged. Operator testing has not begun.
+**Cold-reopen synchronization follow-up for remaining independent verification.** [PR #1](https://github.com/adun-denton/bve-v2/pull/1) remains draft and unmerged. Operator testing has not begun.
 
-Tested implementation: [802a3a9c9b7a471dbbeeaf80b469eec67042a967](https://github.com/adun-denton/bve-v2/tree/802a3a9c9b7a471dbbeeaf80b469eec67042a967). **37 contract/recovery tests and 26 shipped browser checks passed**, with zero page errors. The [source manifest](evidence/checks.json) hashes 19 committed Git blobs and ties all reports to this exact source commit.
+Tested implementation: [19c24e1f9787fb62fdc9e5a0565d09a85ad7215d](https://github.com/adun-denton/bve-v2/tree/19c24e1f9787fb62fdc9e5a0565d09a85ad7215d). **37 contract/recovery tests and 28 shipped browser checks passed**, with zero page errors. The [source manifest](evidence/checks.json) hashes 19 committed Git blobs and ties all reports to this exact source commit.
 
 [Repair dispositions and changed contracts](docs/REPAIR-REVIEW.md) · [redacted actual fixture-worker packets](evidence/repair-report.json) · [browser evidence](evidence/browser-report.json) · [pinned local handoff](docs/INSTALL.md). Main still contains the earlier baseline designation; use this repaired checkpoint for final review. Native integration, full operator installation and human acceptance remain unverified.
 

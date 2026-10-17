@@ -15,7 +15,7 @@ Use a new source directory. The exact repaired implementation below is pinned fo
 ```sh
 git clone https://github.com/adun-denton/bve-v2.git bve-v2
 cd bve-v2
-git checkout --detach 802a3a9c9b7a471dbbeeaf80b469eec67042a967
+git checkout --detach 19c24e1f9787fb62fdc9e5a0565d09a85ad7215d
 node --version
 npm ci --omit=dev --ignore-scripts
 npm test
