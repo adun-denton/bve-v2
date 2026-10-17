@@ -1,6 +1,6 @@
 # Project statements, cycles and living instructions — review handoff
 
-The 17 October 2026 project-centered assignment is implemented in the existing V2 architecture. Current instructions live in ARCHITECTURE, CONTRACTS and docs/roles; [EXAMPLES](EXAMPLES.md) is the single canonical scenario location. This review/evidence file is development history, not an extra operating contract. candidate.json and evidence/checks.json identify the exact tested source.
+The 17 October 2026 project-centered assignment is implemented in the existing V2 architecture. Current instructions live in ARCHITECTURE, CONTRACTS and docs/roles; [EXAMPLES](EXAMPLES.md) is the single canonical scenario location. This review/evidence file is development history, not an extra operating contract. Tested source: `2a5be1effa25e23bf57cbe999fb8a686c6f5a366`; tree: `b47450a71bbe4705ce1f3d3854bfd2429faedab7`. candidate.json and evidence/checks.json designate this checkpoint and its 40 committed source/instruction hashes.
 
 ## Changes and rationale
 

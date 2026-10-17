@@ -1,233 +1,33 @@
 {
-  "format": "bve-host-installation-evidence-v1",
-  "sourceCommit": "dcee826c8fd8d08d5c1eaeb4848879f337ba94ae",
-  "generatedAt": "2026-10-17T07:41:54.120Z",
+  "format": "bve-host-project-integration-v1",
+  "sourceCommit": "2a5be1effa25e23bf57cbe999fb8a686c6f5a366",
+  "generatedAt": "2026-10-17T10:42:46.275Z",
+  "kind": "integration-limits-with-authored-contract-evidence",
   "contractResults": {
     "total": 47,
     "passed": 47,
     "failed": 0
   },
-  "deterministicCoverage": [
-    "idempotent installation/resume and lost creation response",
-    "fresh scoped role reads and delegation receipts; false proofs rejected",
-    "concurrent installer exclusion",
-    "wrong-role, project, assignment and delegation boundaries",
-    "original-byte independent intake, interrupted delivery, uncertainty without retry",
-    "Conductor replacement and immutable feedback recovery; event read/ack/consume distinct",
-    "scoped Kernel transport preserves running attempts and single owner",
-    "fixture/native claims and first work-session completion checked separately"
-  ],
-  "actualCloudProbe": {
-    "status": "incomplete",
-    "host": "chatgpt-work-cloud-collaboration-probe",
-    "kind": "probe",
-    "capabilities": {
-      "sessions": {
-        "status": "tested",
-        "evidence": "Three actual collaboration child tasks created with distinct canonical identifiers"
-      },
-      "delegation": {
-        "status": "tested",
-        "evidence": "Available in all three sessions; BVE route receipts checked next"
-      },
-      "resume": {
-        "status": "tested",
-        "evidence": "Active cloud task followup and durable BVE polling; fresh role reads checked next"
-      },
-      "image": {
-        "status": "documented",
-        "evidence": "Image tool metadata visible to Generator; no setup image invocation"
-      },
-      "originalBytes": {
-        "status": "unavailable",
-        "evidence": "Windows bridge/records and native returned originals inaccessible from this cloud task"
-      },
-      "userHandoff": {
-        "status": "unavailable",
-        "evidence": "No durable user-openable role conversation provisioning/link API exposed"
-      },
-      "push": {
-        "status": "unavailable",
-        "evidence": "Active-task collaboration messages only; no unattended feedback wake demonstrated"
-      }
-    },
-    "gaps": [
-      "generator: delegated readiness receipt missing"
-    ],
-    "sessions": [
-      {
-        "role": "conductor",
-        "sessionId": "/root/bve_conductor",
-        "sessionUrl": null,
-        "readReceipt": "786e0341-0b56-4ddd-846d-59f077e79536",
-        "readAt": "2026-10-17T07:41:40.070Z"
-      },
-      {
-        "role": "generator",
-        "sessionId": "/root/bve_generator",
-        "sessionUrl": null,
-        "readReceipt": "8fe82637-4cdb-4721-899e-6cdbecdd0780",
-        "readAt": "2026-10-17T07:41:28.223Z"
-      },
-      {
-        "role": "butler",
-        "sessionId": "/root/bve_butler",
-        "sessionUrl": null,
-        "readReceipt": "3da8241e-5dba-4e7f-adec-af207bde12f9",
-        "readAt": "2026-10-17T07:41:31.555Z"
-      }
-    ],
-    "routes": [
-      {
-        "id": "52a4ae36-051b-4632-848f-95990a3a8440",
-        "kind": "readiness",
-        "fromSessionId": "/root/bve_conductor",
-        "toRole": "generator",
-        "sessionId": "/root/bve_generator",
-        "state": "completed",
-        "receipts": [
-          {
-            "id": "06ed00a8-d72e-447e-b811-ab6af2168e24",
-            "sessionId": "/root/bve_generator",
-            "status": "acknowledged",
-            "at": "2026-10-17T07:33:10.985Z"
-          },
-          {
-            "id": "46feb368-4b88-4542-b330-ffb44063ddf0",
-            "sessionId": "/root/bve_generator",
-            "status": "completed",
-            "at": "2026-10-17T07:33:10.987Z"
-          }
-        ]
-      },
-      {
-        "id": "f5f4e45b-edb7-4124-81ee-5e88b40c987e",
-        "kind": "readiness",
-        "fromSessionId": "/root/bve_conductor",
-        "toRole": "butler",
-        "sessionId": "/root/bve_butler",
-        "state": "completed",
-        "receipts": [
-          {
-            "id": "8242a28a-263f-438b-87b1-869ea129a04a",
-            "sessionId": "/root/bve_butler",
-            "status": "acknowledged",
-            "at": "2026-10-17T07:32:53.272Z"
-          },
-          {
-            "id": "ef907ce5-ed3c-4c54-9739-1a11fd7bc5cb",
-            "sessionId": "/root/bve_butler",
-            "status": "completed",
-            "at": "2026-10-17T07:32:53.274Z"
-          }
-        ]
-      },
-      {
-        "id": "b6815653-542a-40a9-b525-6b04559ecee5",
-        "kind": "readiness",
-        "fromSessionId": "/root/bve_conductor",
-        "toRole": "generator",
-        "sessionId": "/root/bve_generator",
-        "state": "completed",
-        "receipts": [
-          {
-            "id": "95132c31-2739-46aa-b6b0-27b7b71c3b43",
-            "sessionId": "/root/bve_generator",
-            "status": "acknowledged",
-            "at": "2026-10-17T07:37:19.077Z"
-          },
-          {
-            "id": "388d78c9-af5e-481b-ac97-0dfdaa7cf473",
-            "sessionId": "/root/bve_generator",
-            "status": "completed",
-            "at": "2026-10-17T07:37:19.079Z"
-          }
-        ]
-      },
-      {
-        "id": "19df02ad-8a5b-42c8-8190-9d47f35069a7",
-        "kind": "readiness",
-        "fromSessionId": "/root/bve_conductor",
-        "toRole": "butler",
-        "sessionId": "/root/bve_butler",
-        "state": "completed",
-        "receipts": [
-          {
-            "id": "ecffcef5-53a9-4217-aa82-365882ccd7d2",
-            "sessionId": "/root/bve_butler",
-            "status": "acknowledged",
-            "at": "2026-10-17T07:37:22.768Z"
-          },
-          {
-            "id": "4c4733ec-71ee-49e3-838b-f5dd88ba5302",
-            "sessionId": "/root/bve_butler",
-            "status": "completed",
-            "at": "2026-10-17T07:37:22.769Z"
-          }
-        ]
-      },
-      {
-        "id": "063cb457-1646-4c3c-bab3-6a1a37ea8184",
-        "kind": "readiness",
-        "fromSessionId": "/root/bve_conductor",
-        "toRole": "generator",
-        "sessionId": "/root/bve_generator",
-        "state": "completed",
-        "receipts": [
-          {
-            "id": "323da10a-526a-45a5-a636-3e6cef7d3734",
-            "sessionId": "/root/bve_generator",
-            "status": "acknowledged",
-            "at": "2026-10-17T07:41:28.227Z"
-          },
-          {
-            "id": "bdd5badd-e618-4c3a-9fb1-ea6aca855e1b",
-            "sessionId": "/root/bve_generator",
-            "status": "completed",
-            "at": "2026-10-17T07:41:28.230Z"
-          }
-        ]
-      },
-      {
-        "id": "bd1ec1fc-2dcc-4671-8d5e-c4dbb1c0d833",
-        "kind": "readiness",
-        "fromSessionId": "/root/bve_conductor",
-        "toRole": "butler",
-        "sessionId": "/root/bve_butler",
-        "state": "completed",
-        "receipts": [
-          {
-            "id": "e8bbb7b1-f5fd-444c-b5b6-3e9dc7dd580d",
-            "sessionId": "/root/bve_butler",
-            "status": "acknowledged",
-            "at": "2026-10-17T07:41:31.564Z"
-          },
-          {
-            "id": "5335754b-66c5-4487-a9de-c6f4a9789e16",
-            "sessionId": "/root/bve_butler",
-            "status": "completed",
-            "at": "2026-10-17T07:41:31.568Z"
-          }
-        ]
-      }
-    ],
-    "observedLimits": [
-      "Cross-tool-execution loopback HTTP failed with ECONNREFUSED; scoped local Kernel transport used instead",
-      "Canonical child task identifiers are transient in this coding thread; no durable user-facing Conductor link",
-      "No access to preserved Windows root, local bridge, user originals or native delivery evidence",
-      "Child image-tool metadata visible; no image calls made by setup or this probe",
-      "Active-task message/followup delivery is not unattended event wake or live feedback push"
-    ]
+  "currentRoster": {
+    "conductor": "1 SOL",
+    "butler": "1 on-demand LUNA",
+    "workers": "0–6 bounded LUNA",
+    "maximum": 8,
+    "supervisors": 0
   },
+  "demonstrated": "See evidence/project-report.json and browser-report.json: authored scoped operations and browser presentation, not native staff",
   "operationalInstallation": {
     "status": "incomplete",
     "preservedWindowsRootModified": false,
     "readyConductorSessionUrl": null,
-    "reason": "Actual Windows host connection, applicable native executor/byte-return verification and durable user chat handoff unavailable here"
+    "reason": "No connected Windows project/root or demonstrated actual SOL/LUNA worker byte-return and initiating-interaction completion route in this run"
   },
-  "limits": [
-    "Authored deterministic checks are not live image production proof",
-    "Prior operator-reported local native intake not inspected or reproduced here",
-    "Windows/macOS OS installation/recovery, native concurrency, unattended push, human usefulness and acceptance remain unverified"
-  ]
+  "unverified": [
+    "Actual host SOL/LUNA provisioning/resume under the current roster",
+    "Native image-tool original return from exact assigned worker",
+    "Butler opening the local browser through host tooling",
+    "Automatic completion in the originating user interaction",
+    "Actual native concurrency, OS recovery and human usefulness/acceptance"
+  ],
+  "historicalEvidence": "Previous role-session probe belongs to bdde9241e9afff2478a133a0c7586af8ca808587 and its earlier contract; it is not current project-workforce verification"
 }
