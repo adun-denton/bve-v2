@@ -6,3 +6,7 @@ node_modules/
 private/
 playwright-report/
 test-results/
+
+LOCAL-INSTALL/
+host-sessions/
+host-deliveries/

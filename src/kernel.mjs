@@ -48,12 +48,95 @@ export class Kernel {
   #list(kind){return this.#db.prepare('SELECT doc FROM records WHERE kind=? ORDER BY rowid').all(kind).map(x=>JSON.parse(x.doc));}
   #get(kind,key){const row=this.#db.prepare('SELECT doc FROM records WHERE kind=? AND id=?').get(kind,key);requireThat(row,`Missing ${kind}: ${key}`,404);return JSON.parse(row.doc);}
   #put(kind,v){this.#db.prepare('INSERT INTO records VALUES(?,?,?) ON CONFLICT(kind,id) DO UPDATE SET doc=excluded.doc').run(kind,v.id,JSON.stringify(v));return v;}
-  #role(token){const role=Object.keys(this.#credentials).find(r=>equal(token,this.#credentials[r]));requireThat(role,'Invalid function credential',403);return role;}
+  #session(token){return this.#list('sessionBinding').find(s=>!s.revokedAt&&equal(hash(token??''),s.tokenHash));}
+  #role(token){const session=this.#session(token);if(session)return session.role;const role=Object.keys(this.#credentials).find(r=>equal(token,this.#credentials[r]));requireThat(role,'Invalid function credential',403);return role;}
+
+  // Installation is a trusted local-owner API, deliberately absent from HTTP.
+  // Session bearers expose only the three existing functional roles in one project.
+  #owner(owner){requireThat(['conductor','generator','butler'].every(r=>equal(owner?.[r],this.#credentials[r])),'Local installation credentials required',403);}
+  hostState(owner,state){
+    this.#owner(owner);
+    if(state!==undefined)return this.#tx(()=>clone(this.#put('hostInstallation',{...clone(state),id:'active'})));
+    return clone(this.#list('hostInstallation')[0]??null);
+  }
+  bindSession(owner,{role,sessionId,sessionUrl=null,projectId,nonce,replace=false}){
+    this.#owner(owner);requireThat(['conductor','generator','butler'].includes(role),'Invalid installed role');
+    text(sessionId,'actual session identity',300);text(nonce,'verification challenge',200);
+    if(projectId!==null)this.#get('project',projectId);
+    if(sessionUrl!==null){const u=new URL(sessionUrl);requireThat(u.protocol==='https:','Session link must use https');}
+    return this.#tx(()=>{
+      const active=this.#list('sessionBinding').filter(s=>!s.revokedAt),prior=active.find(s=>s.role===role);
+      requireThat(!active.some(s=>s.role!==role&&s.sessionId===sessionId),'Roles need distinct actual sessions',409);
+      if(prior&&prior.sessionId===sessionId&&prior.projectId===projectId)return clone(prior);
+      requireThat(!prior||replace,'Explicit replacement required; reuse the existing session',409);
+      if(prior){prior.revokedAt=now();this.#put('sessionBinding',prior);}
+      const installation=this.#list('hostInstallation')[0];if(installation){installation.status='incomplete';installation.gaps=['Role binding changed; verify connections and Conductor handoff'];delete installation.handoffReceipt;this.#put('hostInstallation',installation);}
+      const token=secret(),binding=this.#put('sessionBinding',{id:id(),role,sessionId,sessionUrl,projectId,nonce,token,tokenHash:hash(token),boundAt:now(),hello:null,revokedAt:null});
+      for(const d of this.#list('delegation').filter(d=>d.toRole===role&&d.projectId===projectId&&d.state!=='completed')){d.sessionId=sessionId;d.reboundAt=now();this.#put('delegation',d);}
+      return clone(binding);
+    });
+  }
+  hostBindings(owner){this.#owner(owner);return clone(this.#list('sessionBinding').filter(s=>!s.revokedAt));}
+  hostRoutes(owner){this.#owner(owner);return clone(this.#list('delegation'));}
+  #belongs(v,kind,projectId){
+    if(projectId===null)return false; // No project exists yet: no ambient access.
+    if(kind==='project')return v.id===projectId;
+    if(v.projectId)return v.projectId===projectId;
+    if(v.jobId)return this.#get('job',v.jobId).projectId===projectId;
+    if(v.assignmentId)return this.#get('job',this.#get('assignment',v.assignmentId).jobId).projectId===projectId;
+    return false;
+  }
+  #sessionScope(token,op,x){
+    const s=this.#session(token);if(!s)return;
+    let projectId=x.projectId;
+    if(op==='iteration.commission')projectId=this.#get('request',x.requestId).projectId;
+    else if(op==='attempt.start')projectId=this.#get('job',this.#get('assignment',x.assignmentId).jobId).projectId;
+    else if(op==='job.allocate')projectId=this.#get('job',x.jobId).projectId;
+    else if(op.startsWith('event.'))projectId=this.#get('event',x.eventId).projectId;
+    requireThat(s.projectId!==null&&projectId===s.projectId,'Session project boundary rejected',403);
+    if(s.role==='generator'&&['job.allocate','attempt.start'].includes(op)){
+      const job=op==='job.allocate'?this.#get('job',x.jobId):this.#get('job',this.#get('assignment',x.assignmentId).jobId);
+      requireThat(this.#list('delegation').some(d=>d.kind==='dispatch'&&d.iterationId===job.iterationId&&d.sessionId===s.sessionId&&d.state!=='completed'),'No dispatch delegation for this session/iteration',403);
+    }
+  }
+  #hostCall(token,op,key,x){
+    const s=this.#session(token);requireThat(s,'Installed session credential required',403);text(key,'host receipt key',200);
+    if(op==='host.resume'){
+      requireThat(x.nonce===s.nonce,'Session challenge mismatch',403);
+      const kinds={conductor:['project','request','iteration','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['job','delivery','event','observation','conflict']}[s.role];
+      const context=Object.fromEntries(kinds.map(k=>[k,this.read(token,k)]));
+      const receipt=this.#tx(()=>{
+        const value=this.#once('session:'+s.id+':'+op,key,x,()=>({id:id(),sessionId:s.sessionId,role:s.role,projectId:s.projectId,readAt:now(),latestIterationId:context.iteration?.at(-1)?.id??null,submissionIds:context.submission?.map(v=>v.id)??[]}));
+        s.hello=value;this.#put('sessionBinding',s);return value;
+      });
+      return {receipt,context,delegations:this.#list('delegation').filter(d=>d.projectId===s.projectId&&(s.role==='conductor'||d.sessionId===s.sessionId))};
+    }
+    if(op==='host.delegate'){
+      requireThat(s.role==='conductor','Only Conductor delegates',403);
+      requireThat(['dispatch','reconcile','readiness'].includes(x.kind),'Invalid bounded delegation');
+      if(x.kind==='readiness')requireThat(s.projectId===x.projectId&&['generator','butler'].includes(x.toRole),'Invalid readiness scope',403);else this.#sessionScope(token,op,x);
+      const toRole=x.kind==='readiness'?x.toRole:x.kind==='dispatch'?'generator':'butler',target=this.#list('sessionBinding').find(b=>!b.revokedAt&&b.role===toRole&&b.projectId===s.projectId);
+      requireThat(target?.hello,'Destination session has not verified its scoped connection',409);
+      if(x.kind==='dispatch')requireThat(this.#get('iteration',x.iterationId).projectId===s.projectId,'Foreign delegated iteration',403);
+      return this.#tx(()=>this.#once('session:'+s.id+':'+op,key,x,()=>this.#put('delegation',{id:id(),projectId:s.projectId,kind:x.kind,iterationId:x.iterationId??null,fromSessionId:s.sessionId,toRole,sessionId:target.sessionId,state:'pending',createdAt:now(),receipts:[]})));
+    }
+    if(op==='host.receipt'){
+      const d=this.#get('delegation',x.delegationId);requireThat(d.toRole===s.role&&d.sessionId===s.sessionId&&d.projectId===s.projectId,'Delegation recipient boundary rejected',403);
+      requireThat(['acknowledged','completed','blocked'].includes(x.status),'Invalid delegation receipt');text(x.detail,'delegation outcome',2000);
+      if(x.status==='completed'&&d.kind==='dispatch')requireThat(this.#get('iteration',d.iterationId).jobIds.every(j=>['succeeded','failed'].includes(this.#get('job',j).state)),'Dispatch is not completed; preserve uncertainty or partial work',409);
+      this.reconcile(this.#credentials.butler);
+      return this.#tx(()=>this.#once('session:'+s.id+':'+op,key,x,()=>{requireThat(d.state!=='completed','Delegation already completed',409);d.receipts.push({id:id(),sessionId:s.sessionId,status:x.status,detail:x.detail,at:now()});d.state=x.status;return this.#put('delegation',d);}));
+    }
+    throw new Fault('Unknown host session operation',404);
+  }
   #event(iteration,type,extra={}){const eid=`${iteration.id}:${type}`;if(this.#list('event').some(e=>e.id===eid))return;this.#put('event',{id:eid,projectId:iteration.projectId,iterationId:iteration.id,type,createdAt:now(),deliveryAttempts:[],acknowledgedAt:null,consumedAt:null,...extra});}
   call(token,op,key,input={}) {
     // No role property is interpreted; only the locally provisioned function credential selects operations.
     if(op==='result.deliver') return this.#deliver(token,key,input);
-    const role=this.#role(token);requireThat(permissions[role].includes(op),`${role} cannot call ${op}`,403);
+    const role=this.#role(token);
+    if(op.startsWith('host.'))return this.#hostCall(token,op,key,input);
+    this.#sessionScope(token,op,input);
+    requireThat(permissions[role].includes(op),`${role} cannot call ${op}`,403);
     text(key,'idempotency key',200);
     this.reconcile(this.#credentials.butler);
     const result=this.#tx(()=>{
@@ -72,7 +155,10 @@ export class Kernel {
       case 'project.create': {
         const p={id:id(),name:text(x.name,'project name',200),brief:text(x.brief,'brief'),page:'board',createdAt:now(),fixture:x.fixture===true,
           defaults:{count:integer(x.count??1,1,6,'candidate count'),direction:x.direction??'Fresh',brand:x.brand??null},standingRemaining:integer(x.standingIterations??0,0,20,'standing iterations')};
-        requireThat(['Fresh','Follow'].includes(p.defaults.direction),'Invalid direction'); if(p.defaults.brand!==null)text(p.defaults.brand,'brand context');return this.#put('project',p);
+        requireThat(['Fresh','Follow'].includes(p.defaults.direction),'Invalid direction'); if(p.defaults.brand!==null)text(p.defaults.brand,'brand context');this.#put('project',p);
+        for(const b of this.#list('sessionBinding').filter(b=>!b.revokedAt&&b.projectId===null)){b.projectId=p.id;this.#put('sessionBinding',b);}
+        const installation=this.#list('hostInstallation')[0];if(installation&&installation.projectId===null){installation.projectId=p.id;this.#put('hostInstallation',installation);}
+        return p;
       }
       case 'request.create': return this.#request(x);
       case 'iteration.commission': return this.#commission(x);
@@ -289,7 +375,7 @@ export class Kernel {
     requireThat(v.sha256===a.sha256&&v.width===a.width&&v.height===a.height,`Original hash or dimensions mismatch: ${a.id}`,409);return v;
   }
   reconcile(token){
-    requireThat(this.#role(token)==='butler','Only Butler reconciles',403);
+    requireThat(this.#role(token)==='butler'&&!this.#session(token),'Only deterministic Butler service reconciles',403);
     return this.#tx(()=>{
       for(const d of this.#list('delivery').filter(d=>d.state==='pending')){
         const a=this.#get('assignment',d.assignmentId),j=this.#get('job',d.jobId);
@@ -345,16 +431,18 @@ export class Kernel {
     const role=this.#role(token);
     const allowed={human:['project','request','iteration','job','artifact','draft','submission','continuation','acceptance','creativeContext','event','delivery','conflict','observation'],conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['job','assignment','delivery','event','conflict','observation']};
     requireThat(allowed[role].includes(kind),'Read boundary rejected',403);
-    return clone(this.#list(kind).map(v=>{const {token,tokenHash,...rest}=v;return rest;}));
+    const binding=this.#session(token);
+    return clone(this.#list(kind).filter(v=>!binding||this.#belongs(v,kind,binding.projectId)).map(v=>{const {token,tokenHash,...rest}=v;return rest;}));
   }
   assignment(token){const a=this.#assignment(token),j=this.#get('job',a.jobId);const {token:t,tokenHash,...safe}=a;return {...safe,specification:j.specification,state:j.state};}
   original(token,artifactId){
     try{this.#role(token);}catch{const assigned=this.#assignment(token),job=this.#get('job',assigned.jobId);requireThat(job.specification.sources.some(ref=>ref.artifactId===artifactId),'Executor can only read assigned source originals',403);}
-    const a=this.#get('artifact',artifactId);this.#verifyArtifact(a);return Buffer.from(this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256).data);}
+    const a=this.#get('artifact',artifactId),binding=this.#session(token);if(binding)requireThat(binding.role==='conductor'&&a.projectId===binding.projectId,'Session original boundary rejected',403);this.#verifyArtifact(a);return Buffer.from(this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256).data);}
   portable(token,submissionId,{jobId=null}={}){
     const role=this.#role(token);requireThat(['human','conductor'].includes(role),'Portable review boundary',403);
     this.reconcile(this.#credentials.butler);
-    const submission=this.#get('submission',submissionId),continuation=this.#get('continuation',submissionId),iteration=this.#get('iteration',submission.iterationId);
+    const submission=this.#get('submission',submissionId);this.#sessionScope(token,'portable',{projectId:submission.projectId});
+    const continuation=this.#get('continuation',submissionId),iteration=this.#get('iteration',submission.iterationId);
     let requested=continuation.historicalCoverage.availableSources,production=null,missing=continuation.historicalCoverage.issues;
     if(jobId){
       const job=this.#get('job',jobId),child=this.#get('iteration',job.iterationId);

@@ -1,10 +1,8 @@
 # BVE V2
 
-**Cold-reopen synchronization follow-up for remaining independent verification.** [PR #1](https://github.com/adun-denton/bve-v2/pull/1) remains draft and unmerged. Operator testing has not begun.
+**Operational host-installation contract change — development candidate.** [PR #1](https://github.com/adun-denton/bve-v2/pull/1) remains draft/unmerged. The installation lifecycle now provisions and verifies actual role sessions through a narrow host driver; server startup alone is incomplete. The earlier checkpoint did not implement this requirement.
 
-Tested implementation: [19c24e1f9787fb62fdc9e5a0565d09a85ad7215d](https://github.com/adun-denton/bve-v2/tree/19c24e1f9787fb62fdc9e5a0565d09a85ad7215d). **37 contract/recovery tests and 28 shipped browser checks passed**, with zero page errors. The [source manifest](evidence/checks.json) hashes 19 committed Git blobs and ties all reports to this exact source commit.
-
-[Repair dispositions and changed contracts](docs/REPAIR-REVIEW.md) · [redacted actual fixture-worker packets](evidence/repair-report.json) · [browser evidence](evidence/browser-report.json) · [pinned local handoff](docs/INSTALL.md). Main still contains the earlier baseline designation; use this repaired checkpoint for final review. Native integration, full operator installation and human acceptance remain unverified.
+See candidate.json for the exact tested source and [host installation review](docs/HOST-INSTALLATION-REVIEW.md) for results, actual cloud probe identities and missing capabilities. Fixtures do not establish native operational installation. The existing Windows installation and prior operator work were not accessed or modified here. A native driver and user-facing Conductor handoff remain unavailable in this cloud host.
 
 A local, image-first AI–human design workspace. Humans judge designs; replaceable executors perform bounded work; durable software owns authority and continuity.
 
@@ -24,8 +22,8 @@ npm test
 npm start
 ```
 
-Open http://127.0.0.1:4317/ . Private state defaults to `~/.bve-v2/workspace-v1`, outside the repository; use `BVE_ROOT` to choose a new private root. Existing unknown/nonempty roots are refused. No legacy runtime is accessed. Stop with Ctrl+C; restart with the same root. Ordinary review and continuation survive browser/AI replacement. Running image attempts become uncertain on owner recovery and are never automatically retried.
+Open http://127.0.0.1:4317/ . Private state defaults to `~/.bve-v2/workspace-v1`, outside the repository; select the exact preserved `BVE_ROOT` for an existing installation. Existing unknown/nonempty roots are refused. No legacy runtime is accessed. Stop with Ctrl+C; restart with the same root. Ordinary review and continuation survive browser/AI replacement. Running image attempts become uncertain on owner recovery and are never automatically retried.
 
 [Installation, backup and recovery](docs/INSTALL.md) · [functional APIs and native integration handoff](docs/ADAPTERS.md) · [human journey and action count](docs/WORKFLOW.md) · [verification evidence](docs/VERIFICATION.md)
 
-`npm run demo` uses an independent `BVE_ROOT` chosen by the operator and seeds clearly labeled authored PNG fixtures through simulated adapters. Native workers, concurrency, push notifications, human usefulness and design acceptance remain unverified. For browser verification, install dev dependencies and Chromium as described in the installation guide.
+`npm run demo` uses an independent `BVE_ROOT` chosen by the operator and seeds clearly labeled authored PNG fixtures through simulated adapters. These authored fixtures do not verify native workers, concurrency, push notifications, human usefulness or design acceptance. For browser verification, install dev dependencies and Chromium as described in the installation guide.

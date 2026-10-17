@@ -6,7 +6,7 @@
 |---|---|---|
 | Conductor commissioning and event read/consume | Demonstrated deterministic interface; simulated creative interpretation | Kernel and browser two-iteration tests |
 | Generator allocation/start | Demonstrated deterministic interface; serial fixture dispatch | Recovery and duplicate-start tests |
-| Executor original-byte delivery | Simulated PNG worker; native host unavailable | Authored PNGs through independent Butler intake |
+| Executor original-byte delivery | Simulated PNG worker; native host not exercised by this public fixture evidence | Authored PNGs through independent Butler intake |
 | Butler intake, source reconciliation, events, continuation | Demonstrated offline while AI absent | Tests plus server timer |
 | Live native tool/model/telemetry | Unverified and unavailable by default | No native image call made; model/cost/usage remain unknown |
 | Concurrent native execution | Unverified, disabled | Serial fallback only |
@@ -55,19 +55,17 @@ A reported uncertainty is an observation, not a completed image receipt: it reta
 
 The first image contract supports 8-bit, non-interlaced PNG (grayscale, RGB, grayscale-alpha, RGBA) up to 16MP and 24MiB. JPEG, palette/interlaced PNG, animation and other formats are deferred. Do not silently convert an unsupported original to make it appear byte-identical.
 
-## Next local-session handoff
+## Operational installation lifecycle (changed requirement)
 
-Start with **Install BVE.** and the remotely verified candidate commit from the implementation return. Install/reopen the new private root and demonstrate saved review/continuation recovery. Do not adopt a previous pilot.
+The 17 October 2026 user-directed requirement brings native host integration and actual role-session handoff into installation completion. The earlier candidate treated it as a subsequent phase; server startup alone no longer satisfies installation. See [INSTALL](INSTALL.md) and the narrow [host driver](HOST-DRIVER.md).
 
-Then, in the separately authorized native integration phase:
+The installer provisions distinct actual Conductor, Generator and Butler sessions, role-specific instructions, scoped project bearers, identities, idempotent provisioning keys, durable delegation/receipt records, replacement and polling/resume. Creation labels are not evidence. Every session must perform a fresh scoped context read, and Conductor must send readiness routes received by both role sessions. Only a tested native host with applicable image/original-byte evidence and a usable initial Conductor link can be marked operational. Fixture/probe installations remain explicitly incomplete for native operation.
 
-1. Discover the actual host's available executor and image tools without generation calls. Record documented support, original-byte return, limits and notification mechanisms separately from demonstrated behavior. Do not assume accounts or requested model names imply native subagents or telemetry.
-2. Implement a narrow host adapter using the existing Generator allocation/start and assignment delivery contracts. Keep Conductor on creative commissioning; do not move file intake/bookkeeping into it. No paid provider substitution.
-3. Under an explicit bounded image request, demonstrate one original-byte native delivery and independent intake. Preserve the uncertain identity if the call is interrupted. Reuse the review and source-bound continuation path.
-4. Only after actual concurrent execution is tested and evidenced, enable more than one worker. Serial operation is the supported fallback. Record actual notification delivery/acknowledgement/consumption, or retain durable unread polling events.
-5. Run a human two-iteration pilot. Record usefulness findings and an explicit acceptance judgment separately from software checks. No technical fixture result supplies design acceptance.
+The session API adds host.resume, host.delegate and host.receipt through the existing /api/op boundary. It cannot grant another function by a role label. Conductor may delegate readiness, dispatch of a commissioned exact iteration, or reconciliation; Generator may dispatch only its assigned iteration routes; Butler's session asks the independent deterministic service to reconcile. Assigned executor result delivery remains unchanged. Routes, read/ack/completion receipts and replacements are durable SQLite records. Only the local installation owner can create/revoke session bindings; those methods are not HTTP operations.
 
-No mandatory technical ceremony is added to the designer's ordinary flow. Adapter setup is local installation/integration work, and unresolved capability gaps remain explicit rather than simulated in production.
+The reusable role helpers are src/host-runtime.mjs. HTTP is normal; scoped Kernel command transport is supported for tested shared-filesystem hosts with unreachable cross-execution loopback. It opens recover:false and never takes owner responsibility. It cannot make inaccessible Windows state available. Read/acknowledgement/consumption and generation scope remain distinct. See role instructions in docs/roles.
+
+Host setup must preserve existing work, back up before runtime/schema changes, and resume the same project. No extra image calls merely to test installation, no paid-provider fallback, no repeated designer permissions. If any essential host capability is missing, installation remains incomplete and names the gap. The designer receives a ready Conductor session only after actual verification; it is not delegated back to the designer as a configuration task.
 
 ## Repaired source and creative-context contracts
 
