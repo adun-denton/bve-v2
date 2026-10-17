@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-10-17T05:36:25.247657+00:00",
+  "result": "passed",
+  "command": "BVE_BROWSER_EXECUTABLE=/tmp/chromium npm run verify",
+  "runtime": "Node 24.19.0",
+  "playwright": "1.62.1",
+  "chromium": "153.0.8010.0",
+  "contracts": {
+    "passed": 20,
+    "failed": 0
+  },
+  "browser": {
+    "passed": 20,
+    "failed": 0,
+    "pageErrors": 0
+  },
+  "unexecuted": [
+    "GitHub-hosted CI",
+    "Windows/macOS installation",
+    "native worker/tool original-byte delivery",
+    "actual concurrent native execution",
+    "live push notification integration",
+    "human usefulness/design acceptance"
+  ],
+  "sourceHashes": {
+    "src/adapters.mjs": "42a5e8d04e7603541d74b6800d42f94f2ed2d0e832d29a81f2c9c9ff72357be1",
+    "src/kernel.mjs": "3d8bdbbc8f82d143e59bfa34f05d43e3db5932a40c2f51a9a2e7c9f2a52639b1",
+    "src/png.mjs": "4cc044503b36e3815da1f886785130a380fcd8a054bea826fea39e576fc99474",
+    "src/server.mjs": "300c59a5dab80243702b058ebaf115526f0f7085d829c2cb24fb1f3be316cf25",
+    "public/app.js": "f7a9e373f9e298f2b4e74a216127b6ae70dcb433e62e66e41e53b05f939fdbd5",
+    "public/index.html": "32713a724ed33ac8f1d656cbd1c0eb5eeaa1b0e38f40517eedfda6150e2a60ef",
+    "public/style.css": "a0de7109594f107eeac39bf3360814bf28d507dfd841c2e8fdf95b80dcb7eafe",
+    "scripts/backup.mjs": "03e35c485d274004f5509538378d615302a1fa0c3734452bfe59843988259455",
+    "scripts/browser-test.mjs": "a5340f4c7014f6dbef48740d7752e00b869d09dcfe0caf4a225dfc8ee1e4812d",
+    "scripts/conductor.mjs": "f6f590691a6ca3eec5156b4abf9eb58dde1a155fa71adb4ba35b887b4e0f0d80",
+    "test/backup.test.mjs": "f029944649833591dbd5afeb18f74b38084d0d10ecc7b49a6aa4b82ca6607cb7",
+    "test/helpers.mjs": "91a8be582ab24be2fac97a65af951cb844c1366fcbc9597c5d44ded03f7651b5",
+    "test/http.test.mjs": "e0f6d4c5bb4ee7307962b4302dc9e8b1031c1c9c1936f86b253cc9bb94d2977c",
+    "test/kernel.test.mjs": "2625e507f4a1fca15d233b7d72efb038710aa70f7608bb7da1fe994a7f8fde86"
+  }
+}

@@ -8,7 +8,7 @@ A new decision is needed only for materially ambiguous creative intent, extra at
 
 ## Records and operations
 
-All mutating operations take an idempotency key. The same key and payload recover the original receipt; changed payload conflicts. A function credential is provisioned by the local owner, not inferred from a role string in a request. Executor tokens are assignment-scoped and reveal only frozen job context. The browser cannot call Generator or Butler by supplying a role label. Conductor cannot invoke their operations. HTTP checks Origin and Host; secrets are never in public source or portable exports.
+Mutating commands take an idempotency key. The same key and payload recover the original receipt; changed payload conflicts. Execution start is stricter: after its first durable start, every duplicate start rejects, including a replay of the original key; a lost start response must never authorize a second invocation. Automatic Butler maintenance is deterministic and transactional. A function credential is provisioned by the local owner, not inferred from a role string in a request. Executor tokens are assignment-scoped and reveal only frozen job context. The browser cannot call Generator or Butler by supplying a role label. Conductor cannot invoke their operations. HTTP checks Origin and Host; secrets are never in public source or portable exports.
 
 - Project: identity, name, brief, defaults, independent direction/brand context; isolated in a private root.
 - Iteration: project/page, parent review, original user request/scope, distinct frozen specifications, count and separate attempt limit.

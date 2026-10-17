@@ -1,0 +1,2459 @@
+{
+  "generatedAt": "2026-10-17T05:36:07.631Z",
+  "kind": "authored-fixture-browser-evidence",
+  "checks": [
+    "Six image comparison board shows actual authored originals",
+    "Source-bound regional comment appears",
+    "Zoom changes independently of source geometry",
+    "Image navigation recovers saved annotation",
+    "Refresh restores durable overall draft",
+    "Cold browser replacement and direct project/page/iteration link recover results",
+    "Cold reopening recovers server-saved draft without browser storage",
+    "Submission is immutable and continuation ready with screenshots and Conductor notes unavailable",
+    "Exact normalized geometry survives zoom, refresh and cold reopening",
+    "Unread event retained after failed delivery: partial-review",
+    "Unread event retained after failed delivery: review-ready",
+    "Unread event retained after failed delivery: continuation:8300a593-aab6-4f0b-9a96-c0d2b953721e",
+    "Second iteration opens progressively without an approval dialog",
+    "Feedback-only submission commissions no third iteration",
+    "No fixture flow implies design acceptance",
+    "Project library preserves both iterations",
+    "Older review and interpretation remain discoverable",
+    "Mobile board has no horizontal overflow",
+    "Owner process restart reveals completed results and review history",
+    "No browser JavaScript errors"
+  ],
+  "errors": [],
+  "summary": {
+    "iterations": 2,
+    "firstCandidates": 6,
+    "secondCandidates": 6,
+    "submissions": 2,
+    "nativeWorker": "unverified",
+    "concurrency": "unverified; serial fixture only",
+    "liveNotifications": "unverified; durable poll simulated",
+    "humanAcceptance": "unverified; none recorded"
+  },
+  "sourceGeometry": [
+    {
+      "space": "normalized-original",
+      "x": 0.1,
+      "y": 0.20000001656454075,
+      "w": 0.30000000000000004,
+      "h": 0.25,
+      "text": "More breathing room around the focal form."
+    }
+  ],
+  "iterationIds": {
+    "first": "26eb7404-4ac5-480a-b09c-6206865e5866",
+    "second": "4365ea2f-815e-4778-b031-a535b4c83ac7"
+  },
+  "parentReviewId": "8300a593-aab6-4f0b-9a96-c0d2b953721e",
+  "continuation": {
+    "sources": [
+      {
+        "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+        "version": 1,
+        "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+        "width": 900,
+        "height": 650,
+        "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+      },
+      {
+        "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+        "version": 1,
+        "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+        "width": 900,
+        "height": 650,
+        "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72"
+      },
+      {
+        "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+        "version": 1,
+        "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+        "width": 900,
+        "height": 650,
+        "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21"
+      },
+      {
+        "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+        "version": 1,
+        "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+        "width": 900,
+        "height": 650,
+        "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc"
+      },
+      {
+        "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+        "version": 1,
+        "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+        "width": 900,
+        "height": 650,
+        "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac"
+      },
+      {
+        "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+        "version": 1,
+        "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+        "width": 900,
+        "height": 650,
+        "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb"
+      }
+    ],
+    "optional": {
+      "screenshots": {
+        "status": "unavailable",
+        "required": false
+      },
+      "conductorNotes": {
+        "status": "unavailable",
+        "required": false
+      }
+    }
+  },
+  "workflow": {
+    "project": [
+      {
+        "id": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "name": "Quiet Forms · authored study",
+        "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+        "page": "board",
+        "createdAt": "2026-10-17T05:36:04.081Z",
+        "fixture": true,
+        "defaults": {
+          "count": 6,
+          "direction": "Fresh",
+          "brand": "Muted botanical color, generous space; exploratory context"
+        },
+        "standingRemaining": 0
+      }
+    ],
+    "request": [
+      {
+        "id": "1d618c2d-0acd-4c5b-b3e7-03d9926d8398",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "parentReviewId": null,
+        "intent": "Create six distinct candidates for this authored offline workflow demonstration.",
+        "count": 6,
+        "direction": "Fresh",
+        "brand": "Muted botanical color, generous space; exploratory context",
+        "createdAt": "2026-10-17T05:36:04.083Z",
+        "state": "commissioned",
+        "allowance": {
+          "primaryAttempts": 6,
+          "maxRetries": 0
+        },
+        "gap": "Native Conductor adapter unavailable; resume via bounded Conductor interface",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866"
+      },
+      {
+        "id": "fbecd414-1b1a-4369-a75a-174bc0ae199c",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "parentReviewId": "8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "intent": "Continue using submitted review 8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "count": 6,
+        "direction": "Fresh",
+        "brand": "Muted botanical color, generous space; exploratory context",
+        "createdAt": "2026-10-17T05:36:05.469Z",
+        "state": "commissioned",
+        "allowance": {
+          "primaryAttempts": 6,
+          "maxRetries": 0
+        },
+        "gap": "Native Conductor adapter unavailable; resume via bounded Conductor interface",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7"
+      }
+    ],
+    "iteration": [
+      {
+        "id": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "page": "board",
+        "requestId": "1d618c2d-0acd-4c5b-b3e7-03d9926d8398",
+        "parentReviewId": null,
+        "parentIterationId": null,
+        "createdAt": "2026-10-17T05:36:04.085Z",
+        "count": 6,
+        "direction": "Fresh",
+        "brand": "Muted botanical color, generous space; exploratory context",
+        "jobIds": [
+          "0860f3d8-b911-4111-b08a-9a75e698cad6",
+          "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+          "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+          "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+          "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+          "b6292297-a009-40a4-84f7-da521dcc8fbb"
+        ],
+        "interpretation": null
+      },
+      {
+        "id": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "page": "board",
+        "requestId": "fbecd414-1b1a-4369-a75a-174bc0ae199c",
+        "parentReviewId": "8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "parentIterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "createdAt": "2026-10-17T05:36:05.641Z",
+        "count": 6,
+        "direction": "Fresh",
+        "brand": "Muted botanical color, generous space; exploratory context",
+        "jobIds": [
+          "ee29d88e-f5f4-402e-8325-f07e2ae31907",
+          "0b8b204d-c5ee-4dc9-93c2-48215fd195ad",
+          "b112e42d-35f0-42eb-aa53-9e2b04919451",
+          "09070544-286e-4a9f-90f2-9911f64680da",
+          "b8332615-857a-46eb-9a58-a3467aaeadd6",
+          "5b8280e7-ac00-49e1-85ac-538af178dc9f"
+        ],
+        "interpretation": {
+          "reviewId": "8300a593-aab6-4f0b-9a96-c0d2b953721e",
+          "text": "Simulated Conductor interpretation: use the original review words and regions as guidance; keep geometry and original feedback separately inspectable.",
+          "createdAt": "2026-10-17T05:36:05.641Z"
+        }
+      }
+    ],
+    "job": [
+      {
+        "id": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-1",
+          "label": "Soft orbit",
+          "difference": "A large circular focal form and generous quiet edges",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use one off-center circle in a muted botanical palette, spacious and calm.",
+          "sources": [],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:04.085Z",
+        "assignmentId": "407667ba-6280-43e9-bf2b-f4a37bc079d1",
+        "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634"
+      },
+      {
+        "id": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-2",
+          "label": "Editorial block",
+          "difference": "A vertical half-width mass with strong asymmetry",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay.",
+          "sources": [],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:04.085Z",
+        "assignmentId": "40579c79-eae3-46d3-abaf-093aee0efd77",
+        "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b"
+      },
+      {
+        "id": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-3",
+          "label": "Centered signal",
+          "difference": "A centered diamond with a cool palette",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use a single centered diamond, cool pale blue field, precise and geometric.",
+          "sources": [],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:04.085Z",
+        "assignmentId": "8a072bc6-776b-4760-8612-3525e63f89c5",
+        "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde"
+      },
+      {
+        "id": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-4",
+          "label": "Rhythmic field",
+          "difference": "Multiple curved ribbons with a lilac palette",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use repeated diagonal organic wave ribbons over lilac, energetic and layered.",
+          "sources": [],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:04.086Z",
+        "assignmentId": "86228f75-02e6-4c08-a742-76c4b1008f15",
+        "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776"
+      },
+      {
+        "id": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-5",
+          "label": "Garden columns",
+          "difference": "Three separated columns with an olive palette",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use three separated upright columns, pale olive ground, measured rhythm.",
+          "sources": [],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:04.086Z",
+        "assignmentId": "768dbf7f-50a6-4ecd-9074-0b79717f7915",
+        "artifactId": "faffa752-0891-4494-b870-76e957f58800"
+      },
+      {
+        "id": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-6",
+          "label": "Open ring",
+          "difference": "An open central ring with a mint palette",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use a single wide mint ring with an empty center, airy and restrained.",
+          "sources": [],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:04.086Z",
+        "assignmentId": "32ac3e28-0501-40fb-8cc5-7c16c6165f1c",
+        "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f"
+      },
+      {
+        "id": "ee29d88e-f5f4-402e-8325-f07e2ae31907",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-1",
+          "label": "Soft orbit · refinement",
+          "difference": "A large circular focal form and generous quiet edges; a small quiet accent in the upper left",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use one off-center circle in a muted botanical palette, spacious and calm. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+          "sources": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "version": 1,
+              "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+              "width": 900,
+              "height": 650,
+              "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+              "version": 1,
+              "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+              "width": 900,
+              "height": 650,
+              "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+              "version": 1,
+              "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+              "width": 900,
+              "height": 650,
+              "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+              "version": 1,
+              "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+              "width": 900,
+              "height": 650,
+              "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+              "version": 1,
+              "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+              "width": 900,
+              "height": 650,
+              "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+              "version": 1,
+              "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+              "width": 900,
+              "height": 650,
+              "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+              "role": "Review source: interpret original human comments and regions"
+            }
+          ],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "source": {
+                "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+                "version": 1,
+                "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+                "width": 900,
+                "height": 650,
+                "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+              },
+              "space": "normalized-original",
+              "x": 0.1,
+              "y": 0.20000001656454075,
+              "w": 0.30000000000000004,
+              "h": 0.25,
+              "text": "More breathing room around the focal form."
+            }
+          ],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:05.649Z",
+        "assignmentId": "b73654ee-d89f-452a-806e-e3c203d9c4df",
+        "artifactId": "254618e2-e54b-4097-a019-442a594f266c"
+      },
+      {
+        "id": "0b8b204d-c5ee-4dc9-93c2-48215fd195ad",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-2",
+          "label": "Editorial block · refinement",
+          "difference": "A vertical half-width mass with strong asymmetry; a small quiet accent in the upper left",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+          "sources": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "version": 1,
+              "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+              "width": 900,
+              "height": 650,
+              "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+              "version": 1,
+              "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+              "width": 900,
+              "height": 650,
+              "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+              "version": 1,
+              "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+              "width": 900,
+              "height": 650,
+              "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+              "version": 1,
+              "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+              "width": 900,
+              "height": 650,
+              "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+              "version": 1,
+              "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+              "width": 900,
+              "height": 650,
+              "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+              "version": 1,
+              "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+              "width": 900,
+              "height": 650,
+              "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+              "role": "Review source: interpret original human comments and regions"
+            }
+          ],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "source": {
+                "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+                "version": 1,
+                "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+                "width": 900,
+                "height": 650,
+                "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+              },
+              "space": "normalized-original",
+              "x": 0.1,
+              "y": 0.20000001656454075,
+              "w": 0.30000000000000004,
+              "h": 0.25,
+              "text": "More breathing room around the focal form."
+            }
+          ],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:05.667Z",
+        "assignmentId": "059f70e9-2079-45c0-940c-eeca1b0afe8c",
+        "artifactId": "f6d690cc-3b30-4ea8-b0e7-a55e77ab70fb"
+      },
+      {
+        "id": "b112e42d-35f0-42eb-aa53-9e2b04919451",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-3",
+          "label": "Centered signal · refinement",
+          "difference": "A centered diamond with a cool palette; a small quiet accent in the upper left",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use a single centered diamond, cool pale blue field, precise and geometric. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+          "sources": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "version": 1,
+              "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+              "width": 900,
+              "height": 650,
+              "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+              "version": 1,
+              "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+              "width": 900,
+              "height": 650,
+              "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+              "version": 1,
+              "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+              "width": 900,
+              "height": 650,
+              "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+              "version": 1,
+              "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+              "width": 900,
+              "height": 650,
+              "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+              "version": 1,
+              "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+              "width": 900,
+              "height": 650,
+              "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+              "version": 1,
+              "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+              "width": 900,
+              "height": 650,
+              "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+              "role": "Review source: interpret original human comments and regions"
+            }
+          ],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "source": {
+                "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+                "version": 1,
+                "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+                "width": 900,
+                "height": 650,
+                "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+              },
+              "space": "normalized-original",
+              "x": 0.1,
+              "y": 0.20000001656454075,
+              "w": 0.30000000000000004,
+              "h": 0.25,
+              "text": "More breathing room around the focal form."
+            }
+          ],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:05.674Z",
+        "assignmentId": "f61f38cf-1c30-4cc9-bc34-1cc4a8a42615",
+        "artifactId": "d7185c6a-a9cb-41ec-bca9-48ca200faa9b"
+      },
+      {
+        "id": "09070544-286e-4a9f-90f2-9911f64680da",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-4",
+          "label": "Rhythmic field · refinement",
+          "difference": "Multiple curved ribbons with a lilac palette; a small quiet accent in the upper left",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use repeated diagonal organic wave ribbons over lilac, energetic and layered. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+          "sources": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "version": 1,
+              "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+              "width": 900,
+              "height": 650,
+              "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+              "version": 1,
+              "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+              "width": 900,
+              "height": 650,
+              "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+              "version": 1,
+              "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+              "width": 900,
+              "height": 650,
+              "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+              "version": 1,
+              "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+              "width": 900,
+              "height": 650,
+              "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+              "version": 1,
+              "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+              "width": 900,
+              "height": 650,
+              "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+              "version": 1,
+              "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+              "width": 900,
+              "height": 650,
+              "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+              "role": "Review source: interpret original human comments and regions"
+            }
+          ],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "source": {
+                "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+                "version": 1,
+                "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+                "width": 900,
+                "height": 650,
+                "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+              },
+              "space": "normalized-original",
+              "x": 0.1,
+              "y": 0.20000001656454075,
+              "w": 0.30000000000000004,
+              "h": 0.25,
+              "text": "More breathing room around the focal form."
+            }
+          ],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:05.682Z",
+        "assignmentId": "11a2ec13-28c4-4c99-a94d-1db7501d7fd0",
+        "artifactId": "b35de2e2-3cf3-454c-a2f2-a908579f9c1e"
+      },
+      {
+        "id": "b8332615-857a-46eb-9a58-a3467aaeadd6",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-5",
+          "label": "Garden columns · refinement",
+          "difference": "Three separated columns with an olive palette; a small quiet accent in the upper left",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use three separated upright columns, pale olive ground, measured rhythm. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+          "sources": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "version": 1,
+              "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+              "width": 900,
+              "height": 650,
+              "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+              "version": 1,
+              "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+              "width": 900,
+              "height": 650,
+              "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+              "version": 1,
+              "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+              "width": 900,
+              "height": 650,
+              "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+              "version": 1,
+              "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+              "width": 900,
+              "height": 650,
+              "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+              "version": 1,
+              "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+              "width": 900,
+              "height": 650,
+              "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+              "version": 1,
+              "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+              "width": 900,
+              "height": 650,
+              "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+              "role": "Review source: interpret original human comments and regions"
+            }
+          ],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "source": {
+                "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+                "version": 1,
+                "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+                "width": 900,
+                "height": 650,
+                "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+              },
+              "space": "normalized-original",
+              "x": 0.1,
+              "y": 0.20000001656454075,
+              "w": 0.30000000000000004,
+              "h": 0.25,
+              "text": "More breathing room around the focal form."
+            }
+          ],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:05.690Z",
+        "assignmentId": "c1aa0b8a-be45-423c-be5c-b60e23bec39a",
+        "artifactId": "ab8412c2-f8d8-45bd-a760-86727a0c6575"
+      },
+      {
+        "id": "5b8280e7-ac00-49e1-85ac-538af178dc9f",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "state": "succeeded",
+        "attemptsUsed": 1,
+        "specification": {
+          "directionId": "direction-6",
+          "label": "Open ring · refinement",
+          "difference": "An open central ring with a mint palette; a small quiet accent in the upper left",
+          "brief": "Explore six distinct graphic compositions for a fictional botanical studio. Authored raster fixtures demonstrate workflow, not AI image quality.",
+          "prompt": "Use a single wide mint ring with an empty center, airy and restrained. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+          "sources": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "version": 1,
+              "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+              "width": 900,
+              "height": 650,
+              "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+              "version": 1,
+              "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+              "width": 900,
+              "height": 650,
+              "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+              "version": 1,
+              "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+              "width": 900,
+              "height": 650,
+              "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+              "version": 1,
+              "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+              "width": 900,
+              "height": 650,
+              "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+              "version": 1,
+              "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+              "width": 900,
+              "height": 650,
+              "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+              "role": "Review source: interpret original human comments and regions"
+            },
+            {
+              "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+              "version": 1,
+              "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+              "width": 900,
+              "height": 650,
+              "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+              "role": "Review source: interpret original human comments and regions"
+            }
+          ],
+          "output": {
+            "format": "image/png"
+          },
+          "hardLimits": {
+            "maxBytes": 25165824,
+            "maxPixels": 16000000
+          },
+          "preferences": [
+            "Calm visual exploration; authored test composition only"
+          ],
+          "regions": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "source": {
+                "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+                "version": 1,
+                "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+                "width": 900,
+                "height": 650,
+                "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+              },
+              "space": "normalized-original",
+              "x": 0.1,
+              "y": 0.20000001656454075,
+              "w": 0.30000000000000004,
+              "h": 0.25,
+              "text": "More breathing room around the focal form."
+            }
+          ],
+          "allowance": {
+            "primaryAttempts": 1,
+            "maxRetries": 0
+          },
+          "destination": {
+            "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+            "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7"
+          },
+          "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+        },
+        "createdAt": "2026-10-17T05:36:05.705Z",
+        "assignmentId": "d7aa7554-a723-4182-b962-f07f584c2a8d",
+        "artifactId": "e8577733-0358-4345-94ef-5e0b9e7865e3"
+      }
+    ],
+    "artifact": [
+      {
+        "id": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+        "version": 1,
+        "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "11fd0157-4457-488f-8fee-199a8eaa547a",
+        "assignmentId": "407667ba-6280-43e9-bf2b-f4a37bc079d1",
+        "attemptId": "798e8a9c-24ef-4048-bd42-ed717e80f550",
+        "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 6596,
+        "verifiedAt": "2026-10-17T05:36:04.165Z",
+        "sources": []
+      },
+      {
+        "id": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+        "version": 1,
+        "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "5c0a9b5a-7a61-4119-8034-a5054edb3917",
+        "assignmentId": "40579c79-eae3-46d3-abaf-093aee0efd77",
+        "attemptId": "f1491f3b-2729-4a8c-a174-dc80d34a33d8",
+        "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 4726,
+        "verifiedAt": "2026-10-17T05:36:04.198Z",
+        "sources": []
+      },
+      {
+        "id": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+        "version": 1,
+        "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "9e61d95c-e2b3-433a-a934-59b4d5e20d9a",
+        "assignmentId": "8a072bc6-776b-4760-8612-3525e63f89c5",
+        "attemptId": "4ba8ccd2-4f16-496f-bcc7-63b6153f622a",
+        "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 6677,
+        "verifiedAt": "2026-10-17T05:36:04.229Z",
+        "sources": []
+      },
+      {
+        "id": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+        "version": 1,
+        "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "b91fdb18-725a-494d-82a7-476741c997b5",
+        "assignmentId": "86228f75-02e6-4c08-a742-76c4b1008f15",
+        "attemptId": "643be6f8-6b05-4029-b6b6-0487d0c5338f",
+        "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 9082,
+        "verifiedAt": "2026-10-17T05:36:04.264Z",
+        "sources": []
+      },
+      {
+        "id": "faffa752-0891-4494-b870-76e957f58800",
+        "version": 1,
+        "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "37acdb08-46d7-421c-ab5c-ca6c9dcabef3",
+        "assignmentId": "768dbf7f-50a6-4ecd-9074-0b79717f7915",
+        "attemptId": "0d8a70f8-9d00-4ab8-ba4a-a2c711419ec1",
+        "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 8258,
+        "verifiedAt": "2026-10-17T05:36:04.300Z",
+        "sources": []
+      },
+      {
+        "id": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+        "version": 1,
+        "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "e19d9aed-bd64-44e5-8280-cb3b3181171b",
+        "assignmentId": "32ac3e28-0501-40fb-8cc5-7c16c6165f1c",
+        "attemptId": "e718f05d-4ee3-4325-9e5b-8a5394b456dc",
+        "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 9107,
+        "verifiedAt": "2026-10-17T05:36:04.334Z",
+        "sources": []
+      },
+      {
+        "id": "254618e2-e54b-4097-a019-442a594f266c",
+        "version": 1,
+        "jobId": "ee29d88e-f5f4-402e-8325-f07e2ae31907",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "5f4c6a7d-e88f-4086-aaaf-a424708208ce",
+        "assignmentId": "b73654ee-d89f-452a-806e-e3c203d9c4df",
+        "attemptId": "0faf305f-817f-4640-9046-c905a4022475",
+        "sha256": "426d6db17bd168dfb5df4c8ff80b5338669463f13295a3a435b6ea6d70efe985",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 6926,
+        "verifiedAt": "2026-10-17T05:36:05.792Z",
+        "sources": [
+          {
+            "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+            "version": 1,
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "width": 900,
+            "height": 650,
+            "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+            "version": 1,
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "width": 900,
+            "height": 650,
+            "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+            "version": 1,
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "width": 900,
+            "height": 650,
+            "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+            "version": 1,
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "width": 900,
+            "height": 650,
+            "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+            "role": "Review source: interpret original human comments and regions"
+          }
+        ]
+      },
+      {
+        "id": "f6d690cc-3b30-4ea8-b0e7-a55e77ab70fb",
+        "version": 1,
+        "jobId": "0b8b204d-c5ee-4dc9-93c2-48215fd195ad",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "a3350688-fbea-4dbd-8384-cf515fd44ac7",
+        "assignmentId": "059f70e9-2079-45c0-940c-eeca1b0afe8c",
+        "attemptId": "dad6179e-4fc5-43f8-9cf7-13ebb860bf2f",
+        "sha256": "fec930c7d4891ad1ef55a6a649e71a50f6d7d0c37c2a5d77081d4155838c5bdb",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 5065,
+        "verifiedAt": "2026-10-17T05:36:05.854Z",
+        "sources": [
+          {
+            "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+            "version": 1,
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "width": 900,
+            "height": 650,
+            "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+            "version": 1,
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "width": 900,
+            "height": 650,
+            "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+            "version": 1,
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "width": 900,
+            "height": 650,
+            "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+            "version": 1,
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "width": 900,
+            "height": 650,
+            "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+            "role": "Review source: interpret original human comments and regions"
+          }
+        ]
+      },
+      {
+        "id": "d7185c6a-a9cb-41ec-bca9-48ca200faa9b",
+        "version": 1,
+        "jobId": "b112e42d-35f0-42eb-aa53-9e2b04919451",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "5b7f84dd-5cdb-4e83-9e0d-009e7567b1bc",
+        "assignmentId": "f61f38cf-1c30-4cc9-bc34-1cc4a8a42615",
+        "attemptId": "b67dec7a-611d-4cc5-af93-1d1ac4c8d503",
+        "sha256": "1f829d94c89d57e2d8ac14224aecc4275305340ea472d8040a187dbedda1256e",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 6997,
+        "verifiedAt": "2026-10-17T05:36:05.913Z",
+        "sources": [
+          {
+            "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+            "version": 1,
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "width": 900,
+            "height": 650,
+            "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+            "version": 1,
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "width": 900,
+            "height": 650,
+            "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+            "version": 1,
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "width": 900,
+            "height": 650,
+            "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+            "version": 1,
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "width": 900,
+            "height": 650,
+            "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+            "role": "Review source: interpret original human comments and regions"
+          }
+        ]
+      },
+      {
+        "id": "b35de2e2-3cf3-454c-a2f2-a908579f9c1e",
+        "version": 1,
+        "jobId": "09070544-286e-4a9f-90f2-9911f64680da",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "3983c132-af80-45db-9e35-64dd170d4f73",
+        "assignmentId": "11a2ec13-28c4-4c99-a94d-1db7501d7fd0",
+        "attemptId": "a070f713-9790-4149-843e-4addd1528a9e",
+        "sha256": "2e27a80280be968cc8b86cbb27b2389bf35ec203de1ac0620ef5c220ee8c5e8e",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 9429,
+        "verifiedAt": "2026-10-17T05:36:05.968Z",
+        "sources": [
+          {
+            "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+            "version": 1,
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "width": 900,
+            "height": 650,
+            "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+            "version": 1,
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "width": 900,
+            "height": 650,
+            "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+            "version": 1,
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "width": 900,
+            "height": 650,
+            "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+            "version": 1,
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "width": 900,
+            "height": 650,
+            "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+            "role": "Review source: interpret original human comments and regions"
+          }
+        ]
+      },
+      {
+        "id": "ab8412c2-f8d8-45bd-a760-86727a0c6575",
+        "version": 1,
+        "jobId": "b8332615-857a-46eb-9a58-a3467aaeadd6",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "6a215490-1e12-417c-b4be-60ee3cc951ce",
+        "assignmentId": "c1aa0b8a-be45-423c-be5c-b60e23bec39a",
+        "attemptId": "7e019a88-b049-427d-87c9-3a12bbba65fd",
+        "sha256": "356395125bc31f51e4b5a95195578aeb4e5c828e505def10e98624c1bf7f8a91",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 8570,
+        "verifiedAt": "2026-10-17T05:36:06.023Z",
+        "sources": [
+          {
+            "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+            "version": 1,
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "width": 900,
+            "height": 650,
+            "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+            "version": 1,
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "width": 900,
+            "height": 650,
+            "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+            "version": 1,
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "width": 900,
+            "height": 650,
+            "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+            "version": 1,
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "width": 900,
+            "height": 650,
+            "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+            "role": "Review source: interpret original human comments and regions"
+          }
+        ]
+      },
+      {
+        "id": "e8577733-0358-4345-94ef-5e0b9e7865e3",
+        "version": 1,
+        "jobId": "5b8280e7-ac00-49e1-85ac-538af178dc9f",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "deliveryId": "99fea869-16ff-4a2a-9c1c-e8c0f4e487bc",
+        "assignmentId": "d7aa7554-a723-4182-b962-f07f584c2a8d",
+        "attemptId": "bab4b6b7-875e-4aa4-a96d-79c10bff5734",
+        "sha256": "9f64036dfaa64f85526385d1accd1a2e54002ebe19c8afce2a4f1ddbf9852a98",
+        "width": 900,
+        "height": 650,
+        "mediaType": "image/png",
+        "size": 9286,
+        "verifiedAt": "2026-10-17T05:36:06.080Z",
+        "sources": [
+          {
+            "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+            "version": 1,
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "width": 900,
+            "height": 650,
+            "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+            "version": 1,
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "width": 900,
+            "height": 650,
+            "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+            "version": 1,
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "width": 900,
+            "height": 650,
+            "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+            "role": "Review source: interpret original human comments and regions"
+          },
+          {
+            "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+            "version": 1,
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "width": 900,
+            "height": 650,
+            "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+            "role": "Review source: interpret original human comments and regions"
+          }
+        ]
+      }
+    ],
+    "submission": [
+      {
+        "id": "8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "draftVersion": 2,
+        "feedback": {
+          "overall": "Prefer Soft orbit. Keep the quiet palette and add breathing room in the marked region.",
+          "images": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "version": 1,
+              "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+              "width": 900,
+              "height": 650,
+              "note": "Preserve the calm composition as a preference.",
+              "favorite": true,
+              "regions": [
+                {
+                  "space": "normalized-original",
+                  "x": 0.1,
+                  "y": 0.20000001656454075,
+                  "w": 0.30000000000000004,
+                  "h": 0.25,
+                  "text": "More breathing room around the focal form."
+                }
+              ]
+            },
+            {
+              "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+              "version": 1,
+              "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+              "version": 1,
+              "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+              "version": 1,
+              "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+              "version": 1,
+              "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+              "version": 1,
+              "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            }
+          ]
+        },
+        "sourceArtifacts": [
+          {
+            "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+            "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+          },
+          {
+            "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+            "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72"
+          },
+          {
+            "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+            "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21"
+          },
+          {
+            "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+            "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc"
+          },
+          {
+            "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+            "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac"
+          },
+          {
+            "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+            "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb"
+          }
+        ],
+        "intent": "iterate",
+        "submittedAt": "2026-10-17T05:36:05.468Z",
+        "requestId": "fbecd414-1b1a-4369-a75a-174bc0ae199c"
+      },
+      {
+        "id": "ebcff427-5133-44df-8a74-47d36b5ec106",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "draftVersion": 1,
+        "feedback": {
+          "overall": "Second iteration review recorded. Native production quality and human acceptance are still unverified.",
+          "images": [
+            {
+              "artifactId": "254618e2-e54b-4097-a019-442a594f266c",
+              "version": 1,
+              "sha256": "426d6db17bd168dfb5df4c8ff80b5338669463f13295a3a435b6ea6d70efe985",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "f6d690cc-3b30-4ea8-b0e7-a55e77ab70fb",
+              "version": 1,
+              "sha256": "fec930c7d4891ad1ef55a6a649e71a50f6d7d0c37c2a5d77081d4155838c5bdb",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "d7185c6a-a9cb-41ec-bca9-48ca200faa9b",
+              "version": 1,
+              "sha256": "1f829d94c89d57e2d8ac14224aecc4275305340ea472d8040a187dbedda1256e",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "b35de2e2-3cf3-454c-a2f2-a908579f9c1e",
+              "version": 1,
+              "sha256": "2e27a80280be968cc8b86cbb27b2389bf35ec203de1ac0620ef5c220ee8c5e8e",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "ab8412c2-f8d8-45bd-a760-86727a0c6575",
+              "version": 1,
+              "sha256": "356395125bc31f51e4b5a95195578aeb4e5c828e505def10e98624c1bf7f8a91",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "e8577733-0358-4345-94ef-5e0b9e7865e3",
+              "version": 1,
+              "sha256": "9f64036dfaa64f85526385d1accd1a2e54002ebe19c8afce2a4f1ddbf9852a98",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            }
+          ]
+        },
+        "sourceArtifacts": [
+          {
+            "artifactId": "254618e2-e54b-4097-a019-442a594f266c",
+            "jobId": "ee29d88e-f5f4-402e-8325-f07e2ae31907"
+          },
+          {
+            "artifactId": "f6d690cc-3b30-4ea8-b0e7-a55e77ab70fb",
+            "jobId": "0b8b204d-c5ee-4dc9-93c2-48215fd195ad"
+          },
+          {
+            "artifactId": "d7185c6a-a9cb-41ec-bca9-48ca200faa9b",
+            "jobId": "b112e42d-35f0-42eb-aa53-9e2b04919451"
+          },
+          {
+            "artifactId": "b35de2e2-3cf3-454c-a2f2-a908579f9c1e",
+            "jobId": "09070544-286e-4a9f-90f2-9911f64680da"
+          },
+          {
+            "artifactId": "ab8412c2-f8d8-45bd-a760-86727a0c6575",
+            "jobId": "b8332615-857a-46eb-9a58-a3467aaeadd6"
+          },
+          {
+            "artifactId": "e8577733-0358-4345-94ef-5e0b9e7865e3",
+            "jobId": "5b8280e7-ac00-49e1-85ac-538af178dc9f"
+          }
+        ],
+        "intent": "feedback",
+        "submittedAt": "2026-10-17T05:36:07.169Z"
+      }
+    ],
+    "continuation": [
+      {
+        "id": "8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "submissionId": "8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "status": "ready",
+        "sources": [
+          {
+            "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6"
+          },
+          {
+            "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72"
+          },
+          {
+            "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+            "version": 1,
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "width": 900,
+            "height": 650,
+            "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21"
+          },
+          {
+            "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+            "version": 1,
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "width": 900,
+            "height": 650,
+            "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc"
+          },
+          {
+            "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+            "version": 1,
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "width": 900,
+            "height": 650,
+            "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac"
+          },
+          {
+            "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+            "version": 1,
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "width": 900,
+            "height": 650,
+            "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb"
+          }
+        ],
+        "issues": [],
+        "feedback": {
+          "overall": "Prefer Soft orbit. Keep the quiet palette and add breathing room in the marked region.",
+          "images": [
+            {
+              "artifactId": "460d3180-f864-4047-a2c2-2d7e1e16d634",
+              "version": 1,
+              "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+              "width": 900,
+              "height": 650,
+              "note": "Preserve the calm composition as a preference.",
+              "favorite": true,
+              "regions": [
+                {
+                  "space": "normalized-original",
+                  "x": 0.1,
+                  "y": 0.20000001656454075,
+                  "w": 0.30000000000000004,
+                  "h": 0.25,
+                  "text": "More breathing room around the focal form."
+                }
+              ]
+            },
+            {
+              "artifactId": "d2271778-39bc-40e7-8f72-d692bd71b16b",
+              "version": 1,
+              "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "1af7d301-a8c9-480e-8cf6-e8af8f57acde",
+              "version": 1,
+              "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "83325190-c234-4d0b-beb5-b0a7b1ca7776",
+              "version": 1,
+              "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "faffa752-0891-4494-b870-76e957f58800",
+              "version": 1,
+              "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "09e692e8-dce3-4dfd-94c9-e293a966bb4f",
+              "version": 1,
+              "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            }
+          ]
+        },
+        "optional": {
+          "screenshots": {
+            "status": "unavailable",
+            "required": false
+          },
+          "conductorNotes": {
+            "status": "unavailable",
+            "required": false
+          }
+        },
+        "preparedAt": "2026-10-17T05:36:07.178Z"
+      },
+      {
+        "id": "ebcff427-5133-44df-8a74-47d36b5ec106",
+        "submissionId": "ebcff427-5133-44df-8a74-47d36b5ec106",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "status": "ready",
+        "sources": [
+          {
+            "artifactId": "254618e2-e54b-4097-a019-442a594f266c",
+            "version": 1,
+            "sha256": "426d6db17bd168dfb5df4c8ff80b5338669463f13295a3a435b6ea6d70efe985",
+            "width": 900,
+            "height": 650,
+            "jobId": "ee29d88e-f5f4-402e-8325-f07e2ae31907"
+          },
+          {
+            "artifactId": "f6d690cc-3b30-4ea8-b0e7-a55e77ab70fb",
+            "version": 1,
+            "sha256": "fec930c7d4891ad1ef55a6a649e71a50f6d7d0c37c2a5d77081d4155838c5bdb",
+            "width": 900,
+            "height": 650,
+            "jobId": "0b8b204d-c5ee-4dc9-93c2-48215fd195ad"
+          },
+          {
+            "artifactId": "d7185c6a-a9cb-41ec-bca9-48ca200faa9b",
+            "version": 1,
+            "sha256": "1f829d94c89d57e2d8ac14224aecc4275305340ea472d8040a187dbedda1256e",
+            "width": 900,
+            "height": 650,
+            "jobId": "b112e42d-35f0-42eb-aa53-9e2b04919451"
+          },
+          {
+            "artifactId": "b35de2e2-3cf3-454c-a2f2-a908579f9c1e",
+            "version": 1,
+            "sha256": "2e27a80280be968cc8b86cbb27b2389bf35ec203de1ac0620ef5c220ee8c5e8e",
+            "width": 900,
+            "height": 650,
+            "jobId": "09070544-286e-4a9f-90f2-9911f64680da"
+          },
+          {
+            "artifactId": "ab8412c2-f8d8-45bd-a760-86727a0c6575",
+            "version": 1,
+            "sha256": "356395125bc31f51e4b5a95195578aeb4e5c828e505def10e98624c1bf7f8a91",
+            "width": 900,
+            "height": 650,
+            "jobId": "b8332615-857a-46eb-9a58-a3467aaeadd6"
+          },
+          {
+            "artifactId": "e8577733-0358-4345-94ef-5e0b9e7865e3",
+            "version": 1,
+            "sha256": "9f64036dfaa64f85526385d1accd1a2e54002ebe19c8afce2a4f1ddbf9852a98",
+            "width": 900,
+            "height": 650,
+            "jobId": "5b8280e7-ac00-49e1-85ac-538af178dc9f"
+          }
+        ],
+        "issues": [],
+        "feedback": {
+          "overall": "Second iteration review recorded. Native production quality and human acceptance are still unverified.",
+          "images": [
+            {
+              "artifactId": "254618e2-e54b-4097-a019-442a594f266c",
+              "version": 1,
+              "sha256": "426d6db17bd168dfb5df4c8ff80b5338669463f13295a3a435b6ea6d70efe985",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "f6d690cc-3b30-4ea8-b0e7-a55e77ab70fb",
+              "version": 1,
+              "sha256": "fec930c7d4891ad1ef55a6a649e71a50f6d7d0c37c2a5d77081d4155838c5bdb",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "d7185c6a-a9cb-41ec-bca9-48ca200faa9b",
+              "version": 1,
+              "sha256": "1f829d94c89d57e2d8ac14224aecc4275305340ea472d8040a187dbedda1256e",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "b35de2e2-3cf3-454c-a2f2-a908579f9c1e",
+              "version": 1,
+              "sha256": "2e27a80280be968cc8b86cbb27b2389bf35ec203de1ac0620ef5c220ee8c5e8e",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "ab8412c2-f8d8-45bd-a760-86727a0c6575",
+              "version": 1,
+              "sha256": "356395125bc31f51e4b5a95195578aeb4e5c828e505def10e98624c1bf7f8a91",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            },
+            {
+              "artifactId": "e8577733-0358-4345-94ef-5e0b9e7865e3",
+              "version": 1,
+              "sha256": "9f64036dfaa64f85526385d1accd1a2e54002ebe19c8afce2a4f1ddbf9852a98",
+              "width": 900,
+              "height": 650,
+              "note": "",
+              "favorite": false,
+              "regions": []
+            }
+          ]
+        },
+        "optional": {
+          "screenshots": {
+            "status": "unavailable",
+            "required": false
+          },
+          "conductorNotes": {
+            "status": "unavailable",
+            "required": false
+          }
+        },
+        "preparedAt": "2026-10-17T05:36:07.187Z"
+      }
+    ],
+    "event": [
+      {
+        "id": "26eb7404-4ac5-480a-b09c-6206865e5866:partial-review",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "type": "partial-review",
+        "createdAt": "2026-10-17T05:36:04.165Z",
+        "deliveryAttempts": [
+          {
+            "id": "13d77922-de43-4cd5-9d0c-88793d57f68f",
+            "at": "2026-10-17T05:36:05.525Z",
+            "mechanism": "simulated notification delivery",
+            "status": "failed",
+            "evidence": "No live push adapter in this candidate"
+          }
+        ],
+        "acknowledgedAt": "2026-10-17T05:36:05.535Z",
+        "consumedAt": "2026-10-17T05:36:05.544Z",
+        "available": 1,
+        "total": 6,
+        "acknowledgement": "Simulated Conductor poll acknowledgement"
+      },
+      {
+        "id": "26eb7404-4ac5-480a-b09c-6206865e5866:review-ready",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "type": "review-ready",
+        "createdAt": "2026-10-17T05:36:04.335Z",
+        "deliveryAttempts": [
+          {
+            "id": "07dbdfa6-d30a-4500-bf55-18bdc515c34d",
+            "at": "2026-10-17T05:36:05.563Z",
+            "mechanism": "simulated notification delivery",
+            "status": "failed",
+            "evidence": "No live push adapter in this candidate"
+          }
+        ],
+        "acknowledgedAt": "2026-10-17T05:36:05.582Z",
+        "consumedAt": "2026-10-17T05:36:05.591Z",
+        "available": 6,
+        "total": 6,
+        "failed": 0,
+        "acknowledgement": "Simulated Conductor poll acknowledgement"
+      },
+      {
+        "id": "26eb7404-4ac5-480a-b09c-6206865e5866:continuation:8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "26eb7404-4ac5-480a-b09c-6206865e5866",
+        "type": "continuation:8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "createdAt": "2026-10-17T05:36:05.485Z",
+        "deliveryAttempts": [
+          {
+            "id": "6850c00e-9502-4490-a1a8-a41746a0d340",
+            "at": "2026-10-17T05:36:05.601Z",
+            "mechanism": "simulated notification delivery",
+            "status": "failed",
+            "evidence": "No live push adapter in this candidate"
+          }
+        ],
+        "acknowledgedAt": "2026-10-17T05:36:05.623Z",
+        "consumedAt": "2026-10-17T05:36:05.632Z",
+        "submissionId": "8300a593-aab6-4f0b-9a96-c0d2b953721e",
+        "requestId": "fbecd414-1b1a-4369-a75a-174bc0ae199c",
+        "acknowledgement": "Simulated Conductor poll acknowledgement"
+      },
+      {
+        "id": "4365ea2f-815e-4778-b031-a535b4c83ac7:partial-review",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "type": "partial-review",
+        "createdAt": "2026-10-17T05:36:05.792Z",
+        "deliveryAttempts": [],
+        "acknowledgedAt": null,
+        "consumedAt": null,
+        "available": 1,
+        "total": 6
+      },
+      {
+        "id": "4365ea2f-815e-4778-b031-a535b4c83ac7:review-ready",
+        "projectId": "6015e7da-70bf-4663-a0bc-d7b606762c80",
+        "iterationId": "4365ea2f-815e-4778-b031-a535b4c83ac7",
+        "type": "review-ready",
+        "createdAt": "2026-10-17T05:36:06.081Z",
+        "deliveryAttempts": [],
+        "acknowledgedAt": null,
+        "consumedAt": null,
+        "available": 6,
+        "total": 6,
+        "failed": 0
+      }
+    ],
+    "acceptance": [],
+    "delivery": [
+      {
+        "id": "11fd0157-4457-488f-8fee-199a8eaa547a",
+        "assignmentId": "407667ba-6280-43e9-bf2b-f4a37bc079d1",
+        "jobId": "0860f3d8-b911-4111-b08a-9a75e698cad6",
+        "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+        "fingerprint": "02b5cd5b82bfde3463f7825e36b4876bd0ecadc2b359b714e7193b75fed51def",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 1
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:04.161Z",
+        "processedAt": "2026-10-17T05:36:04.165Z"
+      },
+      {
+        "id": "5c0a9b5a-7a61-4119-8034-a5054edb3917",
+        "assignmentId": "40579c79-eae3-46d3-abaf-093aee0efd77",
+        "jobId": "2c5f01aa-3cf1-45b3-96b9-991e75223c72",
+        "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+        "fingerprint": "40b8cbe73905fcab5f641fc5993ad4f53561c224cc7d621fd52e6ce4a421999e",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 1
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:04.195Z",
+        "processedAt": "2026-10-17T05:36:04.198Z"
+      },
+      {
+        "id": "9e61d95c-e2b3-433a-a934-59b4d5e20d9a",
+        "assignmentId": "8a072bc6-776b-4760-8612-3525e63f89c5",
+        "jobId": "b3c2f6f2-2378-45fd-bc53-5b9a12e4ca21",
+        "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+        "fingerprint": "8661202e61f1641cb6456de9b33d037f8532e0cf57b70a79e44d1c9a1ef1e137",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 1
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:04.226Z",
+        "processedAt": "2026-10-17T05:36:04.229Z"
+      },
+      {
+        "id": "b91fdb18-725a-494d-82a7-476741c997b5",
+        "assignmentId": "86228f75-02e6-4c08-a742-76c4b1008f15",
+        "jobId": "638794ec-b5b4-44a2-9ba6-b1beb0273ebc",
+        "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+        "fingerprint": "fc9028654749ac1f3ef111db1f06f9128de2746d09f7c72abfdb9eff415ee6bc",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 1
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:04.261Z",
+        "processedAt": "2026-10-17T05:36:04.264Z"
+      },
+      {
+        "id": "37acdb08-46d7-421c-ab5c-ca6c9dcabef3",
+        "assignmentId": "768dbf7f-50a6-4ecd-9074-0b79717f7915",
+        "jobId": "9002bc2c-9b4c-4576-bf9e-a7960de245ac",
+        "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+        "fingerprint": "22df7c3710d864e642ba916e6ca63c9a8720f09afd71a89d816d7eaf4b1ed97b",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 1
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:04.297Z",
+        "processedAt": "2026-10-17T05:36:04.300Z"
+      },
+      {
+        "id": "e19d9aed-bd64-44e5-8280-cb3b3181171b",
+        "assignmentId": "32ac3e28-0501-40fb-8cc5-7c16c6165f1c",
+        "jobId": "b6292297-a009-40a4-84f7-da521dcc8fbb",
+        "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+        "fingerprint": "35cdc67abe4685070485e01c6a62dd6e871a857bc7525273e97ac9d444a40519",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 1
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:04.332Z",
+        "processedAt": "2026-10-17T05:36:04.334Z"
+      },
+      {
+        "id": "5f4c6a7d-e88f-4086-aaaf-a424708208ce",
+        "assignmentId": "b73654ee-d89f-452a-806e-e3c203d9c4df",
+        "jobId": "ee29d88e-f5f4-402e-8325-f07e2ae31907",
+        "sha256": "426d6db17bd168dfb5df4c8ff80b5338669463f13295a3a435b6ea6d70efe985",
+        "fingerprint": "f953e4bdf968181b9de21d3322ae25b5ba8ddb291dc268ca508f595d205d54af",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 2
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:05.790Z",
+        "processedAt": "2026-10-17T05:36:05.792Z"
+      },
+      {
+        "id": "a3350688-fbea-4dbd-8384-cf515fd44ac7",
+        "assignmentId": "059f70e9-2079-45c0-940c-eeca1b0afe8c",
+        "jobId": "0b8b204d-c5ee-4dc9-93c2-48215fd195ad",
+        "sha256": "fec930c7d4891ad1ef55a6a649e71a50f6d7d0c37c2a5d77081d4155838c5bdb",
+        "fingerprint": "c31b2a287c8690fd76df1008eb667ad4acaddddbd3caf4ef0b6473a278107cb7",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 2
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:05.852Z",
+        "processedAt": "2026-10-17T05:36:05.854Z"
+      },
+      {
+        "id": "5b7f84dd-5cdb-4e83-9e0d-009e7567b1bc",
+        "assignmentId": "f61f38cf-1c30-4cc9-bc34-1cc4a8a42615",
+        "jobId": "b112e42d-35f0-42eb-aa53-9e2b04919451",
+        "sha256": "1f829d94c89d57e2d8ac14224aecc4275305340ea472d8040a187dbedda1256e",
+        "fingerprint": "81bf4c593f0a269bed1acd8a78c4b513cc0e5031ae7fa051e0d09cbff4ce27a0",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 2
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:05.910Z",
+        "processedAt": "2026-10-17T05:36:05.913Z"
+      },
+      {
+        "id": "3983c132-af80-45db-9e35-64dd170d4f73",
+        "assignmentId": "11a2ec13-28c4-4c99-a94d-1db7501d7fd0",
+        "jobId": "09070544-286e-4a9f-90f2-9911f64680da",
+        "sha256": "2e27a80280be968cc8b86cbb27b2389bf35ec203de1ac0620ef5c220ee8c5e8e",
+        "fingerprint": "d2be4a15bb03c2611eac6619e1f9f1371ce4a67fbb2a8a5e1d0d1ed558b62cf9",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 2
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:05.966Z",
+        "processedAt": "2026-10-17T05:36:05.968Z"
+      },
+      {
+        "id": "6a215490-1e12-417c-b4be-60ee3cc951ce",
+        "assignmentId": "c1aa0b8a-be45-423c-be5c-b60e23bec39a",
+        "jobId": "b8332615-857a-46eb-9a58-a3467aaeadd6",
+        "sha256": "356395125bc31f51e4b5a95195578aeb4e5c828e505def10e98624c1bf7f8a91",
+        "fingerprint": "ac69e19cc39c05bebd3f80ae6468ca4fffd69b0b84c354e14d3608ea30ecad16",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 2
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:06.021Z",
+        "processedAt": "2026-10-17T05:36:06.023Z"
+      },
+      {
+        "id": "99fea869-16ff-4a2a-9c1c-e8c0f4e487bc",
+        "assignmentId": "d7aa7554-a723-4182-b962-f07f584c2a8d",
+        "jobId": "5b8280e7-ac00-49e1-85ac-538af178dc9f",
+        "sha256": "9f64036dfaa64f85526385d1accd1a2e54002ebe19c8afce2a4f1ddbf9852a98",
+        "fingerprint": "31117c07fd9ca0cc7715215379fe5a3831f8ad505ee30fa97bbdf57c167da9c2",
+        "evidence": {
+          "kind": "simulated",
+          "executor": "authored-fixture-executor",
+          "model": null,
+          "cost": null,
+          "usage": null,
+          "iteration": 2
+        },
+        "outcome": "success",
+        "state": "processed",
+        "receivedAt": "2026-10-17T05:36:06.078Z",
+        "processedAt": "2026-10-17T05:36:06.080Z"
+      }
+    ]
+  }
+}

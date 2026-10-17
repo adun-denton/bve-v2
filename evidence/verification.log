@@ -1,0 +1,48 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> bve-v2@0.1.0-candidate.1 verify
+> npm test && npm run test:browser
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> bve-v2@0.1.0-candidate.1 test
+> node --test test/*.test.mjs
+
+✔ online SQLite backup includes immutable originals and submitted feedback; restore uses a new root (150.10558ms)
+✔ loopback HTTP rejects role spoofing, cross-origin writes and read leaks (62.532118ms)
+✔ two complete iterations use distinct jobs and source-bound review through real function interfaces (846.572391ms)
+✔ functional boundaries reject persona labels, registration, cross-job delivery and nonhuman acceptance (56.549686ms)
+✔ partial, failed and out-of-order delivery preserves usable board and durable events (156.107246ms)
+✔ delivery replay, conflict and lost response never overwrite the original or duplicate outcome (124.990296ms)
+✔ recovery before invocation, in uncertain execution, and during intake preserves attempt identity (87.618734ms)
+✔ Generator serial fallback recovers unsent allocations and skips completed attempts (73.134ms)
+✔ submission and drafts recover immutably, draft conflicts reject and feedback alone does not generate (56.631477ms)
+✔ notification failure, acknowledgement, consumption and event replay are distinct and cannot dispatch (52.046974ms)
+✔ required corrupt precisely blocks continuation; optional screenshots and absent AI never do (99.082111ms)
+✔ required missing-bytes precisely blocks continuation; optional screenshots and absent AI never do (76.27258ms)
+✔ required missing-artifact precisely blocks continuation; optional screenshots and absent AI never do (80.236585ms)
+✔ bounded defaults, inherited Fresh/Follow and independent Brand, standing iteration policy stop correctly (53.443891ms)
+✔ independent byte validation rejects malformed or nonconforming originals without trusting producer claims (50.296002ms)
+✔ wrong source identities/geometry and undifferentiated directions are rejected transactionally (62.406583ms)
+✔ new roots refuse unknown contents and never adopt a legacy root (8.073847ms)
+✔ a replayed start receipt cannot grant a second invocation, even under its original key (11.052665ms)
+✔ adapter uncertainty preserves an observation while permitting the original attempt to deliver late (41.159994ms)
+✔ late images never change the original sources of an already submitted partial review (83.091001ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2119.995
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> bve-v2@0.1.0-candidate.1 test:browser
+> node scripts/browser-test.mjs
+
+{
+  "passed": 20,
+  "errors": [],
+  "report": "evidence/browser-report.json"
+}
