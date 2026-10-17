@@ -1,6 +1,6 @@
 # Install and resume BVE
 
-Use the exact tested source in candidate.json or the implementation return; main is not the application installation target. Node 24.x (tested 24.19.0), Git and bundled npm/node:sqlite are required. Runtime npm dependencies are zero. Browser testing uses pinned Playwright 1.62.1 and a compatible Chromium.
+For local testing, the public `main` branch contains the reviewed V2 development candidate; it is **not a stable release**. Check `candidate.json` for the exact tested `implementationCommit` (`2a5be1effa25e23bf57cbe999fb8a686c6f5a366`). Use that commit for byte-identical reproduction, or `main` for the integrated local-testing candidate with subsequent evidence and documentation. Do not confuse publication with native host or designer acceptance. Node 24.x (tested 24.19.0), Git and bundled npm/node:sqlite are required. Runtime npm dependencies are zero. Browser testing uses pinned Playwright 1.62.1 and a compatible Chromium.
 
 Installation owns the reusable host integration: actual session/delegation/model tools, private scoped transport, browser presentation and originating-interaction return. It is not project staff and creates no fixed workforce. The first BVE project chat is the existing SOL Conductor. Exploration does not create production staff/folders. On explicit production intent Conductor activates/resumes the named project and obtains Butler/Gen workers on demand, following [Examples A–C](EXAMPLES.md). Designer credential/file-transfer/worker setup is installer work, not a repeated creative-flow task.
 
