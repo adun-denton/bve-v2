@@ -12,6 +12,15 @@ export async function sessionCall(access,{op,key=randomUUID(),input={}}){
   const r=await fetch(access.origin+'/api/op',{method:'POST',headers:{Authorization:`Bearer ${access.token}`,'Content-Type':'application/json'},body:JSON.stringify({op,key,input})});
   const value=await r.json();if(!r.ok)throw Error(value.error);return value;
 }
+export async function sessionOriginal(access,artifactId){
+  if(access.transport==='kernel'){
+    if(typeof access.root!=='string'||!existsSync(join(access.root,'bve-v2-root.json')))throw Error('Scoped transport requires an existing recognized private root');
+    const kernel=new Kernel(access.root,{recover:false});
+    try{return kernel.original(access.token,artifactId);}finally{kernel.close();}
+  }
+  const r=await fetch(access.origin+'/api/original?id='+encodeURIComponent(artifactId),{headers:{Authorization:`Bearer ${access.token}`}});
+  if(!r.ok)throw Error((await r.json()).error);return Buffer.from(await r.arrayBuffer());
+}
 export async function resumeSession(access){return sessionCall(access,{op:'host.resume',input:{nonce:access.nonce}});}
 if(process.argv[1]?.endsWith('/session.mjs')||process.argv[1]?.endsWith('\\session.mjs')){
   const [path,command='resume']=process.argv.slice(2);if(!path)throw Error('Usage: node scripts/session.mjs PRIVATE_ACCESS_FILE resume|call (call reads JSON packet on stdin)');

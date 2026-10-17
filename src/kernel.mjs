@@ -103,7 +103,7 @@ export class Kernel {
     const s=this.#session(token);requireThat(s,'Installed session credential required',403);text(key,'host receipt key',200);
     if(op==='host.resume'){
       requireThat(x.nonce===s.nonce,'Session challenge mismatch',403);
-      const kinds={conductor:['project','request','iteration','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['job','delivery','event','observation','conflict']}[s.role];
+      const kinds={conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['job','delivery','event','observation','conflict']}[s.role];
       const context=Object.fromEntries(kinds.map(k=>[k,this.read(token,k)]));
       const receipt=this.#tx(()=>{
         const value=this.#once('session:'+s.id+':'+op,key,x,()=>({id:id(),sessionId:s.sessionId,role:s.role,projectId:s.projectId,readAt:now(),latestIterationId:context.iteration?.at(-1)?.id??null,submissionIds:context.submission?.map(v=>v.id)??[]}));

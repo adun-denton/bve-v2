@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { serve } from '../src/server.mjs';
 import { installHost,installationStatus,unavailableHost } from '../src/host-installation.mjs';
-import { sessionCall,resumeSession } from '../scripts/session.mjs';
+import { sessionCall,resumeSession,sessionOriginal } from '../scripts/session.mjs';
 import { fixtureSpecifications,capabilities } from '../src/adapters.mjs';
 import { fixturePNG } from '../src/png.mjs';
 const disposable=()=>join(mkdtempSync(join(tmpdir(),'bve-host-')),'private');
@@ -87,6 +87,9 @@ test('delegated fixture cycle preserves original intake, feedback, event distinc
     await invoke(host.access.butler,'host.receipt',{delegationId:b.id,status:'completed',detail:'Independent service reconciled fixture original'});
     await invoke(host.access.generator,'host.receipt',{delegationId:delegation.id,status:'completed',detail:'Kernel reports all assigned jobs resolved'});
     const artifact=app.kernel.read(app.credentials.human,'artifact')[0];assert.equal(artifact.deliveryId,receipt.deliveryId);assert.deepEqual(app.kernel.original(app.credentials.human,artifact.id),bytes);
+    const board=await resumeSession(host.access.conductor);assert.equal(board.context.artifact[0].id,artifact.id);
+    assert.deepEqual(await sessionOriginal({...host.access.conductor,transport:'kernel',root:app.kernel.root},artifact.id),bytes);
+    await assert.rejects(()=>sessionOriginal({...host.access.generator,transport:'kernel',root:app.kernel.root},artifact.id),/original boundary/);
     assert.throws(()=>app.kernel.original(host.access.generator.token,artifact.id),/original boundary/);
     const feedback={overall:'Preserve this submitted human wording',images:[{artifactId:artifact.id,sha256:artifact.sha256,version:1,width:artifact.width,height:artifact.height,note:'Quiet shape',favorite:true,regions:[]}]};
     const draft=app.kernel.call(app.credentials.human,'draft.save','draft-host',{iterationId:iteration.id,expectedVersion:0,feedback});
