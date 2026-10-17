@@ -1,0 +1,75 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> bve-v2@0.1.0-candidate.1 verify
+> npm test && npm run test:browser
+
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> bve-v2@0.1.0-candidate.1 test
+> node --test test/*.test.mjs
+
+✔ online SQLite backup includes immutable originals and submitted feedback; restore uses a new root (276.946837ms)
+✔ Example A: exploration activates Iman Website only on production; B1 ready precedes exactly Gen1–Gen3 (490.657751ms)
+✔ Examples B/C: R004 comparison and R005 branch preserve history and recover C2 without duplicate workforce (817.855821ms)
+✔ identity, readiness, tier, project and exact worker assignment boundaries are enforced (55.898431ms)
+✔ maximum staff, stable provisioning reuse and current project instruction revisions survive restart (157.741311ms)
+✔ worker success report alone cannot complete delivery; replay and uncertainty retain original attempt (121.567915ms)
+✔ comparison preserves unsent/saved notes and rejects omitted or foreign presentation material (494.340742ms)
+✔ installation provisions no project staff and reports unavailable native integration accurately (33.581747ms)
+✔ concurrent installation and failed session creation do not create duplicate staff (42.760431ms)
+✔ project backup restores statements/checkpoints and reconstructs local folder without changing original bytes (278.851026ms)
+✔ round retrieval is scoped over HTTP and incomplete operations cannot be relabeled complete (313.997333ms)
+✔ loopback HTTP rejects role spoofing, cross-origin writes and read leaks (83.139533ms)
+✔ two complete iterations use distinct jobs and source-bound review through real function interfaces (1549.153654ms)
+✔ functional boundaries reject persona labels, registration, cross-job delivery and nonhuman acceptance (108.030439ms)
+✔ partial, failed and out-of-order delivery preserves usable board and durable events (248.093869ms)
+✔ delivery replay, conflict and lost response never overwrite the original or duplicate outcome (190.51404ms)
+✔ recovery before invocation, in uncertain execution, and during intake preserves attempt identity (119.964324ms)
+✔ Generator serial fallback recovers unsent allocations and skips completed attempts (74.379842ms)
+✔ submission and drafts recover immutably, draft conflicts reject and feedback alone does not generate (75.269528ms)
+✔ notification failure, acknowledgement, consumption and event replay are distinct and cannot dispatch (52.942322ms)
+✔ historical corrupt limits coverage without blocking independent Fresh continuation (81.887469ms)
+✔ historical missing-bytes limits coverage without blocking independent Fresh continuation (80.701533ms)
+✔ historical missing-artifact limits coverage without blocking independent Fresh continuation (99.125576ms)
+✔ bounded defaults, inherited Fresh/Follow and independent Brand, standing iteration policy stop correctly (65.862962ms)
+✔ independent byte validation rejects malformed or nonconforming originals without trusting producer claims (43.298184ms)
+✔ wrong source identities/geometry and undifferentiated directions are rejected transactionally (78.854358ms)
+✔ new roots refuse unknown contents and never adopt a legacy root (7.804063ms)
+✔ a replayed start receipt cannot grant a second invocation, even under its original key (10.622709ms)
+✔ adapter uncertainty preserves an observation while permitting the original attempt to deliver late (53.615804ms)
+✔ late images never change the original sources of an already submitted partial review (94.406931ms)
+✔ R01: six-image review remains immutable while children use one/two chosen roles and only selected regions (746.058527ms)
+✔ R01: Fresh permits zero old inputs or an explicit content reference without losing lineage (189.972809ms)
+✔ R01: corrupt historical evidence is disclosed without blocking independent jobs (386.494897ms)
+✔ R01: missing-bytes historical evidence is disclosed without blocking independent jobs (317.427848ms)
+✔ R01: missing-artifact historical evidence is disclosed without blocking independent jobs (553.746158ms)
+✔ R01: production export includes exact chosen dependencies even outside the reviewed board (198.212508ms)
+✔ R01: foreign identities, hash/version drift and invalid region bindings reject (279.790933ms)
+✔ R01: source loss after allocation blocks only the dependent start and recovery preserves its reservation (142.790314ms)
+✔ R02: real assignment and dispatch freeze Fresh / Brand off (52.925156ms)
+✔ R02: real assignment and dispatch freeze Fresh / Brand Warm and restrained (44.064605ms)
+✔ R02: real assignment and dispatch freeze Follow / Brand off (37.85017ms)
+✔ R02: real assignment and dispatch freeze Follow / Brand Warm and restrained (39.38148ms)
+✔ R02: changed subsequent settings reach the worker; contradictory supplied fields reject transactionally (67.675995ms)
+✔ R03: optional creative context survives owner/Conductor replacement before and after a child commission (155.86086ms)
+✔ R03: validation rejects foreign/invalid origins, excessive bounds and attempts to cross functional ownership (113.48426ms)
+✔ R03: portable context is bounded/relevant, notes stay optional when their references are unavailable (391.458785ms)
+✔ A01: reservation and durable start counters stay distinct through unsent recovery, uncertainty, late delivery and duplicate start (48.743364ms)
+ℹ tests 47
+ℹ suites 0
+ℹ pass 47
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3949.235415
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> bve-v2@0.1.0-candidate.1 test:browser
+> node scripts/browser-test.mjs
+
+{
+  "passed": 33,
+  "errors": [],
+  "report": "evidence/browser-report.json"
+}

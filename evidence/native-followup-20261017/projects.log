@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> bve-v2@0.1.0-candidate.1 evidence:projects
+> node scripts/project-evidence.mjs
+
+{"sourceCommit":"2a5be1effa25e23bf57cbe999fb8a686c6f5a366","examples":["A","B","C"],"checkpoints":5,"images":5,"nativeCalls":0}
