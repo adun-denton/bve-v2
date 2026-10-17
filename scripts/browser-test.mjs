@@ -67,6 +67,8 @@ try{
   const note=app.kernel.call(app.credentials.conductor,'creativeContext.supply','browser-creative-note',{projectId:submission.projectId,iterationId:submission.iterationId,reviewId:submission.id,kind:'rationale',text:'Authored advisory note: keep the human words distinct from this Fresh interpretation.',sources:[],constraints:['Advisory only'],provenance:{author:null,executor:'simulated-Conductor',tool:null}});
   check('Optional creative context is preserved before any child commission',app.kernel.read(app.credentials.conductor,'continuation').find(c=>c.id===submission.id).creativeContext[0].id===note.id);
   check('Creative context supply leaves human feedback and review snapshots unchanged',JSON.stringify(app.kernel.read(app.credentials.human,'submission')[0])===beforeNotes);
+  await page.locator('#submissions p').filter({hasText:note.text}).waitFor({state:'attached'});
+  check('Optional notes appear in review history before child commissioning',await page.locator('#submissions p').filter({hasText:note.text}).count()===1);
   let releaseOriginals;
   const originalsBarrier=new Promise(resolve=>releaseOriginals=resolve);
   let requestedOriginals=0;
@@ -85,7 +87,16 @@ try{
   check('No fixture flow implies design acceptance',app.kernel.read(app.credentials.human,'acceptance').length===0);
   await page.getByRole('button',{name:'Image library',exact:true}).click();check('Project library preserves both iterations',await page.locator('#library-cards .art-button').count()===12);
   await page.getByRole('button',{name:'Back to board',exact:true}).click();
-  await page.getByLabel('Iteration history',{exact:true}).selectOption(submission.iterationId);await page.getByRole('button',{name:'Focus Soft orbit',exact:true}).waitFor();
+  let releasePoll;
+  const pollBarrier=new Promise(resolve=>releasePoll=resolve);
+  await page.route('**/api/read?kind=project',async route=>{await pollBarrier;await route.continue();});
+  await page.waitForRequest(request=>new URL(request.url()).pathname==='/api/read'&&new URL(request.url()).searchParams.get('kind')==='project',{timeout:15000});
+  await page.getByLabel('Iteration history',{exact:true}).selectOption(submission.iterationId);
+  await page.waitForURL(url=>url.hash.includes(submission.iterationId));
+  releasePoll();
+  await waitForCompleteBoard(page,app.kernel.read(app.credentials.human,'iteration').find(i=>i.id===submission.iterationId));
+  await page.unroute('**/api/read?kind=project');
+  check('History navigation during in-flight polling restores the matching board and draft',await page.getByLabel('Overall feedback',{exact:true}).inputValue()===submission.feedback.overall);
   check('Older review and interpretation remain discoverable',await page.locator('#submissions .submission').count()===2);
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(evidence,'04-mobile-board.png'),fullPage:true});
   check('Mobile board has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));

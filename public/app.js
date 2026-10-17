@@ -98,7 +98,7 @@ async function refresh(force=false){
     if(next?.iterationId&&next.iterationId!==i?.id){i=iterations.find(i=>i.id===next.iterationId);route(p,i);localStorage.removeItem(`bve:waiting:${p.id}`);}
     state.project=p;state.iteration=i;
     $('runtime').textContent=p.fixture?'Authored fixtures · simulation':'Private · local workspace';
-    const signature=JSON.stringify({p,iterations,jobs:state.data.job.filter(j=>j.projectId===p.id),submissions:state.data.submission.filter(s=>s.projectId===p.id),requests:state.data.request.filter(r=>r.projectId===p.id),acceptance:state.data.acceptance});
+    const signature=JSON.stringify({p,selectedIterationId:i?.id,continuations:state.data.continuation.filter(c=>c.projectId===p.id).map(c=>({id:c.id,historicalCoverage:c.historicalCoverage,creativeContext:c.creativeContext})),iterations,jobs:state.data.job.filter(j=>j.projectId===p.id),submissions:state.data.submission.filter(s=>s.projectId===p.id),requests:state.data.request.filter(r=>r.projectId===p.id),acceptance:state.data.acceptance});
     if(!force&&signature===state.lastSignature){if(!$('inspector').hidden)$('inspection').textContent=JSON.stringify(inspect(),null,2);return;}
     state.lastSignature=signature;
     $('empty').hidden=true;$('workspace').hidden=false;
