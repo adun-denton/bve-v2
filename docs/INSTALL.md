@@ -10,12 +10,12 @@ An authorized local session receiving **Install BVE.** should perform routine di
 
 ## Install and start
 
-Use a new source directory. Replace `156c5e4e4c027ff515adaf556254460eea39c71f` with the remotely verified commit supplied in the implementation return (or the manifest's implementation commit).
+Use a new source directory. The exact repaired implementation below is pinned for final independent review; later operator installation follows that review and the operator’s testing decision. Routine installation under that later request does not require repeated confirmations.
 
 ```sh
 git clone https://github.com/adun-denton/bve-v2.git bve-v2
 cd bve-v2
-git checkout --detach 156c5e4e4c027ff515adaf556254460eea39c71f
+git checkout --detach 802a3a9c9b7a471dbbeeaf80b469eec67042a967
 node --version
 npm ci --omit=dev --ignore-scripts
 npm test

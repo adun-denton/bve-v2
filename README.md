@@ -1,15 +1,10 @@
 # BVE V2
 
-**Designated development candidate:** [156c5e4](https://github.com/adun-denton/bve-v2/tree/156c5e4e4c027ff515adaf556254460eea39c71f) — 20 contract tests and 20 browser checks passed with authored fixtures. [Review checkpoint](https://github.com/adun-denton/bve-v2/tree/0664e2e797b77e5cc0f6358a8d20f9bae9da3c43) · [Pinned installation handoff](https://github.com/adun-denton/bve-v2/blob/0664e2e797b77e5cc0f6358a8d20f9bae9da3c43/docs/INSTALL.md) · [Evidence](https://github.com/adun-denton/bve-v2/blob/0664e2e797b77e5cc0f6358a8d20f9bae9da3c43/docs/VERIFICATION.md). Native integration and human acceptance remain unverified.
+**Consolidated repair checkpoint for final independent review.** [PR #1](https://github.com/adun-denton/bve-v2/pull/1) remains draft and unmerged. Operator testing has not begun.
 
-```sh
-git clone https://github.com/adun-denton/bve-v2.git
-cd bve-v2
-git checkout --detach 156c5e4e4c027ff515adaf556254460eea39c71f
-npm ci --omit=dev --ignore-scripts
-npm test
-npm start
-```
+Tested implementation: [802a3a9c9b7a471dbbeeaf80b469eec67042a967](https://github.com/adun-denton/bve-v2/tree/802a3a9c9b7a471dbbeeaf80b469eec67042a967). **37 contract/recovery tests and 26 shipped browser checks passed**, with zero page errors. The [source manifest](evidence/checks.json) hashes 19 committed Git blobs and ties all reports to this exact source commit.
+
+[Repair dispositions and changed contracts](docs/REPAIR-REVIEW.md) · [redacted actual fixture-worker packets](evidence/repair-report.json) · [browser evidence](evidence/browser-report.json) · [pinned local handoff](docs/INSTALL.md). Main still contains the earlier baseline designation; use this repaired checkpoint for final review. Native integration, full operator installation and human acceptance remain unverified.
 
 A local, image-first AI–human design workspace. Humans judge designs; replaceable executors perform bounded work; durable software owns authority and continuity.
 

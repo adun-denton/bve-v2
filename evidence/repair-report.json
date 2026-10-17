@@ -1,0 +1,1293 @@
+{
+  "format": "bve-v2-repairs-evidence-v1",
+  "sourceCommit": "802a3a9c9b7a471dbbeeaf80b469eec67042a967",
+  "generatedAt": "2026-10-17T06:18:02.437Z",
+  "kind": "authored-fixtures-and-simulated-executors",
+  "baseline": "115a07a34bd35d84ac00e45253671db4bb254888",
+  "dispositions": {
+    "R01": "fixed; historical coverage separated from actual job dependencies",
+    "R02": "fixed; canonical direction/Brand frozen into actual worker packets",
+    "R03": "fixed; bounded immutable context with recovered revisions",
+    "R04": "see shipped browser report and source hash manifest",
+    "A01": "clarified; reservation versus durable invocation marker; provider usage unknown",
+    "D01": "deferred product controls",
+    "D02": "deferred synchronized detail comparison",
+    "I01": "native workers/concurrency unverified",
+    "I02": "live push unavailable",
+    "I03": "restricted PNG preserved",
+    "I04": "independent Windows code/browser evidence acknowledged; full platform installation/recovery unverified",
+    "I05": "human usefulness and acceptance unverified"
+  },
+  "humanEvidence": {
+    "submission": {
+      "id": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+      "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+      "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+      "draftVersion": 1,
+      "feedback": {
+        "overall": "Prefer the quiet circle; add breathing room in the marked area.",
+        "images": [
+          {
+            "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "Keep composition as a preference",
+            "favorite": true,
+            "regions": [
+              {
+                "space": "normalized-original",
+                "x": 0.1,
+                "y": 0.2,
+                "w": 0.3,
+                "h": 0.25,
+                "text": "Give this area more breathing room"
+              }
+            ]
+          },
+          {
+            "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          },
+          {
+            "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          },
+          {
+            "artifactId": "8592e99d-adaa-4b1a-8289-1508459f02f0",
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          },
+          {
+            "artifactId": "e6bba234-201b-45ef-b308-9f80d309ce5a",
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          },
+          {
+            "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          }
+        ]
+      },
+      "sourceArtifacts": [
+        {
+          "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "69161737-1a5d-4b32-98a1-5aab1685720a",
+          "version": 1,
+          "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "e6bba234-201b-45ef-b308-9f80d309ce5a",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "786c2ba9-e5e9-43b4-bbbe-e26db9c926de",
+          "version": 1,
+          "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "8592e99d-adaa-4b1a-8289-1508459f02f0",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "4011cf14-27e2-43cf-99fa-336e9cc4c43e",
+          "version": 1,
+          "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "995036ee-052b-4f63-8cdc-33224cc4ce9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "6ed08016-e3c2-4586-a11b-c43a5d692cea",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650
+        }
+      ],
+      "intent": "feedback",
+      "submittedAt": "2026-10-17T06:17:59.615Z"
+    },
+    "recoveredSubmission": {
+      "id": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+      "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+      "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+      "draftVersion": 1,
+      "feedback": {
+        "overall": "Prefer the quiet circle; add breathing room in the marked area.",
+        "images": [
+          {
+            "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "Keep composition as a preference",
+            "favorite": true,
+            "regions": [
+              {
+                "space": "normalized-original",
+                "x": 0.1,
+                "y": 0.2,
+                "w": 0.3,
+                "h": 0.25,
+                "text": "Give this area more breathing room"
+              }
+            ]
+          },
+          {
+            "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          },
+          {
+            "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          },
+          {
+            "artifactId": "8592e99d-adaa-4b1a-8289-1508459f02f0",
+            "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          },
+          {
+            "artifactId": "e6bba234-201b-45ef-b308-9f80d309ce5a",
+            "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          },
+          {
+            "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+            "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+            "version": 1,
+            "width": 900,
+            "height": 650,
+            "note": "",
+            "favorite": false,
+            "regions": []
+          }
+        ]
+      },
+      "sourceArtifacts": [
+        {
+          "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "69161737-1a5d-4b32-98a1-5aab1685720a",
+          "version": 1,
+          "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "e6bba234-201b-45ef-b308-9f80d309ce5a",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "786c2ba9-e5e9-43b4-bbbe-e26db9c926de",
+          "version": 1,
+          "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "8592e99d-adaa-4b1a-8289-1508459f02f0",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "4011cf14-27e2-43cf-99fa-336e9cc4c43e",
+          "version": 1,
+          "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "995036ee-052b-4f63-8cdc-33224cc4ce9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "6ed08016-e3c2-4586-a11b-c43a5d692cea",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650
+        }
+      ],
+      "intent": "feedback",
+      "submittedAt": "2026-10-17T06:17:59.615Z"
+    },
+    "unchanged": true,
+    "lateDeliveryProtection": "Covered by regression suite"
+  },
+  "creativeContext": {
+    "zeroNotes": {
+      "status": "unavailable",
+      "required": false,
+      "references": [],
+      "sourceIssues": []
+    },
+    "original": {
+      "id": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+      "contextId": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+      "version": 1,
+      "supersedes": null,
+      "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+      "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+      "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+      "kind": "rationale",
+      "text": "Authored optional rationale: choose a quiet composition and keep the human region comment separate from this interpretation.",
+      "sources": [
+        {
+          "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Rationale evidence",
+          "regions": []
+        }
+      ],
+      "constraints": [
+        "Advisory, subordinate to the human request"
+      ],
+      "provenance": {
+        "author": null,
+        "executor": "authored-Conductor-fixture",
+        "tool": null
+      },
+      "createdAt": "2026-10-17T06:17:59.994Z"
+    },
+    "revision": {
+      "id": "fc908c0b-1689-43be-b03d-3e86703afef0",
+      "contextId": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+      "version": 2,
+      "supersedes": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+      "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+      "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+      "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+      "kind": "rationale",
+      "text": "Authored revision: only explicitly selected inputs are required; Fresh may start from words alone.",
+      "sources": [
+        {
+          "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Rationale evidence",
+          "regions": []
+        }
+      ],
+      "constraints": [
+        "Advisory, subordinate to the human request"
+      ],
+      "provenance": {
+        "author": null,
+        "executor": "authored-Conductor-fixture",
+        "tool": null
+      },
+      "createdAt": "2026-10-17T06:18:00.572Z"
+    },
+    "recovered": [
+      {
+        "id": "fc908c0b-1689-43be-b03d-3e86703afef0",
+        "contextId": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+        "version": 2,
+        "supersedes": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+        "kind": "rationale",
+        "text": "Authored revision: only explicitly selected inputs are required; Fresh may start from words alone.",
+        "sources": [
+          {
+            "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+            "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+            "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+            "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "role": "Rationale evidence",
+            "regions": []
+          }
+        ],
+        "constraints": [
+          "Advisory, subordinate to the human request"
+        ],
+        "provenance": {
+          "author": null,
+          "executor": "authored-Conductor-fixture",
+          "tool": null
+        },
+        "createdAt": "2026-10-17T06:18:00.572Z"
+      }
+    ],
+    "optional": {
+      "screenshots": {
+        "status": "unavailable",
+        "required": false
+      },
+      "conductorNotes": {
+        "status": "available",
+        "required": false,
+        "references": [
+          {
+            "id": "fc908c0b-1689-43be-b03d-3e86703afef0",
+            "contextId": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+            "version": 2
+          }
+        ],
+        "sourceIssues": []
+      }
+    }
+  },
+  "continuation": {
+    "id": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+    "submissionId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+    "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+    "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+    "status": "ready",
+    "reviewEvidence": [
+      {
+        "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "jobId": "69161737-1a5d-4b32-98a1-5aab1685720a",
+        "version": 1,
+        "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+        "width": 900,
+        "height": 650
+      },
+      {
+        "artifactId": "e6bba234-201b-45ef-b308-9f80d309ce5a",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "jobId": "786c2ba9-e5e9-43b4-bbbe-e26db9c926de",
+        "version": 1,
+        "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+        "width": 900,
+        "height": 650
+      },
+      {
+        "artifactId": "8592e99d-adaa-4b1a-8289-1508459f02f0",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "jobId": "4011cf14-27e2-43cf-99fa-336e9cc4c43e",
+        "version": 1,
+        "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+        "width": 900,
+        "height": 650
+      },
+      {
+        "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "jobId": "995036ee-052b-4f63-8cdc-33224cc4ce9e",
+        "version": 1,
+        "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+        "width": 900,
+        "height": 650
+      },
+      {
+        "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "jobId": "6ed08016-e3c2-4586-a11b-c43a5d692cea",
+        "version": 1,
+        "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+        "width": 900,
+        "height": 650
+      },
+      {
+        "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+        "version": 1,
+        "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+        "width": 900,
+        "height": 650
+      }
+    ],
+    "feedback": {
+      "overall": "Prefer the quiet circle; add breathing room in the marked area.",
+      "images": [
+        {
+          "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "version": 1,
+          "width": 900,
+          "height": 650,
+          "note": "Keep composition as a preference",
+          "favorite": true,
+          "regions": [
+            {
+              "space": "normalized-original",
+              "x": 0.1,
+              "y": 0.2,
+              "w": 0.3,
+              "h": 0.25,
+              "text": "Give this area more breathing room"
+            }
+          ]
+        },
+        {
+          "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "version": 1,
+          "width": 900,
+          "height": 650,
+          "note": "",
+          "favorite": false,
+          "regions": []
+        },
+        {
+          "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "version": 1,
+          "width": 900,
+          "height": 650,
+          "note": "",
+          "favorite": false,
+          "regions": []
+        },
+        {
+          "artifactId": "8592e99d-adaa-4b1a-8289-1508459f02f0",
+          "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+          "version": 1,
+          "width": 900,
+          "height": 650,
+          "note": "",
+          "favorite": false,
+          "regions": []
+        },
+        {
+          "artifactId": "e6bba234-201b-45ef-b308-9f80d309ce5a",
+          "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+          "version": 1,
+          "width": 900,
+          "height": 650,
+          "note": "",
+          "favorite": false,
+          "regions": []
+        },
+        {
+          "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+          "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+          "version": 1,
+          "width": 900,
+          "height": 650,
+          "note": "",
+          "favorite": false,
+          "regions": []
+        }
+      ]
+    },
+    "historicalCoverage": {
+      "status": "limited",
+      "availableSources": [
+        {
+          "artifactId": "e6bba234-201b-45ef-b308-9f80d309ce5a",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "786c2ba9-e5e9-43b4-bbbe-e26db9c926de",
+          "version": 1,
+          "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "8592e99d-adaa-4b1a-8289-1508459f02f0",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "4011cf14-27e2-43cf-99fa-336e9cc4c43e",
+          "version": 1,
+          "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "995036ee-052b-4f63-8cdc-33224cc4ce9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "6ed08016-e3c2-4586-a11b-c43a5d692cea",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650
+        },
+        {
+          "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650
+        }
+      ],
+      "issues": [
+        {
+          "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+          "reason": "Corrupt original 9c66368e-c735-4136-ad7c-0e43ea72eba9: Unsupported or oversized image: PNG required"
+        }
+      ]
+    },
+    "creativeContext": [
+      {
+        "id": "fc908c0b-1689-43be-b03d-3e86703afef0",
+        "contextId": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+        "version": 2,
+        "supersedes": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+        "kind": "rationale",
+        "text": "Authored revision: only explicitly selected inputs are required; Fresh may start from words alone.",
+        "sources": [
+          {
+            "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+            "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+            "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+            "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "role": "Rationale evidence",
+            "regions": []
+          }
+        ],
+        "constraints": [
+          "Advisory, subordinate to the human request"
+        ],
+        "provenance": {
+          "author": null,
+          "executor": "authored-Conductor-fixture",
+          "tool": null
+        },
+        "createdAt": "2026-10-17T06:18:00.572Z"
+      }
+    ],
+    "optional": {
+      "screenshots": {
+        "status": "unavailable",
+        "required": false
+      },
+      "conductorNotes": {
+        "status": "available",
+        "required": false,
+        "references": [
+          {
+            "id": "fc908c0b-1689-43be-b03d-3e86703afef0",
+            "contextId": "de8a9e0d-4bad-4bf5-ae5e-f1f87ff96380",
+            "version": 2
+          }
+        ],
+        "sourceIssues": []
+      }
+    },
+    "preparedAt": "2026-10-17T06:18:02.415Z"
+  },
+  "childIterations": [
+    {
+      "id": "9f026950-c1eb-4f75-9b74-c6b175a8a9fa",
+      "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+      "page": "board",
+      "requestId": "56423d0e-4107-43ef-b71b-68ed8dc9989c",
+      "parentReviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+      "parentIterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+      "createdAt": "2026-10-17T06:18:00.862Z",
+      "count": 2,
+      "direction": "Follow",
+      "brand": "Muted green",
+      "jobIds": [
+        "5dc1752f-6c43-4459-85bf-ece3900a7f2d",
+        "41c666dc-8db4-4c68-a510-0bbd844b4e1d"
+      ],
+      "interpretation": {
+        "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+        "text": "Authored independent interpretation for Follow chosen one/two references",
+        "createdAt": "2026-10-17T06:18:00.862Z"
+      }
+    },
+    {
+      "id": "05c67f64-e3eb-442b-a132-ae03feffccb1",
+      "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+      "page": "board",
+      "requestId": "2a7625c1-0c6e-4091-a91b-9e1f9157bc5e",
+      "parentReviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+      "parentIterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+      "createdAt": "2026-10-17T06:18:01.615Z",
+      "count": 2,
+      "direction": "Fresh",
+      "brand": null,
+      "jobIds": [
+        "c1aded07-e897-4cc4-baed-43bee831ba9d",
+        "d4dce241-e2d8-4e44-8543-d6bce3c0fdee"
+      ],
+      "interpretation": {
+        "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+        "text": "Authored independent interpretation for Fresh independent and explicit-content variants",
+        "createdAt": "2026-10-17T06:18:01.615Z"
+      }
+    },
+    {
+      "id": "9b0f58fd-6f32-4daa-b585-02d9d7deac6c",
+      "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+      "page": "board",
+      "requestId": "de5c31e9-eda3-4912-b5c5-be57486616b6",
+      "parentReviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+      "parentIterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+      "createdAt": "2026-10-17T06:18:02.129Z",
+      "count": 2,
+      "direction": "Follow",
+      "brand": null,
+      "jobIds": [
+        "0924a4bd-09a5-4ac1-b78f-6d771cf3e0c7",
+        "beb7f31c-88ac-4265-85be-8dc5dfe9fc68"
+      ],
+      "interpretation": {
+        "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+        "text": "Authored independent interpretation for Mixed dependency work; preserve independent job",
+        "createdAt": "2026-10-17T06:18:02.129Z"
+      }
+    }
+  ],
+  "workerEnvelopes": [
+    {
+      "id": "2378eaf8-c3f0-4aef-a01f-814207f45ac8",
+      "jobId": "5dc1752f-6c43-4459-85bf-ece3900a7f2d",
+      "attemptId": "468d3680-de28-4a28-986b-4ee409d27c78",
+      "executor": "authored-fixture-executor",
+      "capability": {
+        "status": "simulated",
+        "originalBytes": true,
+        "formats": [
+          "image/png"
+        ],
+        "paid": false,
+        "concurrency": 1,
+        "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
+      },
+      "allocatedAt": "2026-10-17T06:18:00.987Z",
+      "startedAt": "2026-10-17T06:18:01.061Z",
+      "specification": {
+        "directionId": "direction-1",
+        "label": "Soft orbit · refinement",
+        "difference": "A large circular focal form and generous quiet edges; a small quiet accent in the upper left",
+        "brief": "Explore calm abstract compositions",
+        "prompt": "Use one off-center circle in a muted botanical palette, spacious and calm. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+        "sources": [
+          {
+            "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+            "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+            "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+            "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+            "version": 1,
+            "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+            "width": 900,
+            "height": 650,
+            "role": "Chosen composition",
+            "regions": [
+              {
+                "space": "normalized-original",
+                "x": 0.1,
+                "y": 0.2,
+                "w": 0.3,
+                "h": 0.25,
+                "meaning": "Give the marked area breathing room",
+                "reviewRegion": {
+                  "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+                  "index": 0
+                }
+              }
+            ]
+          }
+        ],
+        "output": {
+          "format": "image/png"
+        },
+        "hardLimits": {
+          "maxBytes": 25165824,
+          "maxPixels": 16000000
+        },
+        "preferences": [
+          "Calm visual exploration; authored test composition only"
+        ],
+        "direction": "Follow",
+        "brand": "Muted green",
+        "lineage": {
+          "parentReviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+          "parentIterationId": "633e4af7-8557-485f-8b00-b52ef4705a89"
+        },
+        "allowance": {
+          "primaryAttempts": 1,
+          "maxRetries": 0
+        },
+        "destination": {
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "9f026950-c1eb-4f75-9b74-c6b175a8a9fa"
+        },
+        "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+      },
+      "state": "running"
+    },
+    {
+      "id": "4b62c7d9-059f-4a01-9cc8-0b82b49c9b13",
+      "jobId": "41c666dc-8db4-4c68-a510-0bbd844b4e1d",
+      "attemptId": "2cba43fa-a2e5-47ee-894f-ca248b667818",
+      "executor": "authored-fixture-executor",
+      "capability": {
+        "status": "simulated",
+        "originalBytes": true,
+        "formats": [
+          "image/png"
+        ],
+        "paid": false,
+        "concurrency": 1,
+        "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
+      },
+      "allocatedAt": "2026-10-17T06:18:01.351Z",
+      "startedAt": "2026-10-17T06:18:01.410Z",
+      "specification": {
+        "directionId": "direction-2",
+        "label": "Editorial block · refinement",
+        "difference": "A vertical half-width mass with strong asymmetry; a small quiet accent in the upper left",
+        "brief": "Explore calm abstract compositions",
+        "prompt": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+        "sources": [
+          {
+            "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+            "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+            "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+            "jobId": "6ed08016-e3c2-4586-a11b-c43a5d692cea",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "role": "Palette only",
+            "regions": []
+          },
+          {
+            "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+            "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+            "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+            "jobId": "995036ee-052b-4f63-8cdc-33224cc4ce9e",
+            "version": 1,
+            "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+            "width": 900,
+            "height": 650,
+            "role": "Content only",
+            "regions": []
+          }
+        ],
+        "output": {
+          "format": "image/png"
+        },
+        "hardLimits": {
+          "maxBytes": 25165824,
+          "maxPixels": 16000000
+        },
+        "preferences": [
+          "Calm visual exploration; authored test composition only"
+        ],
+        "direction": "Follow",
+        "brand": "Muted green",
+        "lineage": {
+          "parentReviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+          "parentIterationId": "633e4af7-8557-485f-8b00-b52ef4705a89"
+        },
+        "allowance": {
+          "primaryAttempts": 1,
+          "maxRetries": 0
+        },
+        "destination": {
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "9f026950-c1eb-4f75-9b74-c6b175a8a9fa"
+        },
+        "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+      },
+      "state": "running"
+    },
+    {
+      "id": "2247a41c-8d0e-487d-bd9b-4655cc7217e1",
+      "jobId": "c1aded07-e897-4cc4-baed-43bee831ba9d",
+      "attemptId": "76547c2a-2b1f-45c9-8da7-6298444b54a9",
+      "executor": "authored-fixture-executor",
+      "capability": {
+        "status": "simulated",
+        "originalBytes": true,
+        "formats": [
+          "image/png"
+        ],
+        "paid": false,
+        "concurrency": 1,
+        "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
+      },
+      "allocatedAt": "2026-10-17T06:18:01.697Z",
+      "startedAt": "2026-10-17T06:18:01.749Z",
+      "specification": {
+        "directionId": "direction-1",
+        "label": "Soft orbit · refinement",
+        "difference": "A large circular focal form and generous quiet edges; a small quiet accent in the upper left",
+        "brief": "Explore calm abstract compositions",
+        "prompt": "Use one off-center circle in a muted botanical palette, spacious and calm. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+        "sources": [],
+        "output": {
+          "format": "image/png"
+        },
+        "hardLimits": {
+          "maxBytes": 25165824,
+          "maxPixels": 16000000
+        },
+        "preferences": [
+          "Calm visual exploration; authored test composition only"
+        ],
+        "direction": "Fresh",
+        "brand": null,
+        "lineage": {
+          "parentReviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+          "parentIterationId": "633e4af7-8557-485f-8b00-b52ef4705a89"
+        },
+        "allowance": {
+          "primaryAttempts": 1,
+          "maxRetries": 0
+        },
+        "destination": {
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "05c67f64-e3eb-442b-a132-ae03feffccb1"
+        },
+        "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+      },
+      "state": "running"
+    },
+    {
+      "id": "04c4bbec-4057-4955-bfaa-399ab43b4e55",
+      "jobId": "d4dce241-e2d8-4e44-8543-d6bce3c0fdee",
+      "attemptId": "aa878db9-63ff-4d81-bd13-6b93dea167de",
+      "executor": "authored-fixture-executor",
+      "capability": {
+        "status": "simulated",
+        "originalBytes": true,
+        "formats": [
+          "image/png"
+        ],
+        "paid": false,
+        "concurrency": 1,
+        "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
+      },
+      "allocatedAt": "2026-10-17T06:18:01.930Z",
+      "startedAt": "2026-10-17T06:18:01.972Z",
+      "specification": {
+        "directionId": "direction-2",
+        "label": "Editorial block · refinement",
+        "difference": "A vertical half-width mass with strong asymmetry; a small quiet accent in the upper left",
+        "brief": "Explore calm abstract compositions",
+        "prompt": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+        "sources": [
+          {
+            "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+            "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+            "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+            "jobId": "6ed08016-e3c2-4586-a11b-c43a5d692cea",
+            "version": 1,
+            "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+            "width": 900,
+            "height": 650,
+            "role": "Subject matter only, no historical style obligation",
+            "regions": []
+          }
+        ],
+        "output": {
+          "format": "image/png"
+        },
+        "hardLimits": {
+          "maxBytes": 25165824,
+          "maxPixels": 16000000
+        },
+        "preferences": [
+          "Calm visual exploration; authored test composition only"
+        ],
+        "direction": "Fresh",
+        "brand": null,
+        "lineage": {
+          "parentReviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+          "parentIterationId": "633e4af7-8557-485f-8b00-b52ef4705a89"
+        },
+        "allowance": {
+          "primaryAttempts": 1,
+          "maxRetries": 0
+        },
+        "destination": {
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "05c67f64-e3eb-442b-a132-ae03feffccb1"
+        },
+        "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+      },
+      "state": "running"
+    },
+    {
+      "id": "4eb2c333-26b4-40a5-b98f-ff49bfd9d5a3",
+      "jobId": "beb7f31c-88ac-4265-85be-8dc5dfe9fc68",
+      "attemptId": "2a1c2cba-2db3-45ab-935e-78e17a2443ce",
+      "executor": "authored-fixture-executor",
+      "capability": {
+        "status": "simulated",
+        "originalBytes": true,
+        "formats": [
+          "image/png"
+        ],
+        "paid": false,
+        "concurrency": 1,
+        "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
+      },
+      "allocatedAt": "2026-10-17T06:18:02.205Z",
+      "startedAt": "2026-10-17T06:18:02.244Z",
+      "specification": {
+        "directionId": "direction-2",
+        "label": "Editorial block · refinement",
+        "difference": "A vertical half-width mass with strong asymmetry; a small quiet accent in the upper left",
+        "brief": "Explore calm abstract compositions",
+        "prompt": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
+        "sources": [],
+        "output": {
+          "format": "image/png"
+        },
+        "hardLimits": {
+          "maxBytes": 25165824,
+          "maxPixels": 16000000
+        },
+        "preferences": [
+          "Calm visual exploration; authored test composition only"
+        ],
+        "direction": "Follow",
+        "brand": null,
+        "lineage": {
+          "parentReviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+          "parentIterationId": "633e4af7-8557-485f-8b00-b52ef4705a89"
+        },
+        "allowance": {
+          "primaryAttempts": 1,
+          "maxRetries": 0
+        },
+        "destination": {
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "9b0f58fd-6f32-4daa-b585-02d9d7deac6c"
+        },
+        "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
+      },
+      "state": "running"
+    }
+  ],
+  "dependencyOutcomes": [
+    {
+      "jobId": "5dc1752f-6c43-4459-85bf-ece3900a7f2d",
+      "state": "succeeded",
+      "sources": [
+        {
+          "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Chosen composition",
+          "regions": [
+            {
+              "space": "normalized-original",
+              "x": 0.1,
+              "y": 0.2,
+              "w": 0.3,
+              "h": 0.25,
+              "meaning": "Give the marked area breathing room",
+              "reviewRegion": {
+                "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+                "index": 0
+              }
+            }
+          ]
+        }
+      ],
+      "dependencyIssues": [],
+      "allowanceReserved": 1,
+      "invocationsStarted": 1
+    },
+    {
+      "jobId": "41c666dc-8db4-4c68-a510-0bbd844b4e1d",
+      "state": "succeeded",
+      "sources": [
+        {
+          "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "6ed08016-e3c2-4586-a11b-c43a5d692cea",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650,
+          "role": "Palette only",
+          "regions": []
+        },
+        {
+          "artifactId": "26a91077-757f-4326-8366-b0bded2f5619",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "995036ee-052b-4f63-8cdc-33224cc4ce9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650,
+          "role": "Content only",
+          "regions": []
+        }
+      ],
+      "dependencyIssues": [],
+      "allowanceReserved": 1,
+      "invocationsStarted": 1
+    },
+    {
+      "jobId": "c1aded07-e897-4cc4-baed-43bee831ba9d",
+      "state": "succeeded",
+      "sources": [],
+      "dependencyIssues": [],
+      "allowanceReserved": 1,
+      "invocationsStarted": 1
+    },
+    {
+      "jobId": "d4dce241-e2d8-4e44-8543-d6bce3c0fdee",
+      "state": "succeeded",
+      "sources": [
+        {
+          "artifactId": "4fa8bec3-adcc-4f6f-818e-af364f3b241a",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "6ed08016-e3c2-4586-a11b-c43a5d692cea",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650,
+          "role": "Subject matter only, no historical style obligation",
+          "regions": []
+        }
+      ],
+      "dependencyIssues": [],
+      "allowanceReserved": 1,
+      "invocationsStarted": 1
+    },
+    {
+      "jobId": "0924a4bd-09a5-4ac1-b78f-6d771cf3e0c7",
+      "state": "blocked",
+      "sources": [
+        {
+          "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+          "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+          "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+          "jobId": "69161737-1a5d-4b32-98a1-5aab1685720a",
+          "version": 1,
+          "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
+          "width": 900,
+          "height": 650,
+          "role": "Required unavailable subject",
+          "regions": []
+        }
+      ],
+      "dependencyIssues": [
+        {
+          "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+          "reason": "Corrupt original 9c66368e-c735-4136-ad7c-0e43ea72eba9: Unsupported or oversized image: PNG required"
+        }
+      ],
+      "allowanceReserved": 0,
+      "invocationsStarted": 0
+    },
+    {
+      "jobId": "beb7f31c-88ac-4265-85be-8dc5dfe9fc68",
+      "state": "succeeded",
+      "sources": [],
+      "dependencyIssues": [],
+      "allowanceReserved": 1,
+      "invocationsStarted": 1
+    }
+  ],
+  "portableCoverage": {
+    "independent": {
+      "status": "complete",
+      "historical": "limited",
+      "missing": [],
+      "expectedArtifactIds": [],
+      "includedArtifactIds": []
+    },
+    "dependent": {
+      "status": "blocked",
+      "historical": "limited",
+      "missing": [
+        {
+          "artifactId": "9c66368e-c735-4136-ad7c-0e43ea72eba9",
+          "reason": "Corrupt original 9c66368e-c735-4136-ad7c-0e43ea72eba9: Unsupported or oversized image: PNG required"
+        }
+      ],
+      "expectedArtifactIds": [
+        "9c66368e-c735-4136-ad7c-0e43ea72eba9"
+      ],
+      "includedArtifactIds": []
+    },
+    "selected": {
+      "status": "complete",
+      "historical": "limited",
+      "missing": [],
+      "expectedArtifactIds": [
+        "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211"
+      ],
+      "includedArtifactIds": [
+        "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211"
+      ]
+    },
+    "selectedOriginalIdentities": [
+      {
+        "artifactId": "6c9d2aa7-ede6-4d9e-a80f-8a1c0822d211",
+        "projectId": "c4099554-e021-44fb-978c-a911c8bec196",
+        "iterationId": "633e4af7-8557-485f-8b00-b52ef4705a89",
+        "jobId": "962d646d-6194-49e3-8ce6-60df5ca3f1d9",
+        "version": 1,
+        "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+        "width": 900,
+        "height": 650,
+        "role": "Chosen composition",
+        "regions": [
+          {
+            "space": "normalized-original",
+            "x": 0.1,
+            "y": 0.2,
+            "w": 0.3,
+            "h": 0.25,
+            "meaning": "Give the marked area breathing room",
+            "reviewRegion": {
+              "reviewId": "683e83db-67cc-4a49-ba5a-b61e599b5859",
+              "index": 0
+            }
+          }
+        ],
+        "mediaType": "image/png"
+      }
+    ]
+  },
+  "limits": {
+    "nativeWorker": "unverified",
+    "concurrency": "unverified; serial fixtures",
+    "notification": "durable polling only",
+    "humanAcceptance": "unverified; none recorded"
+  }
+}

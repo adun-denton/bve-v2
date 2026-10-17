@@ -47,3 +47,7 @@ The reviewed baseline passed 20 contract tests. Its unmodified browser harness f
 No extra approval/capture/grant-entry controls were added. Normal submission, explicit iteration intent, optional notes and human acceptance remain separate. Lost starts, restart, uncertain results, duplicate deliveries and unread-event replay are covered by existing plus new regression cases. Native invocation duplication is not claimed as live-proven: the durable dispatch protection is demonstrated offline.
 
 The proposed next technical checkpoint is the exact repaired source commit in evidence/checks.json plus its published PR head. The independent reviewer must read back that actual commit and assess R01–R04/A01 before the operator chooses when to begin local/native and human testing. This coding return does not self-accept the candidate.
+
+## Final coding-session result
+
+Tested implementation: 802a3a9c9b7a471dbbeeaf80b469eec67042a967. The final run passed 37 contract/recovery/HTTP/backup tests and 26 repaired shipped browser checks with zero page errors on Node 24.19.0, Playwright 1.62.1 and Chromium 153.0.8010.0, Linux x64. All three reports name that source commit; the manifest hashes 19 committed Git blobs. Five actual fixture-worker envelopes are redacted in repair-report.json. Documentation/evidence follow in a separate commit with unchanged runtime/test sources. Final independent review and operator testing remain pending.

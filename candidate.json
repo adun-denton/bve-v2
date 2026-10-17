@@ -1,15 +1,18 @@
 {
   "format": "bve-v2-candidate-v1",
-  "status": "development-candidate-not-approved-release",
-  "implementationCommit": "156c5e4e4c027ff515adaf556254460eea39c71f",
+  "status": "repair-review-pending-independent-review",
+  "implementationCommit": "802a3a9c9b7a471dbbeeaf80b469eec67042a967",
   "repository": "https://github.com/adun-denton/bve-v2",
   "branch": "codex/v2-candidate",
   "node": "24.x",
   "testedNode": "24.19.0",
-  "contractsPassed": 20,
-  "browserChecksPassed": 20,
+  "contractsPassed": 37,
+  "browserChecksPassed": 26,
   "nativeWorkers": "unverified",
   "concurrency": "unverified; serial only",
   "liveNotifications": "unverified",
-  "humanAcceptance": "unverified"
+  "humanAcceptance": "unverified",
+  "reviewedBaseline": "115a07a34bd35d84ac00e45253671db4bb254888",
+  "operatorTesting": "not started; final independent review precedes operator decision",
+  "platformEvidence": "Linux repaired checkpoint; independent Windows baseline contract/diagnostic browser evidence acknowledged; repaired Windows/macOS rerun not executed"
 }
