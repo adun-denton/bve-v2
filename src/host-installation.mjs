@@ -73,6 +73,8 @@ async function installUnlocked({kernel,owner,origin,host=unavailableHost,project
     const routes=kernel.hostRoutes(owner);
     for(const role of ['generator','butler'])if(!routes.some(d=>!previousRoutes.has(d.id)&&d.kind==='readiness'&&d.fromSessionId===conductor.sessionId&&d.toRole===role&&d.state==='completed'))throw Error(`${role}: delegated readiness receipt missing`);
     state.gaps=required.filter(k=>state.capabilities[k]?.status!=='tested'||!state.capabilities[k]?.evidence).map(k=>`${k}: actual host capability not tested`);
+    if(state.capabilities.image?.paid!==false)state.gaps.push('Uncharged image capability not established; no provider substitution');
+    if(!state.capabilities.originalBytes?.formats?.includes('image/png'))state.gaps.push('Compatible original PNG transport not established');
     if(host.kind!=='native')state.gaps.push('Only fixture/probe installation demonstrated; no native operational handoff');
     if(!conductor.sessionUrl)state.gaps.push('No user-openable Conductor session link');
     if(state.gaps.length){state.status=host.kind==='fixture'?'fixture-verified':'incomplete';save();return installationStatus(kernel,owner);}

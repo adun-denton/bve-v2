@@ -14,7 +14,7 @@ const invoke=(a,op,input,key=randomUUID())=>sessionCall(a,{op,input,key});
 export function fixtureHost(){
   const access={},ids={},keys={},created=[];
   return {id:'authored-fixture-host',kind:'fixture',access,ids,keys,created,
-    async discover(){return Object.fromEntries(['sessions','delegation','resume','image','originalBytes','userHandoff'].map(k=>[k,{status:'tested',evidence:'Authored simulated host; no native image/session integration'}]));},
+    async discover(){return Object.fromEntries(['sessions','delegation','resume','image','originalBytes','userHandoff'].map(k=>[k,{status:'tested',paid:false,formats:['image/png'],evidence:'Authored simulated host; no native image/session integration'}]));},
     async ensureSession({role,key,previous}){keys[role]=key;ids[role]??=previous?.id??`fixture-${role}-${randomUUID()}`;if(!created.includes(ids[role]))created.push(ids[role]);return {id:ids[role],url:`https://example.invalid/fixture/${ids[role]}`,receipt:`simulated:${key}`};},
     async verifySession({role,accessFile}){access[role]=JSON.parse(readFileSync(accessFile));await resumeSession(access[role]);},
     async verifyDelegation({projectId}){
