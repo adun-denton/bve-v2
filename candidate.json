@@ -1,0 +1,15 @@
+{
+  "format": "bve-v2-candidate-v1",
+  "status": "development-candidate-not-approved-release",
+  "implementationCommit": "156c5e4e4c027ff515adaf556254460eea39c71f",
+  "repository": "https://github.com/adun-denton/bve-v2",
+  "branch": "codex/v2-candidate",
+  "node": "24.x",
+  "testedNode": "24.19.0",
+  "contractsPassed": 20,
+  "browserChecksPassed": 20,
+  "nativeWorkers": "unverified",
+  "concurrency": "unverified; serial only",
+  "liveNotifications": "unverified",
+  "humanAcceptance": "unverified"
+}
