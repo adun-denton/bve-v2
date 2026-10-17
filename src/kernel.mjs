@@ -15,7 +15,7 @@ const text = (s,label,max=20000) => { requireThat(typeof s==='string'&&s.trim().
 const integer = (n,min,max,label) => {requireThat(Number.isInteger(n)&&n>=min&&n<=max,`Invalid ${label}`);return n;};
 const permissions={
   human:['project.create','request.create','draft.save','review.submit','design.accept'],
-  conductor:['iteration.commission','event.consume','event.ack'],
+  conductor:['iteration.commission','creativeContext.supply','event.consume','event.ack'],
   generator:['job.allocate','attempt.start'],
   butler:['event.delivery'],
 };
@@ -55,6 +55,7 @@ export class Kernel {
     if(op==='result.deliver') return this.#deliver(token,key,input);
     const role=this.#role(token);requireThat(permissions[role].includes(op),`${role} cannot call ${op}`,403);
     text(key,'idempotency key',200);
+    this.reconcile(this.#credentials.butler);
     const result=this.#tx(()=>{
       if(op==='attempt.start'){const a=this.#get('assignment',input.assignmentId),j=this.#get('job',a.jobId);requireThat(j.state==='assigned'&&!a.startedAt,'Attempt was already started or is uncertain; a lost start acknowledgement cannot authorize invocation again',409);}
       return this.#once(role+':'+op,key,input,()=>this.#operate(role,op,input));
@@ -75,18 +76,19 @@ export class Kernel {
       }
       case 'request.create': return this.#request(x);
       case 'iteration.commission': return this.#commission(x);
+      case 'creativeContext.supply': return this.#preserveCreativeContext(x);
       case 'job.allocate': {
         const j=this.#get('job',x.jobId);requireThat(j.state==='queued','Job already allocated or resolved',409);
         const c=x.capability;requireThat(c&&['simulated','demonstrated'].includes(c.status)&&c.originalBytes===true&&Array.isArray(c.formats)&&c.formats.includes('image/png')&&c.paid===false,'No compatible uncharged executor with original-byte delivery');
         requireThat(!(c.status==='demonstrated'&& !c.evidence),'Demonstrated capability needs actual host evidence');
         const token=secret(),a={id:id(),jobId:j.id,attemptId:id(),executor:text(x.executor,'executor',200),capability:clone(c),tokenHash:hash(token),token,allocatedAt:now(),startedAt:null};
-        this.#put('assignment',a);j.state='assigned';j.assignmentId=a.id;j.attemptsUsed=1;this.#put('job',j);
+        this.#put('assignment',a);j.state='assigned';j.assignmentId=a.id;j.allowanceReserved=1;this.#put('job',j);
         return {...a,specification:j.specification};
       }
       case 'attempt.start': {
         const a=this.#get('assignment',x.assignmentId),j=this.#get('job',a.jobId);
         requireThat(j.state==='assigned'&&!a.startedAt,'Attempt was already started or is uncertain',409);
-        j.state='running';a.startedAt=now();this.#put('assignment',a);this.#put('job',j);return {assignmentId:a.id,attemptId:a.attemptId,startedAt:a.startedAt};
+        j.state='running';j.invocationsStarted=1;a.startedAt=now();this.#put('assignment',a);this.#put('job',j);return {assignmentId:a.id,attemptId:a.attemptId,startedAt:a.startedAt};
       }
       case 'draft.save': {
         const i=this.#get('iteration',x.iterationId),prev=this.#list('draft').find(d=>d.id===i.id),version=prev?.version??0;
@@ -98,7 +100,7 @@ export class Kernel {
         const i=this.#get('iteration',x.iterationId),d=this.#get('draft',i.id);
         requireThat(x.draftVersion===d.version,'Draft version changed',409);
         requireThat(['feedback','iterate'].includes(x.intent),'Explicit review intent required');this.#validateFeedback(i,d.feedback);
-        const p=this.#get('project',i.projectId),s={id:id(),iterationId:i.id,projectId:i.projectId,draftVersion:d.version,feedback:clone(d.feedback),sourceArtifacts:i.jobIds.map(jobId=>this.#get('job',jobId)).filter(j=>j.state==='succeeded').map(j=>({artifactId:j.artifactId,jobId:j.id})),intent:x.intent,submittedAt:now()};
+        const p=this.#get('project',i.projectId),s={id:id(),iterationId:i.id,projectId:i.projectId,draftVersion:d.version,feedback:clone(d.feedback),sourceArtifacts:i.jobIds.map(jobId=>this.#get('job',jobId)).filter(j=>j.state==='succeeded').map(j=>this.#sourceSnapshot(this.#get('artifact',j.artifactId))),intent:x.intent,submittedAt:now()};
         this.#put('submission',s);
         if(x.intent==='iterate'||p.standingRemaining>0){
           if(x.intent!=='iterate'){p.standingRemaining--;this.#put('project',p);s.standingPolicy=true;}
@@ -131,27 +133,114 @@ export class Kernel {
     const r={id:id(),projectId:p.id,parentReviewId:x.parentReviewId??null,intent:text(x.intent,'user intent'),count,direction,brand,createdAt:now(),state:'waiting-for-conductor',allowance:{primaryAttempts:count,maxRetries:0},gap:'Native Conductor adapter unavailable; resume via bounded Conductor interface'};
     p.defaults={count,direction,brand};this.#put('project',p);this.#put('request',r);return r;
   }
+  #sourceSnapshot(a){
+    return {artifactId:a.id,projectId:a.projectId,iterationId:a.iterationId,jobId:a.jobId,version:a.version,sha256:a.sha256,width:a.width,height:a.height};
+  }
+  #knownSource(artifactId,projectId){
+    let a=this.#list('artifact').find(a=>a.id===artifactId);
+    if(!a){
+      const snapshot=this.#list('submission').filter(s=>s.projectId===projectId).flatMap(s=>s.sourceArtifacts).find(ref=>ref.artifactId===artifactId&&ref.sha256);
+      if(snapshot)a={...snapshot,id:snapshot.artifactId};
+    }
+    requireThat(a,'Unknown required source: '+artifactId,404);
+    requireThat(a.projectId===projectId,'Foreign source: '+artifactId);
+    return a;
+  }
+  #validateRegion(region){
+    requireThat(region&&region.space==='normalized-original','Invalid source-region coordinate system');
+    requireThat(['x','y','w','h'].every(k=>Number.isFinite(region[k]))&&region.x>=0&&region.y>=0&&region.w>0&&region.h>0&&region.x+region.w<=1.000001&&region.y+region.h<=1.000001,'Region outside original image');
+  }
+  #sourceReferences(refs,projectId){
+    requireThat(Array.isArray(refs)&&refs.length<=6,'At most six explicit production source references');
+    const seen=new Set();
+    return refs.map(ref=>{
+      const a=this.#knownSource(ref.artifactId,projectId);
+      requireThat(!seen.has(a.id),'Duplicate production source');seen.add(a.id);
+      requireThat(ref.sha256===a.sha256&&ref.version===a.version,'Source identity/version/hash mismatch: '+a.id);
+      if(ref.width!==undefined)requireThat(ref.width===a.width,'Source width mismatch: '+a.id);
+      if(ref.height!==undefined)requireThat(ref.height===a.height,'Source height mismatch: '+a.id);
+      text(ref.role,'source role',2000);
+      requireThat(ref.regions===undefined||Array.isArray(ref.regions)&&ref.regions.length<=24,'Invalid production regions');
+      const regions=(ref.regions??[]).map(region=>{
+        requireThat(Object.keys(region).every(k=>['space','x','y','w','h','meaning','reviewRegion'].includes(k)),'Invalid source-region fields');
+        this.#validateRegion(region);text(region.meaning,'production region meaning',2000);
+        const result={space:region.space,x:region.x,y:region.y,w:region.w,h:region.h,meaning:region.meaning};
+        if(region.reviewRegion){
+          const binding=region.reviewRegion,review=this.#get('submission',binding.reviewId);
+          requireThat(review.projectId===projectId,'Foreign source-region review');
+          const image=review.feedback.images.find(f=>f.artifactId===a.id);
+          requireThat(image&&image.sha256===a.sha256&&image.version===a.version,'Source-region review binding mismatch');
+          integer(binding.index,0,(image.regions?.length??0)-1,'review region index');
+          const original=image.regions[binding.index];
+          requireThat(['space','x','y','w','h'].every(k=>original[k]===region[k]),'Source-region geometry differs from original annotation');
+          result.reviewRegion={reviewId:review.id,index:binding.index};
+        }
+        return result;
+      });
+      return {...this.#sourceSnapshot(a),role:ref.role,regions};
+    });
+  }
+  #dependencyIssues(refs){
+    const issues=[];
+    for(const ref of refs){
+      try{
+        const a=this.#get('artifact',ref.artifactId);
+        requireThat(a.projectId===ref.projectId&&a.version===ref.version&&a.sha256===ref.sha256&&a.width===ref.width&&a.height===ref.height,'Required source canonical identity changed: '+ref.artifactId,409);
+        this.#verifyArtifact(a);
+      }catch(e){issues.push({artifactId:ref.artifactId,reason:e.message});}
+    }
+    return issues;
+  }
   #commission(x){
     const r=this.#get('request',x.requestId);requireThat(r.state==='waiting-for-conductor','Request already commissioned',409);
     requireThat(Array.isArray(x.specifications)&&x.specifications.length===r.count,'One distinct specification per requested candidate');
-    let continuation=null;
-    if(r.parentReviewId){continuation=this.#get('continuation',r.parentReviewId);requireThat(continuation.status==='ready',`Required sources unavailable: ${continuation.issues.map(x=>x.artifactId+': '+x.reason).join(', ')}`,409);text(x.interpretation,'creative interpretation');}
+    let parent=null;
+    if(r.parentReviewId){parent=this.#get('submission',r.parentReviewId);text(x.interpretation,'creative interpretation');}
     const dirs=new Set(),prompts=new Set(),differences=new Set();
-    const i={id:id(),projectId:r.projectId,page:'board',requestId:r.id,parentReviewId:r.parentReviewId,parentIterationId:continuation?.iterationId??null,createdAt:now(),count:r.count,direction:r.direction,brand:r.brand,jobIds:[],interpretation:r.parentReviewId?{reviewId:r.parentReviewId,text:x.interpretation,createdAt:now()}:null};
+    const i={id:id(),projectId:r.projectId,page:'board',requestId:r.id,parentReviewId:r.parentReviewId,parentIterationId:parent?.iterationId??null,createdAt:now(),count:r.count,direction:r.direction,brand:r.brand,jobIds:[],interpretation:r.parentReviewId?{reviewId:r.parentReviewId,text:x.interpretation,createdAt:now()}:null};
     for(const supplied of x.specifications){
       const s=clone(supplied);text(s.directionId,'direction identifier',200);text(s.difference,'intended difference');text(s.prompt,'prompt');text(s.brief,'exact brief');
       requireThat(!dirs.has(s.directionId)&&!prompts.has(s.prompt)&&!differences.has(s.difference),'Sibling directions, prompts and differences must be distinct');dirs.add(s.directionId);prompts.add(s.prompt);differences.add(s.difference);
       requireThat(s.output?.format==='image/png','PNG output required');
-      requireThat(Array.isArray(s.sources),'Explicit source roles required, including empty sources');
-      for(const ref of s.sources){const a=this.#get('artifact',ref.artifactId);requireThat(a.projectId===i.projectId,'Foreign source');this.#verifyArtifact(a);requireThat(ref.sha256===a.sha256&&ref.version===a.version,'Source identity/version/hash mismatch');text(ref.role,'source role');}
-      if(continuation)for(const a of continuation.sources)requireThat(s.sources.some(ref=>ref.artifactId===a.artifactId),'Follow-up must retain every submitted review source with its role');
-      s.regions=continuation?.feedback.images.flatMap(f=>(f.regions??[]).map(region=>({artifactId:f.artifactId,source:continuation.sources.find(z=>z.artifactId===f.artifactId),...region})))??[];
+      // Canonical request settings are frozen once. Contradictory supplied settings reject.
+      requireThat(s.direction===undefined||s.direction===r.direction,'Specification direction contradicts canonical request');
+      requireThat(s.brand===undefined||s.brand===r.brand,'Specification Brand contradicts canonical request');
+      s.direction=r.direction;s.brand=r.brand;
+      requireThat(s.regions===undefined,'Production regions must be explicitly bound to sources[].regions');
+      s.sources=this.#sourceReferences(s.sources,i.projectId);
+      s.lineage={parentReviewId:r.parentReviewId,parentIterationId:i.parentIterationId};
       s.allowance={primaryAttempts:1,maxRetries:0};s.destination={projectId:i.projectId,iterationId:i.id};s.completion='Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance';
       s.preferences=s.preferences??[];s.hardLimits={maxBytes:24*1024*1024,maxPixels:16_000_000,...s.hardLimits};
       integer(s.hardLimits.maxBytes,1,24*1024*1024,'byte limit');integer(s.hardLimits.maxPixels,1,16_000_000,'pixel limit');
-      const j={id:id(),projectId:i.projectId,iterationId:i.id,state:'queued',attemptsUsed:0,specification:s,createdAt:now()};i.jobIds.push(j.id);this.#put('job',j);
+      const dependencyIssues=this.#dependencyIssues(s.sources);
+      const j={id:id(),projectId:i.projectId,iterationId:i.id,state:dependencyIssues.length?'blocked':'queued',dependencyIssues,allowanceReserved:0,invocationsStarted:0,specification:s,createdAt:now()};i.jobIds.push(j.id);this.#put('job',j);
     }
     this.#put('iteration',i);r.state='commissioned';r.iterationId=i.id;this.#put('request',r);return i;
+  }
+  #preserveCreativeContext(x){
+    const fields=['projectId','iterationId','reviewId','kind','text','sources','constraints','provenance','supersedes'];
+    requireThat(Object.keys(x).every(k=>fields.includes(k)),'Unsupported creative context field');
+    const iteration=this.#get('iteration',x.iterationId);
+    requireThat(iteration.projectId===x.projectId,'Creative context project/iteration mismatch');
+    if(x.reviewId){const review=this.#get('submission',x.reviewId);requireThat(review.projectId===x.projectId&&review.iterationId===iteration.id,'Creative context review/iteration mismatch');}
+    requireThat(['interpretation','decision','rationale'].includes(x.kind),'Invalid creative context kind');text(x.text,'creative context',4000);
+    const sources=this.#sourceReferences(x.sources??[],x.projectId),constraints=x.constraints??[];
+    requireThat(Array.isArray(constraints)&&constraints.length<=12,'Invalid creative constraints');constraints.forEach(c=>text(c,'creative constraint',300));
+    const provenance=x.provenance??{};
+    requireThat(provenance&&typeof provenance==='object'&&!Array.isArray(provenance)&&Object.keys(provenance).every(k=>['author','executor','tool'].includes(k)),'Invalid creative provenance');
+    for(const value of Object.values(provenance))if(value!==null)text(value,'creative provenance',200);
+    const all=this.#list('creativeContext');
+    let previous=null;
+    if(x.supersedes){
+      previous=this.#get('creativeContext',x.supersedes);
+      requireThat(previous.projectId===x.projectId&&previous.iterationId===x.iterationId&&previous.reviewId===(x.reviewId??null)&&previous.kind===x.kind,'Creative revision origin mismatch');
+      requireThat(!all.some(n=>n.supersedes===previous.id),'Creative context revision already superseded',409);
+    }else{
+      const heads=all.filter(n=>n.iterationId===x.iterationId&&n.reviewId===(x.reviewId??null)&&!all.some(next=>next.supersedes===n.id));
+      requireThat(heads.length<8,'Creative context limit: eight current notes per origin');
+    }
+    const noteId=id();
+    return this.#put('creativeContext',{id:noteId,contextId:previous?.contextId??noteId,version:(previous?.version??0)+1,supersedes:previous?.id??null,projectId:x.projectId,iterationId:x.iterationId,reviewId:x.reviewId??null,kind:x.kind,text:x.text,sources,constraints,provenance:{author:provenance.author??null,executor:provenance.executor??null,tool:provenance.tool??null},createdAt:now()});
   }
   #validateFeedback(i,f){
     requireThat(f&&typeof f.overall==='string'&&f.overall.length<=20000&&Array.isArray(f.images),'Invalid feedback');
@@ -227,25 +316,34 @@ export class Kernel {
         if(available&&!resolved)this.#event(i,'partial-review',{available,total:i.count});
         if(resolved)this.#event(i,'review-ready',{available,total:i.count,failed:jobs.filter(j=>j.state==='failed').length});
       }
-      for(const s of this.#list('submission')){
-        const i=this.#get('iteration',s.iterationId),issues=[],sources=[];
-        // Freeze the exact board at submission; later results never become retrospective review evidence.
-        for(const source of s.sourceArtifacts){
-          let a;
-          try{a=this.#get('artifact',source.artifactId);this.#verifyArtifact(a);sources.push({artifactId:a.id,version:a.version,sha256:a.sha256,width:a.width,height:a.height,jobId:a.jobId});}
-          catch(e){issues.push({artifactId:a?.id??source.artifactId,reason:e.message});}
+      // Only actual production dependencies affect dispatch readiness, independently per job.
+      for(const j of this.#list('job').filter(j=>['queued','assigned','blocked'].includes(j.state))){
+        const dependencyIssues=this.#dependencyIssues(j.specification.sources),state=dependencyIssues.length?'blocked':j.assignmentId?'assigned':'queued';
+        if(j.state!==state||JSON.stringify(j.dependencyIssues)!==JSON.stringify(dependencyIssues)){
+          j.state=state;j.dependencyIssues=dependencyIssues;this.#put('job',j);
         }
-        if(!sources.length&&!issues.length)issues.push({artifactId:null,reason:'No original images available'});
-        this.#put('continuation',{id:s.id,submissionId:s.id,iterationId:i.id,projectId:s.projectId,status:issues.length?'blocked':'ready',sources,issues,feedback:s.feedback,
-          optional:{screenshots:{status:'unavailable',required:false},conductorNotes:{status:'unavailable',required:false}},preparedAt:now()});
-        if(s.requestId)this.#event(i,`continuation:${s.id}`,{submissionId:s.id,requestId:s.requestId});
+      }
+      for(const s of this.#list('submission')){
+        const i=this.#get('iteration',s.iterationId),issues=[],availableSources=[];
+        for(const source of s.sourceArtifacts){
+          try{
+            const a=this.#get('artifact',source.artifactId);
+            if(source.sha256)requireThat(a.sha256===source.sha256&&a.version===source.version&&a.projectId===s.projectId,'Historical source identity changed: '+source.artifactId,409);
+            this.#verifyArtifact(a);availableSources.push(this.#sourceSnapshot(a));
+          }catch(e){issues.push({artifactId:source.artifactId,reason:e.message});}
+        }
+        const allNotes=this.#list('creativeContext'),notes=allNotes.filter(n=>n.projectId===s.projectId&&n.iterationId===i.id&&(n.reviewId===null||n.reviewId===s.id)&&!allNotes.some(next=>next.supersedes===n.id));
+        this.#put('continuation',{id:s.id,submissionId:s.id,iterationId:i.id,projectId:s.projectId,status:'ready',reviewEvidence:s.sourceArtifacts,feedback:s.feedback,
+          historicalCoverage:{status:issues.length?'limited':'complete',availableSources,issues},
+          creativeContext:notes,optional:{screenshots:{status:'unavailable',required:false},conductorNotes:{status:notes.length?'available':'unavailable',required:false,references:notes.map(n=>({id:n.id,contextId:n.contextId,version:n.version})),sourceIssues:notes.flatMap(n=>this.#dependencyIssues(n.sources).map(issue=>({contextId:n.id,...issue}))) }},preparedAt:now()});
+        if(s.requestId)this.#event(i,'continuation:'+s.id,{submissionId:s.id,requestId:s.requestId});
       }
       return {ok:true};
     });
   }
   read(token,kind){
     const role=this.#role(token);
-    const allowed={human:['project','request','iteration','job','artifact','draft','submission','continuation','acceptance','event','delivery','conflict','observation'],conductor:['project','request','iteration','job','artifact','submission','continuation','event'],generator:['job','assignment'],butler:['job','assignment','delivery','event','conflict','observation']};
+    const allowed={human:['project','request','iteration','job','artifact','draft','submission','continuation','acceptance','creativeContext','event','delivery','conflict','observation'],conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['job','assignment','delivery','event','conflict','observation']};
     requireThat(allowed[role].includes(kind),'Read boundary rejected',403);
     return clone(this.#list(kind).map(v=>{const {token,tokenHash,...rest}=v;return rest;}));
   }
@@ -253,9 +351,20 @@ export class Kernel {
   original(token,artifactId){
     try{this.#role(token);}catch{const assigned=this.#assignment(token),job=this.#get('job',assigned.jobId);requireThat(job.specification.sources.some(ref=>ref.artifactId===artifactId),'Executor can only read assigned source originals',403);}
     const a=this.#get('artifact',artifactId);this.#verifyArtifact(a);return Buffer.from(this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256).data);}
-  portable(token,submissionId){
+  portable(token,submissionId,{jobId=null}={}){
     const role=this.#role(token);requireThat(['human','conductor'].includes(role),'Portable review boundary',403);
-    this.reconcile(this.#credentials.butler);const s=this.#get('submission',submissionId),c=this.#get('continuation',submissionId),i=this.#get('iteration',s.iterationId);
-    return {format:'bve-v2-review-v1',exportedAt:now(),submission:s,continuation:c,iteration:i,originals:c.sources.map(ref=>({...ref,mediaType:'image/png',bytes:this.original(token,ref.artifactId).toString('base64')}))};
+    this.reconcile(this.#credentials.butler);
+    const submission=this.#get('submission',submissionId),continuation=this.#get('continuation',submissionId),iteration=this.#get('iteration',submission.iterationId);
+    let requested=continuation.historicalCoverage.availableSources,production=null,missing=continuation.historicalCoverage.issues;
+    if(jobId){
+      const job=this.#get('job',jobId),child=this.#get('iteration',job.iterationId);
+      requireThat(job.projectId===submission.projectId&&child.parentReviewId===submission.id,'Portable job/review mismatch');
+      requested=job.specification.sources;missing=this.#dependencyIssues(requested);
+      production={jobId:job.id,iterationId:child.id,specification:job.specification,dependencyStatus:missing.length?'blocked':'ready'};
+    }
+    const included=requested.filter(ref=>!missing.some(issue=>issue.artifactId===ref.artifactId));
+    return {format:'bve-v2-review-v2',purpose:production?{kind:'production-job',jobId}:{kind:'review-evidence'},exportedAt:now(),submission,continuation,iteration,production,
+      coverage:{status:missing.length?(production?'blocked':'limited'):'complete',historical:continuation.historicalCoverage.status,missing,expectedArtifactIds:production?requested.map(ref=>ref.artifactId):submission.sourceArtifacts.map(ref=>ref.artifactId),includedArtifactIds:included.map(ref=>ref.artifactId)},
+      originals:included.map(ref=>({...ref,mediaType:'image/png',bytes:this.original(token,ref.artifactId).toString('base64')}))};
   }
 }

@@ -45,7 +45,7 @@ export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Numbe
         res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'private, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'});res.end(bytes);return;
       }
       if(req.method==='GET'&&url.pathname==='/api/portable'){
-        res.setHeader('Content-Disposition',`attachment; filename="bve-review-${url.searchParams.get('id')}.json"`);json(200,kernel.portable(credential,url.searchParams.get('id')));return;
+        res.setHeader('Content-Disposition',`attachment; filename="bve-review-${url.searchParams.get('id')}.json"`);json(200,kernel.portable(credential,url.searchParams.get('id'),{jobId:url.searchParams.get('jobId')}));return;
       }
       if(req.method==='POST'&&url.pathname==='/api/op'){
         let body='',length=0;

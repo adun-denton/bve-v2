@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,10 +12,18 @@ const app=await serve({root,port:0,demo:true}),evidence=resolve('evidence');mkdi
 const browser=await chromium.launch({headless:true,...(process.env.BVE_BROWSER_EXECUTABLE?{executablePath:process.env.BVE_BROWSER_EXECUTABLE}:{}),args:['--no-sandbox','--disable-dev-shm-usage']});
 const checks=[],errors=[];let context=await browser.newContext({viewport:{width:1440,height:1100}}),page=await context.newPage();
 const check=(name,condition)=>{assert.ok(condition,name);checks.push(name);};
+async function waitForCompleteBoard(page,iteration){
+  await page.waitForFunction(({iterationId,jobIds,count})=>{
+    const selected=new URLSearchParams(location.hash.slice(1)).get('iteration');
+    const cards=[...document.querySelectorAll('#cards .card')];
+    const images=[...document.querySelectorAll('#cards .art-button img')];
+    return selected===iterationId&&cards.length===count&&cards.every(card=>jobIds.includes(card.dataset.jobId))&&images.length===count&&images.every(image=>image.complete&&image.naturalWidth>0);
+  },{iterationId:iteration.id,jobIds:iteration.jobIds,count:iteration.count},{timeout:15000});
+}
 page.on('pageerror',e=>errors.push(e.message));
 try{
   await page.goto(app.origin);await page.getByRole('button',{name:'Focus Soft orbit',exact:true}).waitFor();
-  await page.waitForFunction(()=>document.querySelectorAll('.art-button img').length===6&&[...document.querySelectorAll('.art-button img')].every(i=>i.complete&&i.naturalWidth>0));
+  await waitForCompleteBoard(page,app.kernel.read(app.credentials.human,'iteration')[0]);
   check('Six image comparison board shows actual authored originals',await page.locator('#cards .art-button').count()===6);
   const firstURL=page.url();
   await page.screenshot({path:join(evidence,'01-six-candidate-board.png'),fullPage:true});
@@ -54,9 +63,19 @@ try{
     app.kernel.call(app.credentials.conductor,'event.ack',`fixture-ack:${event.id}`,{eventId:event.id,receipt:'Simulated Conductor poll acknowledgement'});
     app.kernel.call(app.credentials.conductor,'event.consume',`fixture-consume:${event.id}`,{eventId:event.id});
   }
+  const beforeNotes=JSON.stringify(submission);
+  const note=app.kernel.call(app.credentials.conductor,'creativeContext.supply','browser-creative-note',{projectId:submission.projectId,iterationId:submission.iterationId,reviewId:submission.id,kind:'rationale',text:'Authored advisory note: keep the human words distinct from this Fresh interpretation.',sources:[],constraints:['Advisory only'],provenance:{author:null,executor:'simulated-Conductor',tool:null}});
+  check('Optional creative context is preserved before any child commission',app.kernel.read(app.credentials.conductor,'continuation').find(c=>c.id===submission.id).creativeContext[0].id===note.id);
+  check('Creative context supply leaves human feedback and review snapshots unchanged',JSON.stringify(app.kernel.read(app.credentials.human,'submission')[0])===beforeNotes);
+  let releaseOriginals;
+  const originalsBarrier=new Promise(resolve=>releaseOriginals=resolve);
+  let requestedOriginals=0;
+  await page.route('**/api/original*',async route=>{if(++requestedOriginals>1)await originalsBarrier;await route.continue();});
   const second=await simulateCommission(app.kernel,app.credentials,submission.requestId);
   await page.waitForURL(url=>url.hash.includes(second.id));
   await page.getByRole('button',{name:'Focus Soft orbit · refinement',exact:true}).waitFor();
+  check('Progressive second-iteration review remains usable while later originals load',await page.locator('#cards .art-button').count()===1&&await page.locator('#cards .art-button').first().isEnabled());
+  releaseOriginals();await waitForCompleteBoard(page,second);await page.unroute('**/api/original*');
   check('Second iteration opens progressively without an approval dialog',await page.locator('#cards .art-button').count()===6);
   await page.screenshot({path:join(evidence,'03-parent-linked-iteration.png'),fullPage:true});
   await page.getByLabel('Overall feedback',{exact:true}).fill('Second iteration review recorded. Native production quality and human acceptance are still unverified.');
@@ -71,11 +90,11 @@ try{
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:join(evidence,'04-mobile-board.png'),fullPage:true});
   check('Mobile board has no horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   // Cold owner restart: preserve both completed iterations and immutable submissions.
-  const finalSnapshot=Object.fromEntries(['project','request','iteration','job','artifact','submission','continuation','event','acceptance','delivery'].map(kind=>[kind,app.kernel.read(app.credentials.human,kind)]));
+  const finalSnapshot=Object.fromEntries(['project','request','iteration','job','artifact','submission','continuation','event','acceptance','delivery','creativeContext'].map(kind=>[kind,app.kernel.read(app.credentials.human,kind)]));
   const secondId=second.id;await context.close();await app.stop();
   const reopened=await serve({root,port:0});
-  try{const c=await browser.newContext(),p=await c.newPage();await p.goto(`${reopened.origin}/#project=${second.projectId}&page=board&iteration=${secondId}`);await p.getByRole('button',{name:'Focus Soft orbit · refinement',exact:true}).waitFor();await p.waitForFunction(()=>document.querySelectorAll('#submissions .submission').length===2);check('Owner process restart reveals completed results and review history',await p.locator('#submissions .submission').count()===2);await c.close();}finally{await reopened.stop();}
+  try{const c=await browser.newContext(),p=await c.newPage();await p.goto(`${reopened.origin}/#project=${second.projectId}&page=board&iteration=${secondId}`);await p.getByRole('button',{name:'Focus Soft orbit · refinement',exact:true}).waitFor();await p.waitForFunction(()=>document.querySelectorAll('#submissions .submission').length===2);await p.locator('#submissions p').filter({hasText:note.text}).waitFor({state:'attached'});check('Creative context survives owner and browser replacement',await p.locator('#submissions p').filter({hasText:note.text}).count()===1);check('Owner process restart reveals completed results and review history',await p.locator('#submissions .submission').count()===2);await c.close();}finally{await reopened.stop();}
   check('No browser JavaScript errors',errors.length===0);
-  const report={generatedAt:new Date().toISOString(),kind:'authored-fixture-browser-evidence',checks,errors,summary:{iterations:2,firstCandidates:6,secondCandidates:6,submissions:2,nativeWorker:'unverified',concurrency:'unverified; serial fixture only',liveNotifications:'unverified; durable poll simulated',humanAcceptance:'unverified; none recorded'},sourceGeometry:submission.feedback.images.find(f=>f.regions.length).regions,iterationIds:{first:submission.iterationId,second:secondId},parentReviewId:submission.id,continuation:{sources:continuation.sources,optional:continuation.optional},workflow:finalSnapshot};
+  const report={sourceCommit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),generatedAt:new Date().toISOString(),kind:'authored-fixture-browser-evidence',environment:{node:process.version,browser:browser.version(),playwright:require('playwright/package.json').version,platform:process.platform},checks,errors,summary:{iterations:2,firstCandidates:6,secondCandidates:6,submissions:2,nativeWorker:'unverified',concurrency:'unverified; serial fixture only',liveNotifications:'unverified; durable poll simulated',humanAcceptance:'unverified; none recorded'},sourceGeometry:submission.feedback.images.find(f=>f.regions.length).regions,iterationIds:{first:submission.iterationId,second:secondId},parentReviewId:submission.id,continuation:finalSnapshot.continuation.find(c=>c.id===submission.id),workflow:finalSnapshot};
   writeFileSync(join(evidence,'browser-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({passed:checks.length,errors,report:'evidence/browser-report.json'},null,2));
 }catch(e){await page.screenshot({path:join(evidence,'browser-failure.png'),fullPage:true}).catch(()=>{});console.error(e);process.exitCode=1;await app.stop().catch(()=>{});}finally{await browser.close();}

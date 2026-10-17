@@ -37,4 +37,12 @@ A plain overall-feedback review requires only text entry plus one submission fro
 
 ## Remaining usability limits
 
-The board is usable with authored fixtures on desktop and mobile. Its effectiveness for real creative work and actual tool outputs has not been judged by a human. There is no embedded chat or live notification channel. Until a host adapter is installed, new production requests wait for that explicit integration gap. The root supports multiple projects with one board page each. No arbitrary canvas, side-by-side selection mode beyond the image board, annotation shapes beyond rectangles, or automated exact-pixel editing is implemented. Review source closure is conservative: all images visible at submission are retained as required originals for continuation, even when comments only name one.
+The board is usable with authored fixtures on desktop and mobile. Its effectiveness for real creative work and actual tool outputs has not been judged by a human. There is no embedded chat or live notification channel. Until a host adapter is installed, new production requests wait for that explicit integration gap. The root supports multiple projects with one board page each. No arbitrary canvas, side-by-side selection mode beyond the image board, annotation shapes beyond rectangles, or automated exact-pixel editing is implemented. The board snapshot remains historical evidence; production uses only each job’s declared sources and regions. Unavailable historical originals are disclosed without blocking independent jobs.
+
+## Deferred product questions
+
+D01: Dedicated Level 1 visual controls (accents/contrast/type/background), Level 2 metric sliders and Level 3 structured Brand metadata remain deferred product questions. The lean V2 scope did not establish these dedicated controls as an approved requirement. Their absence is not treated as a regression in this repair.
+
+D02: Gallery comparison fulfills the minimum comparison scope. Synchronized two-image detail/zoom is deferred until human usability evidence justifies it. No general canvas engine or legacy control workflow is introduced.
+
+No new operator decision is required for these deferrals or the current bounded repairs. Final independent technical review precedes the later operator pilot; this does not add confirmations to ordinary authorized runtime operations.

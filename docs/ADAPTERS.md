@@ -17,7 +17,7 @@ No image call is spent on capability discovery. `src/adapters.mjs` declares unav
 
 ## Supported local operations
 
-`src/kernel.mjs` exposes `Kernel.call(credential, operation, key, input)`, `read(credential, kind)`, assignment-scoped `assignment(token)`, `original(token, artifactId)`, and source-bound `portable(credential, submissionId)`. The database handle is private. Ownership is selected by provisioned function credentials, never by an input `role` property. `Kernel.reconcile(butlerCredential)` is deterministic maintenance, not executor authority.
+`src/kernel.mjs` exposes `Kernel.call(credential, operation, key, input)`, `read(credential, kind)`, assignment-scoped `assignment(token)`, `original(token, artifactId)`, and purpose-bound `portable(credential, submissionId, {jobId})`. The database handle is private. Ownership is selected by provisioned function credentials, never by an input `role` property. `Kernel.reconcile(butlerCredential)` is deterministic maintenance, not executor authority.
 
 The loopback server exposes:
 
@@ -27,9 +27,9 @@ The loopback server exposes:
 | `GET /api/read?kind=request` | Role-specific bounded record kinds |
 | `GET /api/assignment` | Assignment token reveals only its own frozen job |
 | `GET /api/original?id=ARTIFACT_ID` | Function credential, or assignment token limited to its job's sources |
-| `GET /api/portable?id=SUBMISSION_ID` | Human/Conductor export: immutable feedback, identities, verified original base64 bytes and optional evidence status; no credentials |
+| `GET /api/portable?id=SUBMISSION_ID` | Human/Conductor review-evidence export; optional jobId selects exact production dependencies. Historical availability and missing inputs are explicit; no credentials |
 
-Human operations: `project.create`, `request.create`, `draft.save`, `review.submit`, `design.accept`. Conductor: `iteration.commission`, `event.ack`, `event.consume`. Generator: `job.allocate`, `attempt.start`. Butler: `event.delivery`, plus reconciliation. Assignment token: `result.deliver` only. Body size is bounded. Unknown paths/operations and boundary crossings reject.
+Human operations: `project.create`, `request.create`, `draft.save`, `review.submit`, `design.accept`. Conductor: `iteration.commission`, `creativeContext.supply`, `event.ack`, `event.consume`. Generator: `job.allocate`, `attempt.start`. Butler: `event.delivery`, plus reconciliation. Assignment token: `result.deliver` only. Body size is bounded. Unknown paths/operations and boundary crossings reject.
 
 The browser holds only the human credential. A local owner can inspect its own credential file and SQLite; this is application-level function separation, not OS sandboxing against its owner. Never give a broad local credential to an image worker. A worker receives one assignment token plus frozen specification and source bytes/roles.
 
@@ -41,7 +41,7 @@ With BVE running and the same root selected:
 node scripts/conductor.mjs resume
 ```
 
-This returns pending creative requests, unread events, submitted words/geometry and verified continuation context. It does not consume events merely by reading. `node scripts/conductor.mjs consume EVENT_ID` explicitly records consumption. Delivery attempts and acknowledgement remain separate. A failed push is retained unread. A polling host can read the event, record acknowledgement using `event.ack` with its actual receipt, then consume it. No native chat notification is claimed.
+This returns pending creative requests, unread events, submitted words/geometry, historical coverage and recoverable optional creative context. It does not consume events merely by reading. `node scripts/conductor.mjs consume EVENT_ID` explicitly records consumption. Delivery attempts and acknowledgement remain separate. A failed push is retained unread. A polling host can read the event, record acknowledgement using `event.ack` with its actual receipt, then consume it. No native chat notification is claimed.
 
 To commission from an authorized request, prepare a private JSON packet with a stable `key` and `input` containing `requestId`, distinct `specifications`, and a separate `interpretation` when parent feedback exists. Send it through `node scripts/conductor.mjs commission /private/specifications.json`. See `fixtureSpecifications` only as an authored example. This is an adapter interface for a local coding/executor session, not a manual designer administration step. User submission succeeds even when this session is absent.
 
@@ -68,3 +68,15 @@ Then, in the separately authorized native integration phase:
 5. Run a human two-iteration pilot. Record usefulness findings and an explicit acceptance judgment separately from software checks. No technical fixture result supplies design acceptance.
 
 No mandatory technical ceremony is added to the designer's ordinary flow. Adapter setup is local installation/integration work, and unresolved capability gaps remain explicit rather than simulated in production.
+
+## Repaired source and creative-context contracts
+
+Every new job freezes direction and nullable Brand from its canonical request. A contradictory supplied field rejects; later defaults cannot change the packet. The scoped assignment and the actual dispatch packet contain both without needing project credentials. Sources/roles remain independent.
+
+Conductor chooses specification.sources and optional sources[].regions. Each source identifies its artifact/version/hash with a role; each region has space=normalized-original, x/y/w/h and authored meaning. Optional reviewRegion={reviewId,index} must match the original human geometry and source. Parent lineage preserves the review regardless of the chosen generation inputs. Fresh may use none; Follow may use a subset.
+
+Use node scripts/conductor.mjs context /private/creative-context.json with the same {key,input} command shape as commissioning. The narrow operation accepts projectId, iterationId, optional reviewId, kind (interpretation/decision/rationale), text (1–4000 characters), at most six exact sources, at most twelve constraints (300 characters each), optional provenance (author/executor/tool, each null or at most 200 characters), and optional supersedes. There are at most eight current notes per exact origin. Revision records keep a stable contextId, increasing version, immutable revision ID and supersession link; a stale revision cannot branch over a superseded head.
+
+Deterministic service validation enforces project/iteration/review/source associations and preserves the record transactionally. Author/executor/tool values are author-supplied, not independently verified; unknowns stay null. createdAt is receipt creation time. Human feedback and result registration are inaccessible through this operation. Context remains advisory and optional even if its own historical reference is lost. Resume/continuation and portable export include relevant current revisions plus revision links, not unrelated notes/chat history.
+
+Allocation records allowanceReserved; durable pre-invocation start records invocationsStarted. Neither is observed provider usage/cost. Unsent recovery, uncertainty and late original delivery preserve the same attempt and never create a retry or refund claim.

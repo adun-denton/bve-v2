@@ -15,7 +15,7 @@
 
 | Owner | Interface | Prohibited transfer |
 |---|---|---|
-| Conductor | Commission distinct specifications; read/interpret submitted feedback; consume events | Cannot invoke images, deliver files, register outcomes, edit human submissions or accept designs |
+| Conductor | Commission distinct specifications; author optional bounded creative context; read/interpret submitted feedback; consume events | Cannot invoke images, deliver files, register outcomes, edit human submissions or accept designs |
 | Generator | Allocate compatible jobs and start each attempt once | Cannot verify/register its own output or accept designs |
 | Assigned executor | Deliver original bytes and actual outcome evidence for its assignment | Cannot select another job, replace authority or claim another role by label |
 | Butler | Independently decode/hash bytes, reconcile known state, register results, prepare review/continuation/events | Cannot invent creative interpretation, invoke uncertain work again, rewrite feedback or accept designs |
@@ -25,6 +25,8 @@ Node runs a loopback HTTP server and a deterministic Butler timer. SQLite transa
 
 Cloud development creates code and authored test evidence. The delivered runtime uses a new private local root, never an existing BVE root by default. Host adapters receive bounded assignments and return original bytes; inaccessible local storage is exchanged through portable packets. No local service is exposed publicly. An absent adapter leaves jobs queued with a specific capability gap. Default native worker and live notification capabilities are unavailable. Simulation is isolated and explicitly labeled.
 
-An invocation is durably marked running before adapter entry. Loss of its process produces uncertainty; lease expiry never means safe re-invocation. Unsent assigned work can be recovered, running work cannot be dispatched again. Deliveries use a durable inbox: intake repeats deterministically after interruption. Results, reviews and events survive browser or AI loss. Missing optional screenshots/notes do not block source-bound continuation. A corrupt required source blocks only dependent continuation and is reported by identity.
+An invocation is durably marked running before adapter entry. Loss of its process produces uncertainty; lease expiry never means safe re-invocation. Unsent assigned work can be recovered, running work cannot be dispatched again. Deliveries use a durable inbox: intake repeats deterministically after interruption. Results, reviews and events survive browser or AI loss. Missing optional screenshots/notes do not block source-bound continuation. A corrupt required production source blocks only dependent unsent jobs and is reported by identity. Historical review coverage is separate and does not defeat independent Fresh/Follow work.
 
 No legacy code is extracted for this candidate. The kernel, adapters, fixtures, tests and UI are newly authored.
+
+Optional creative context is an immutable, bounded authored record preserved by deterministic application services, not an embedded chat or institutional-memory framework. Human feedback, Conductor interpretation and operational verification remain distinct.

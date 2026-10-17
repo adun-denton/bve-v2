@@ -22,7 +22,7 @@ test('two complete iterations use distinct jobs and source-bound review through 
   const second=await simulateCommission(w.k,w.c,s.requestId);
   assert.equal(second.parentReviewId,s.id);assert.equal(second.parentIterationId,i.id);assert.equal(second.count,6);
   const followJobs=w.k.read(w.c.conductor,'job').filter(j=>j.iterationId===second.id);
-  for(const j of followJobs){assert.equal(j.specification.sources.length,6);assert.equal(j.specification.regions[0].text,'Give this area more breathing room');}
+  for(const j of followJobs){assert.equal(j.specification.sources.length,0);assert.equal(j.specification.regions,undefined);assert.equal(j.specification.direction,'Fresh');}
   const secondImages=w.k.read(w.c.human,'artifact').filter(a=>a.iterationId===second.id);submit(w,second,secondImages);
   assert.equal(w.k.read(w.c.human,'submission').length,2);assert.equal(w.k.read(w.c.human,'acceptance').length,0);
   const packet=w.k.portable(w.c.human,s.id);assert.equal(packet.originals.length,6);assert.equal(hash(Buffer.from(packet.originals[0].bytes,'base64')),packet.originals[0].sha256);
@@ -108,15 +108,15 @@ test('notification failure, acknowledgement, consumption and event replay are di
   assert.equal(w.k.read(w.c.human,'job').length,1);assert.equal(w.k.read(w.c.conductor,'event').length,1);assert.ok(w.k.read(w.c.conductor,'event')[0].consumedAt);
 });
 
-for(const problem of ['corrupt','missing-bytes','missing-artifact'])test(`required ${problem} precisely blocks continuation; optional screenshots and absent AI never do`,t=>{
+for(const problem of ['corrupt','missing-bytes','missing-artifact'])test(`historical ${problem} limits coverage without blocking independent Fresh continuation`,t=>{
   const w=workspace();t.after(()=>w.k.close());const {i}=first(w,2),images=finish(w,i),{s}=submit(w,i,images,'iterate');
   assert.equal(w.k.read(w.c.conductor,'continuation')[0].status,'ready');
   const db=new DatabaseSync(join(w.root,'workspace.sqlite'));
   if(problem==='corrupt')db.prepare('UPDATE bytes SET data=? WHERE hash=?').run(Buffer.from('corrupt'),images[0].sha256);
   else if(problem==='missing-bytes')db.prepare('DELETE FROM bytes WHERE hash=?').run(images[0].sha256);
   else db.prepare("DELETE FROM records WHERE kind='artifact' AND id=?").run(images[0].id);
-  db.close();w.k.reconcile(w.c.butler);const c=w.k.read(w.c.conductor,'continuation')[0];assert.equal(c.status,'blocked');assert.equal(c.issues[0].artifactId,images[0].id);assert.equal(c.sources.length,1);
-  assert.throws(()=>w.call('conductor','iteration.commission',{requestId:s.requestId,interpretation:'Use comments',specifications:fixtureSpecifications({brief:'Follow review',count:2,sources:c.sources})}),/Required sources/);
+  db.close();w.k.reconcile(w.c.butler);const c=w.k.read(w.c.conductor,'continuation')[0];assert.equal(c.status,'ready');assert.equal(c.historicalCoverage.status,'limited');assert.equal(c.historicalCoverage.issues[0].artifactId,images[0].id);assert.equal(c.historicalCoverage.availableSources.length,1);
+  const child=w.call('conductor','iteration.commission',{requestId:s.requestId,interpretation:'Start Fresh using words only',specifications:fixtureSpecifications({brief:'New exploration',count:2})});assert.ok(child.parentReviewId);assert.equal(w.k.read(w.c.human,'job').filter(j=>j.iterationId===child.id&&j.state==='queued').length,2);
   assert.equal(w.k.read(w.c.human,'submission')[0].id,s.id);
 });
 
@@ -160,12 +160,12 @@ test('adapter uncertainty preserves an observation while permitting the original
   const w=workspace();t.after(()=>w.k.close());const {i}=first(w,1),a=allocate(w,i.jobIds[0]);start(w,a);
   const receipt=deliver(w,a,0,'uncertain','');assert.ok(receipt.observationId);w.k.reconcile(w.c.butler);
   assert.equal(w.k.read(w.c.human,'observation').length,1);assert.equal(w.k.read(w.c.human,'delivery').length,0);
-  deliver(w,a);w.k.reconcile(w.c.butler);assert.equal(w.k.read(w.c.human,'artifact').length,1);assert.equal(w.k.read(w.c.human,'job')[0].attemptsUsed,1);
+  deliver(w,a);w.k.reconcile(w.c.butler);assert.equal(w.k.read(w.c.human,'artifact').length,1);assert.equal(w.k.read(w.c.human,'job')[0].invocationsStarted,1);
 });
 
 test('late images never change the original sources of an already submitted partial review',t=>{
   const w=workspace();t.after(()=>w.k.close());const {i}=first(w,2);const a=allocate(w,i.jobIds[0]);start(w,a);deliver(w,a);w.k.reconcile(w.c.butler);
   const images=w.k.read(w.c.human,'artifact'),{s}=submit(w,i,images);assert.equal(s.sourceArtifacts.length,1);
   const late=allocate(w,i.jobIds[1]);start(w,late);deliver(w,late,1);w.k.reconcile(w.c.butler);
-  assert.equal(w.k.read(w.c.human,'artifact').length,2);assert.equal(w.k.read(w.c.human,'continuation')[0].sources.length,1);assert.equal(w.k.portable(w.c.human,s.id).originals.length,1);
+  assert.equal(w.k.read(w.c.human,'artifact').length,2);assert.equal(w.k.read(w.c.human,'continuation')[0].historicalCoverage.availableSources.length,1);assert.equal(w.k.portable(w.c.human,s.id).originals.length,1);
 });

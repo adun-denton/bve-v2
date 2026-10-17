@@ -66,7 +66,7 @@ async function renderCards(target,images,{library=false}={}){
       else caption.append(el('small',`Iteration ${state.data.iteration.filter(i=>i.projectId===state.project.id).findIndex(i=>i.id===a.iterationId)+1}`));
       card.append(caption);
     }else{
-      const box=el('div',undefined,'unresolved');box.append(el('strong',j.specification.label||j.specification.directionId),el('span',j.state==='queued'?'Waiting for compatible image executor':j.state),el('small',j.reason||'Available images can be reviewed while this direction waits.'));card.append(box);
+      const box=el('div',undefined,'unresolved');box.append(el('strong',j.specification.label||j.specification.directionId),el('span',j.state==='queued'?'Waiting for compatible image executor':j.state==='blocked'?'Required image source unavailable':j.state),el('small',j.reason||'Available images can be reviewed while this direction waits.'));card.append(box);
     }
     target.append(card);
   }
@@ -77,6 +77,8 @@ function renderHistory(){
   for(const s of state.data.submission.filter(s=>s.projectId===state.project?.id).reverse()){
     const c=state.data.continuation.find(c=>c.id===s.id),box=el('details',undefined,'submission'),summary=el('summary',`${new Date(s.submittedAt).toLocaleString()} · ${s.intent==='iterate'?'Next iteration requested':'Feedback submitted'} · ${c?.status??'Preparing continuation'}`);
     box.append(summary,el('p',s.feedback.overall||'Image-level feedback submitted.'));
+    if(c?.historicalCoverage?.status==='limited')box.append(el('p','Historical evidence is incomplete. Only jobs requiring an unavailable original are blocked.','notice'));
+    for(const note of c?.creativeContext??[])box.append(el('p','Creative '+note.kind+' (v'+note.version+'): '+note.text));
     for(const f of s.feedback.images.filter(f=>f.note||f.regions.length||f.favorite)){const a=state.data.artifact.find(a=>a.id===f.artifactId),j=a&&jobOf(a);box.append(el('p',`${j?.specification.label||f.artifactId}${f.favorite?' · Favorite':''}\n${f.note}`));for(const r of f.regions)box.append(el('p',`Region (${r.x.toFixed(3)}, ${r.y.toFixed(3)}, ${r.w.toFixed(3)}, ${r.h.toFixed(3)}): ${r.text}`));}
     const download=el('button','Download portable review & originals');download.onclick=async()=>{try{const packet=await api('/api/portable?id='+s.id),url=URL.createObjectURL(new Blob([JSON.stringify(packet,null,2)],{type:'application/json'})),a=el('a');a.href=url;a.download=`bve-review-${s.id}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);}catch(e){toast(e.message);}};box.append(download,el('pre',JSON.stringify({submission:s,continuation:c},null,2)));$('submissions').append(box);
   }
