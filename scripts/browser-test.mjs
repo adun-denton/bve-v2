@@ -23,7 +23,8 @@ async function waitForCompleteBoard(page,iteration){
 page.on('pageerror',e=>errors.push(e.message));
 try{
   await page.goto(app.origin);await page.getByRole('button',{name:'Focus Soft orbit',exact:true}).waitFor();
-  await waitForCompleteBoard(page,app.kernel.read(app.credentials.human,'iteration')[0]);
+  const firstIteration=app.kernel.read(app.credentials.human,'iteration')[0];
+  await waitForCompleteBoard(page,firstIteration);
   check('Six image comparison board shows actual authored originals',await page.locator('#cards .art-button').count()===6);
   const firstURL=page.url();
   await page.screenshot({path:join(evidence,'01-six-candidate-board.png'),fullPage:true});
@@ -47,7 +48,14 @@ try{
   await page.reload();await page.waitForFunction(()=>document.getElementById('overall').value.includes('Prefer Soft orbit'));
   check('Refresh restores durable overall draft',await page.getByLabel('Overall feedback',{exact:true}).inputValue()==='Prefer Soft orbit. Keep the quiet palette and add breathing room in the marked region.');
   await context.close();context=await browser.newContext({viewport:{width:1440,height:1100}});page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+  let releaseColdOriginals;
+  const coldOriginalsBarrier=new Promise(resolve=>releaseColdOriginals=resolve);
+  let coldOriginalRequests=0;
+  await page.route('**/api/original*',async route=>{if(++coldOriginalRequests>1)await coldOriginalsBarrier;await route.continue();});
   await page.goto(firstURL);await page.getByRole('button',{name:'Focus Soft orbit',exact:true}).waitFor();await page.waitForFunction(()=>document.getElementById('overall').value.includes('Prefer Soft orbit'));
+  check('Cold reopening retains usable partial images and saved feedback while later originals wait',await page.locator('#cards .art-button').count()===1&&await page.getByRole('button',{name:'Focus Soft orbit',exact:true}).isEnabled());
+  const coldBoardReady=waitForCompleteBoard(page,firstIteration);
+  releaseColdOriginals();await coldBoardReady;await page.unroute('**/api/original*');
   check('Cold browser replacement and direct project/page/iteration link recover results',await page.locator('#cards .art-button').count()===6);
   check('Cold reopening recovers server-saved draft without browser storage',(await page.getByLabel('Overall feedback',{exact:true}).inputValue()).includes('Prefer Soft orbit'));
   await page.getByRole('button',{name:'Submit and iterate →',exact:true}).click();
@@ -104,7 +112,7 @@ try{
   const finalSnapshot=Object.fromEntries(['project','request','iteration','job','artifact','submission','continuation','event','acceptance','delivery','creativeContext'].map(kind=>[kind,app.kernel.read(app.credentials.human,kind)]));
   const secondId=second.id;await context.close();await app.stop();
   const reopened=await serve({root,port:0});
-  try{const c=await browser.newContext(),p=await c.newPage();await p.goto(`${reopened.origin}/#project=${second.projectId}&page=board&iteration=${secondId}`);await p.getByRole('button',{name:'Focus Soft orbit · refinement',exact:true}).waitFor();await p.waitForFunction(()=>document.querySelectorAll('#submissions .submission').length===2);await p.locator('#submissions p').filter({hasText:note.text}).waitFor({state:'attached'});check('Creative context survives owner and browser replacement',await p.locator('#submissions p').filter({hasText:note.text}).count()===1);check('Owner process restart reveals completed results and review history',await p.locator('#submissions .submission').count()===2);await c.close();}finally{await reopened.stop();}
+  try{const c=await browser.newContext(),p=await c.newPage();await p.goto(`${reopened.origin}/#project=${second.projectId}&page=board&iteration=${secondId}`);await waitForCompleteBoard(p,second);check('Owner restart recovers all six expected loaded originals',await p.locator('#cards .art-button').count()===6);await p.waitForFunction(()=>document.querySelectorAll('#submissions .submission').length===2);await p.locator('#submissions p').filter({hasText:note.text}).waitFor({state:'attached'});check('Creative context survives owner and browser replacement',await p.locator('#submissions p').filter({hasText:note.text}).count()===1);check('Owner process restart reveals completed results and review history',await p.locator('#submissions .submission').count()===2);await c.close();}finally{await reopened.stop();}
   check('No browser JavaScript errors',errors.length===0);
   const report={sourceCommit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),generatedAt:new Date().toISOString(),kind:'authored-fixture-browser-evidence',environment:{node:process.version,browser:browser.version(),playwright:require('playwright/package.json').version,platform:process.platform},checks,errors,summary:{iterations:2,firstCandidates:6,secondCandidates:6,submissions:2,nativeWorker:'unverified',concurrency:'unverified; serial fixture only',liveNotifications:'unverified; durable poll simulated',humanAcceptance:'unverified; none recorded'},sourceGeometry:submission.feedback.images.find(f=>f.regions.length).regions,iterationIds:{first:submission.iterationId,second:secondId},parentReviewId:submission.id,continuation:finalSnapshot.continuation.find(c=>c.id===submission.id),workflow:finalSnapshot};
   writeFileSync(join(evidence,'browser-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({passed:checks.length,errors,report:'evidence/browser-report.json'},null,2));
