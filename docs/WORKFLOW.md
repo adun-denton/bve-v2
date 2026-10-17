@@ -1,0 +1,9 @@
+# Human working cycle
+
+Begin in the existing Conductor chat. Discuss intent, references and creative direction; exploration does not create production staff. An explicit production request activates the named project. Conductor obtains Butler on demand and commissions only the bounded Gen workers needed. The user does not configure credentials, copy delivery files or confirm each ordinary step.
+
+Butler presents recorded results or a comparison in BVE. The designer compares images, favorites, writes overall/whole-image/region feedback and submits when ready. Notes autosave, with pending/conflict recovery. A finished operational round commits its checkpoint automatically; user draft saving is separate. Feedback alone generates no new images. Submit and iterate requests one bounded continuation; design acceptance remains a separate explicit judgment.
+
+A comparison or branch can be a round without generation. Butler can present selected existing material through a durable round URL; original images and their notes remain in their original records. Clicking a selected image opens its source board for annotation. Changing conversations does not recreate project staff: the replacement Conductor reads current instructions, statements, rounds, branches and outstanding work.
+
+Follow the exact [Iman Website examples](EXAMPLES.md). Host completion notification and browser opening require demonstrated support. If the host cannot return automatically, the installation must name the required Conductor reopen/resume action accurately. No fixture result proves native integration or human usefulness.

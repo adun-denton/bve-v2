@@ -1,0 +1,206 @@
+{
+  "format": "bve-native-followup-v1",
+  "generatedAt": "2026-10-17T11:20:41.037053+00:00",
+  "authority": {
+    "sourceCommit": "2a5be1effa25e23bf57cbe999fb8a686c6f5a366",
+    "sourceTree": "b47450a71bbe4705ce1f3d3854bfd2429faedab7",
+    "reviewedHead": "e7e3f4724b5cd971ee6f32a58f0df26ecea2e8eb",
+    "reviewedTree": "020e1e8f9d8e60d57417a5f7a2b822a811b70a23",
+    "independentDisposition": "User-returned independent acceptance of deterministic implementation for continued candidate testing only; not native/stable acceptance"
+  },
+  "environment": {
+    "node": "v24.19.0",
+    "platform": "Linux",
+    "architecture": "x86_64",
+    "kernel": "6.18.55",
+    "playwright": "1.62.1",
+    "browser": "153.0.8010.0",
+    "browserExecutable": "/tmp/bve-project-chromium",
+    "browserProvisioning": "Existing test-only Chromium 153 executable; no browser/provider installation on user system"
+  },
+  "verification": {
+    "checkout": "Isolated detached worktree at exact accepted source",
+    "unmodifiedShippedHarness": true,
+    "commands": [
+      "BVE_BROWSER_EXECUTABLE=/tmp/bve-project-chromium npm run verify",
+      "npm run evidence:projects",
+      "npm run evidence:repairs"
+    ],
+    "contracts": {
+      "passed": 47,
+      "failed": 0
+    },
+    "browser": {
+      "passed": 33,
+      "pageErrors": 0
+    },
+    "hashesVerified": 40,
+    "hashesAgainst": [
+      "2a5be1effa25e23bf57cbe999fb8a686c6f5a366",
+      "e7e3f4724b5cd971ee6f32a58f0df26ecea2e8eb"
+    ],
+    "sourceHashes": {
+      "AGENTS.md": "7291fff657aa037bcbfef7db2035454c3f232bd7dda0f824b0e7b1064da842c7",
+      "README.md": "ca8c52d376d32c7a281b9ebe791f8503877aca725f917f02de4e69899b1277c7",
+      "docs/ADAPTERS.md": "6699849da52cbe81139248638cc0b7cbe20f2c4ad8eb4c2f0ad22e91b3468dcc",
+      "docs/ARCHITECTURE.md": "d26553d80a7dc4bf199855efe14f3002ecefadef48c26f4e66f0f69f43f909b3",
+      "docs/CONTRACTS.md": "6cb56892ed1ec6cbfc0f2ccbba1f391899b8f4d5ee52a65e2ed9250f4c96d81f",
+      "docs/EXAMPLES.md": "9ebc6c020ce19f764497eb54ac06b21a8b380b0428981d3131f93243d7250593",
+      "docs/HOST-DRIVER.md": "618a49c3de85572560700647924d9e5730eab6f0582458a29be9af39eff4d36a",
+      "docs/INSTALL.md": "61dc9c36bb6cc8687846ec0823c3c83228b78589e2f603620a826564f45ef40a",
+      "docs/WHY.md": "86b703bf7dec2ca724592f16a88a23402e99aa7fde8b8069bac01fb871d24df8",
+      "docs/WORKFLOW.md": "c25844ac2dffca72280af59579b2efb1ab39d4514e6471c82ac0f567e91f8952",
+      "docs/roles/BUTLER.md": "97c8a27b3511d57daecdc695a22cbda88bbe99ace149f9731714365bd936d901",
+      "docs/roles/CONDUCTOR.md": "f8d372a35631ca61b85b44e7d8ce9274bcb8ea069b28cab2b0f0e01ef38438aa",
+      "docs/roles/WORKER.md": "a19cc4c8c13669886a271f94972cb65b1db0fc2146ea02d3259285d39461be69",
+      "package-lock.json": "4addd6ea24d4e11e5873d45e52da9527339c77d61dfce0cff7f28541aa6bf987",
+      "package.json": "642e1edcfb038b9b79b93359a7f4c69a94982bee784c0988517d020da7e7a1bb",
+      "public/app.js": "523e8272472e112b745c38445ad13bc8dfbd0584da1f79bb52edadcffcc6cf63",
+      "public/index.html": "259595153caceb00c88f2af95b90ded5c9fec779be27f080a6cda522aa032b49",
+      "public/style.css": "babfb12bac0346190923360b68e1aec47ec78d1ce0d8bdb7743b7de6aa6e6a6a",
+      "scripts/backup.mjs": "03e35c485d274004f5509538378d615302a1fa0c3734452bfe59843988259455",
+      "scripts/browser-test.mjs": "9a8f35818433b0a55bad2fbaf2eb436a062fe1a181424428d527c4ce22df7882",
+      "scripts/conductor.mjs": "3d338d84a4ec8a28a58d862e5b9a5f652f801e9e3ba1dd012d726ed36bc4a954",
+      "scripts/host-evidence.mjs": "84d73307f100604ba8b2cc6156d525ceda489303236d3b94cc401df13bce971e",
+      "scripts/install-host.mjs": "b348e003437ced7eccdb962a555e263d0fa7fbbadf01511f27f4f61768a4dce9",
+      "scripts/project-evidence.mjs": "7d47e516dbeb7427d8685dc5d96c8fa5bf278270e3d0cb83557159d8ad0982b5",
+      "scripts/repair-evidence.mjs": "56987c6a374c140370ebe49d7e50f9e207b275987125adc1542ce620b10bf4c8",
+      "scripts/session.mjs": "5eaf81595f901dbe49e936cf8bfc1d830ccc4fcefa80d125747589fabfc47020",
+      "scripts/source-evidence.mjs": "7747ade932dea2a9b05fd14da3ff31908a11bc4144531a051ce4db2716c9973a",
+      "src/adapters.mjs": "81feb08d7d6c20ff5d61e1580f98eea7e7b63b896f937de9c5c6281fd3aa1420",
+      "src/host-installation.mjs": "61d66be90b64cc350cabc2a7b203af43b2e248cbd8b9ad5d049929a4bac48232",
+      "src/host-runtime.mjs": "1889752e2d4f598f619bf30bfb9e899c3633c7cdf362b841d0edb513d5387077",
+      "src/kernel.mjs": "d76cf71a987a54de1af56f0c74a4b60688ad556e723058a2d0ddf197438e2c20",
+      "src/png.mjs": "4cc044503b36e3815da1f886785130a380fcd8a054bea826fea39e576fc99474",
+      "src/server.mjs": "d6c3229dd66ab3d76332a597989d3ffb62061687262623a385afef98e0e79072",
+      "test/backup.test.mjs": "f029944649833591dbd5afeb18f74b38084d0d10ecc7b49a6aa4b82ca6607cb7",
+      "test/helpers.mjs": "91a8be582ab24be2fac97a65af951cb844c1366fcbc9597c5d44ded03f7651b5",
+      "test/host-installation.test.mjs": "6a525a5f71f9b402d4e521b704f073c6dfaf42f34506522fa2fb01a1a682048c",
+      "test/http.test.mjs": "e0f6d4c5bb4ee7307962b4302dc9e8b1031c1c9c1936f86b253cc9bb94d2977c",
+      "test/kernel.test.mjs": "e44b179417e23cac6f5d54d4d6497c5f1d50e9c1f378475f4d3b3a26aabdccf8",
+      "test/project-fixture.mjs": "8af24a2321d556d7241be5a86f29e89f20bf749673a61f465075dec48ccb777b",
+      "test/repairs.test.mjs": "77f88b5d6a879d67d84b107adbb639604d2966c231ccfcaa5304ac23ac04a065"
+    }
+  },
+  "hostCapabilities": [
+    {
+      "capability": "Child task creation with requested LUNA model",
+      "status": "demonstrated-partial",
+      "evidence": "collaboration.spawn_agent accepted model gpt-6-luna and fork_turns none; actual task /root/native_capability_probe executed tools and returned challenge nonce",
+      "limit": "No independent exact-model attestation, stable project session provisioning or user-openable session URL"
+    },
+    {
+      "capability": "Same task follow-up and active parent return",
+      "status": "demonstrated",
+      "evidence": "Two followup_task turns of same task; collaboration.send_message and final return observed by active parent",
+      "limit": "Does not establish restart replacement, offline wake or completion in a finished originating interaction"
+    },
+    {
+      "capability": "Child shell and shared byte access",
+      "status": "demonstrated",
+      "evidence": {
+        "bytes": 1024,
+        "sha256": "f1305624e9a6d905a63dc5ec25bee729df52db7ce7ff2c25716dd91303e8a699"
+      },
+      "limit": "Synthetic 1024-byte control file, not image-tool output or assignment-bound native original delivery"
+    },
+    {
+      "capability": "Native image tool in child",
+      "status": "exposed-untested",
+      "evidence": "Child independently inventoried image_gen__imagegen metadata",
+      "limit": "No call made; actual tool invocation, output format and original-byte return untested"
+    },
+    {
+      "capability": "Connected operator browser presentation",
+      "status": "unavailable-in-this-context",
+      "evidence": "Browser access requires the originating browser context. Open ChatGPT in the browser with the connected extension and try again.",
+      "limit": "No operator browser presentation and no Butler-driven opening demonstrated; shipped Playwright browser checks are separate"
+    },
+    {
+      "capability": "Stable role session identity/link and local host adapter",
+      "status": "unavailable-in-exposed-interface",
+      "evidence": "Only canonical child task path surfaced; no user-openable URL or reusable private local driver supplied",
+      "limit": "Transient task identity cannot be claimed as operational project staff or a ready Conductor handoff"
+    },
+    {
+      "capability": "Actual BVE completion event to Conductor and submitted feedback wake",
+      "status": "untested",
+      "evidence": "Only active task callback routing tested; authored BVE event/ack/resume checks rerun separately",
+      "limit": "No demonstrated native push/automatic finished-chat wake. User must reopen the project Conductor and ask it to resume/read durable events when no verified push route exists; current cloud probe does not install that local route"
+    },
+    {
+      "capability": "Windows local pilot and new local installation",
+      "status": "not-accessed",
+      "evidence": "No connected local filesystem/runtime bridge in this execution",
+      "limit": "No runtime/schema/installation changes, no Windows verification"
+    }
+  ],
+  "canonicalScenarios": {
+    "A": {
+      "authoredRerun": "passed, exactly C1+B1+Gen1+Gen2+Gen3, three distinct jobs, Butler ready first, validated originals and checkpoint",
+      "native": "not-run"
+    },
+    "B": {
+      "authoredRerun": "passed, four existing selected references, zero new workers or image attempts",
+      "native": "not-run"
+    },
+    "C": {
+      "authoredRerun": "passed, R005 branches R002 preserving R003/R004; C2 retains B1/history and revokes C1 authority",
+      "native": "not-run"
+    },
+    "checkpointCount": 5,
+    "authoredImages": 5,
+    "nativeImageCalls": 0
+  },
+  "nativeProduction": {
+    "pendingBoundedRequestSuppliedForThisVerification": false,
+    "calls": 0,
+    "reason": "Capability discovery is not a production request. No fresh pending bounded production job supplied, and essential local session/browser/transport handoff remains unverified."
+  },
+  "originalByteTransport": {
+    "authoredPNGIntake": "passed in unchanged shipped project/repair/contract/browser checks",
+    "liveSharedByteControl": "passed with SHA256 above",
+    "nativeImageOriginalDelivery": "untested; no assigned native producer invoked",
+    "screenshotsUsedAsOriginals": false
+  },
+  "callback": {
+    "activeParentTaskMessage": "observed",
+    "sameTaskResumption": "observed",
+    "nativeRoundEventAcknowledgement": "not demonstrated",
+    "finishedOriginatingInteractionCompletion": "not demonstrated"
+  },
+  "defects": {
+    "reproducedSourceDefects": [],
+    "sourceCorrections": [],
+    "rollback": "No application/schema/runtime change. Existing accepted source and reviewed evidence head remain usable; new files are evidence-only."
+  },
+  "installationDiscovery": {
+    "aligned": false,
+    "remoteDefaultBranch": "main",
+    "readbackBaseCommit": "bdbe3579f77b46a433c4a386e7d1fde1aa8e2e4c",
+    "advertisedSource": "156c5e4e4c027ff515adaf556254460eea39c71f",
+    "approvedSourceForCandidateTesting": "2a5be1effa25e23bf57cbe999fb8a686c6f5a366",
+    "pinnedInstall": "https://github.com/adun-denton/bve-v2/blob/e7e3f4724b5cd971ee6f32a58f0df26ecea2e8eb/docs/INSTALL.md",
+    "changed": false,
+    "reason": "The handoff conditions public entry-point alignment on an explicit publishing decision; none was supplied. No automatic merge/default-branch update."
+  },
+  "preservation": {
+    "existingCheckoutCleanBeforeWork": true,
+    "windowsPilotModified": false,
+    "privateRootsModified": false,
+    "paidProviderCalls": 0,
+    "designAcceptanceRecords": 0,
+    "merge": false,
+    "stableRelease": false,
+    "prRemainsDraft": true
+  },
+  "remainingGates": [
+    "Supported local host attachment and model/tool access attestation",
+    "Real serial bounded production job under a pending explicit request, with original byte delivery and independent intake",
+    "Native A three-worker cycle once specifically authorized",
+    "Native comparison and branch/replacement against real project records",
+    "Butler browser presentation and native completion/feedback return or accurately demonstrated manual resume",
+    "Human visual usefulness and explicit design acceptance",
+    "Explicit public installation discovery publishing decision; PR remains draft"
+  ]
+}

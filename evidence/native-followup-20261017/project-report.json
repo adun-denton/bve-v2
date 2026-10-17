@@ -1,0 +1,1979 @@
+{
+  "format": "bve-project-examples-v1",
+  "sourceCommit": "2a5be1effa25e23bf57cbe999fb8a686c6f5a366",
+  "generatedAt": "2026-10-17T11:18:44.118Z",
+  "kind": "authored-fixture-sessions-and-images-not-native-integration",
+  "exampleA": {
+    "project": "Iman Website",
+    "projectCode": "P001",
+    "round": "R001",
+    "conductor": "C1",
+    "butler": "B1",
+    "workers": [
+      "Gen1",
+      "Gen2",
+      "Gen3"
+    ],
+    "expectedResults": 3,
+    "verifiedArtifacts": [
+      "fcd96f9b-2d31-4c03-ac08-5faa157580bf",
+      "19d7ea69-b145-480f-a83b-89851e52d265",
+      "8cfea4ab-5126-4476-8f6d-071b837af90c"
+    ],
+    "initialStaffCount": 5,
+    "supervisors": 0
+  },
+  "exampleB": {
+    "round": "R004",
+    "operation": "compare",
+    "expectedResults": 0,
+    "selectedArtifactIds": [
+      "fcd96f9b-2d31-4c03-ac08-5faa157580bf",
+      "19d7ea69-b145-480f-a83b-89851e52d265",
+      "8cfea4ab-5126-4476-8f6d-071b837af90c",
+      "994838f5-6975-484a-bef4-9868c3172b19"
+    ],
+    "newWorkers": 0,
+    "newGenerationInvocations": 0
+  },
+  "exampleC": {
+    "round": "R005",
+    "parentRound": "R002",
+    "preservedLaterRounds": [
+      "R003",
+      "R004"
+    ],
+    "replacementConductor": "C2",
+    "butlerRecreated": false,
+    "recoveredInstructions": [
+      {
+        "id": "c3a828b4-d173-4926-be96-fd5961792118",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "version": 1,
+        "text": "Develop Iman Website from the recorded brief; preserve original references and human judgments.",
+        "actor": {
+          "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+          "sessionId": "C1",
+          "role": "conductor",
+          "tier": "SOL"
+        },
+        "createdAt": "2026-10-17T11:18:42.988Z"
+      }
+    ],
+    "retainedWorkerIdentities": [
+      "Gen1",
+      "Gen2",
+      "Gen3",
+      "Gen4",
+      "Gen5"
+    ]
+  },
+  "roundIds": {
+    "R001": "6110a622-8d69-4afa-b183-fa2f74979925",
+    "R002": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+    "R003": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+    "R004": "536407c3-ef3d-432f-a947-b0a12205ce89",
+    "R005": "3155256e-468f-491e-af1f-62c9a45e873f"
+  },
+  "statements": [
+    {
+      "id": "335cd336-f9aa-4251-808b-f251768a350b",
+      "code": "S001",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": null,
+      "jobId": null,
+      "instructions": "Prepare the project folder and context; expect exactly 3 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "butlerInstructions": "Prepare the project folder and context; expect exactly 3 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "prompt": null,
+      "createdAt": "2026-10-17T11:18:43.002Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "6110a622-8d69-4afa-b183-fa2f74979925",
+        "code": "R001",
+        "parent": null,
+        "expectedResults": 3,
+        "operation": "generate"
+      },
+      "inputs": [],
+      "events": [
+        {
+          "id": "7054dff3-3d29-4390-aada-aed184fd3a58",
+          "statementId": "335cd336-f9aa-4251-808b-f251768a350b",
+          "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "ready",
+          "report": {
+            "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 3"
+          },
+          "createdAt": "2026-10-17T11:18:43.010Z"
+        },
+        {
+          "id": "25cc07f7-b3df-486d-b08b-de0eca13a01f",
+          "statementId": "335cd336-f9aa-4251-808b-f251768a350b",
+          "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "completed",
+          "report": {
+            "text": "All 3 expected originals accounted for by independent intake; concepts arranged for review."
+          },
+          "createdAt": "2026-10-17T11:18:43.390Z"
+        },
+        {
+          "id": "bcba4e4b-320e-4e34-9fd0-d3bf7ecb8500",
+          "statementId": "335cd336-f9aa-4251-808b-f251768a350b",
+          "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+            "sessionId": "C1",
+            "role": "conductor",
+            "tier": "SOL"
+          },
+          "kind": "disposition",
+          "report": {
+            "text": "Your three homepage concepts are ready in BVE. Open Iman Website to review them and submit your feedback."
+          },
+          "createdAt": "2026-10-17T11:18:43.410Z"
+        }
+      ],
+      "assignment": null,
+      "verifiedArtifactId": null,
+      "status": "disposition"
+    },
+    {
+      "id": "f7732f12-07da-43bb-af0e-084b0e1f9e19",
+      "code": "S002",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": {
+        "bindingId": "aec2c34d-8de5-4aaa-a8c0-3063a48fd193",
+        "sessionId": "Gen1",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "jobId": "e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+      "instructions": "Use one off-center circle in a muted botanical palette, spacious and calm.",
+      "butlerInstructions": "Prepare the project folder and context; expect exactly 3 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "prompt": "Use one off-center circle in a muted botanical palette, spacious and calm.",
+      "createdAt": "2026-10-17T11:18:43.030Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "6110a622-8d69-4afa-b183-fa2f74979925",
+        "code": "R001",
+        "parent": null,
+        "expectedResults": 3,
+        "operation": "generate"
+      },
+      "inputs": [],
+      "events": [
+        {
+          "id": "c185195c-f764-408b-aab9-2f8feb4d4e1a",
+          "statementId": "f7732f12-07da-43bb-af0e-084b0e1f9e19",
+          "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "aec2c34d-8de5-4aaa-a8c0-3063a48fd193",
+            "sessionId": "Gen1",
+            "role": "worker",
+            "tier": "LUNA"
+          },
+          "kind": "produced",
+          "report": {
+            "text": "Assigned executor returned success; independent intake determines artifact validity"
+          },
+          "createdAt": "2026-10-17T11:18:43.332Z"
+        }
+      ],
+      "assignment": {
+        "jobId": "e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+        "assignmentId": "bccca5f8-d084-4546-ad46-755c0b748d05",
+        "status": "succeeded"
+      },
+      "verifiedArtifactId": "8cfea4ab-5126-4476-8f6d-071b837af90c",
+      "status": "succeeded"
+    },
+    {
+      "id": "5beb126e-a46a-4388-8748-c9d9f8eee980",
+      "code": "S003",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": {
+        "bindingId": "1c663d57-a038-4a3f-b77a-987b4884e052",
+        "sessionId": "Gen2",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "jobId": "e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+      "instructions": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay.",
+      "butlerInstructions": "Prepare the project folder and context; expect exactly 3 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "prompt": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay.",
+      "createdAt": "2026-10-17T11:18:43.050Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "6110a622-8d69-4afa-b183-fa2f74979925",
+        "code": "R001",
+        "parent": null,
+        "expectedResults": 3,
+        "operation": "generate"
+      },
+      "inputs": [],
+      "events": [
+        {
+          "id": "79b292c1-8bd3-4ae8-8567-bc8d790f7a30",
+          "statementId": "5beb126e-a46a-4388-8748-c9d9f8eee980",
+          "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "1c663d57-a038-4a3f-b77a-987b4884e052",
+            "sessionId": "Gen2",
+            "role": "worker",
+            "tier": "LUNA"
+          },
+          "kind": "produced",
+          "report": {
+            "text": "Assigned executor returned success; independent intake determines artifact validity"
+          },
+          "createdAt": "2026-10-17T11:18:43.265Z"
+        }
+      ],
+      "assignment": {
+        "jobId": "e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+        "assignmentId": "e164222f-4cbc-42ec-93ce-ef5be14320e9",
+        "status": "succeeded"
+      },
+      "verifiedArtifactId": "19d7ea69-b145-480f-a83b-89851e52d265",
+      "status": "succeeded"
+    },
+    {
+      "id": "f4a1c260-f499-419b-85d1-877654a17d91",
+      "code": "S004",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": {
+        "bindingId": "7dec033d-b620-476b-b50e-b2a91327d905",
+        "sessionId": "Gen3",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "jobId": "aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+      "instructions": "Use a single centered diamond, cool pale blue field, precise and geometric.",
+      "butlerInstructions": "Prepare the project folder and context; expect exactly 3 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "prompt": "Use a single centered diamond, cool pale blue field, precise and geometric.",
+      "createdAt": "2026-10-17T11:18:43.076Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "6110a622-8d69-4afa-b183-fa2f74979925",
+        "code": "R001",
+        "parent": null,
+        "expectedResults": 3,
+        "operation": "generate"
+      },
+      "inputs": [],
+      "events": [
+        {
+          "id": "32b2e40f-8293-4eae-a65e-9b4fc8d7ffbb",
+          "statementId": "f4a1c260-f499-419b-85d1-877654a17d91",
+          "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "7dec033d-b620-476b-b50e-b2a91327d905",
+            "sessionId": "Gen3",
+            "role": "worker",
+            "tier": "LUNA"
+          },
+          "kind": "produced",
+          "report": {
+            "text": "Assigned executor returned success; independent intake determines artifact validity"
+          },
+          "createdAt": "2026-10-17T11:18:43.194Z"
+        }
+      ],
+      "assignment": {
+        "jobId": "aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+        "assignmentId": "bc9f2206-ebdd-436c-bb1d-132ae33aee2e",
+        "status": "succeeded"
+      },
+      "verifiedArtifactId": "fcd96f9b-2d31-4c03-ac08-5faa157580bf",
+      "status": "succeeded"
+    },
+    {
+      "id": "5910f783-d3ed-473d-93ac-9b3ccfd4c054",
+      "code": "S005",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": null,
+      "jobId": null,
+      "instructions": "Prepare the project folder and context; expect exactly 1 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "butlerInstructions": "Prepare the project folder and context; expect exactly 1 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "prompt": null,
+      "createdAt": "2026-10-17T11:18:43.431Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+        "code": "R002",
+        "parent": "6110a622-8d69-4afa-b183-fa2f74979925",
+        "expectedResults": 1,
+        "operation": "generate"
+      },
+      "inputs": [],
+      "events": [
+        {
+          "id": "a8fabeba-c22f-4f3a-95b4-4d5bbd3ddb71",
+          "statementId": "5910f783-d3ed-473d-93ac-9b3ccfd4c054",
+          "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "ready",
+          "report": {
+            "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 1"
+          },
+          "createdAt": "2026-10-17T11:18:43.440Z"
+        },
+        {
+          "id": "dffefaa7-ca96-4dca-b0f7-3125c1bd12b0",
+          "statementId": "5910f783-d3ed-473d-93ac-9b3ccfd4c054",
+          "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "completed",
+          "report": {
+            "text": "All 1 expected originals accounted for by independent intake; concepts arranged for review."
+          },
+          "createdAt": "2026-10-17T11:18:43.582Z"
+        },
+        {
+          "id": "e88ea324-8b22-4b91-9e85-cd9faf869f2f",
+          "statementId": "5910f783-d3ed-473d-93ac-9b3ccfd4c054",
+          "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+            "sessionId": "C1",
+            "role": "conductor",
+            "tier": "SOL"
+          },
+          "kind": "disposition",
+          "report": {
+            "text": "The recorded follow-up direction is ready in BVE."
+          },
+          "createdAt": "2026-10-17T11:18:43.640Z"
+        }
+      ],
+      "assignment": null,
+      "verifiedArtifactId": null,
+      "status": "disposition"
+    },
+    {
+      "id": "cba00e94-48cd-4976-9157-02706a326b89",
+      "code": "S006",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": {
+        "bindingId": "050a4ec2-6adb-46d6-b0fc-54a82e3f2b8c",
+        "sessionId": "Gen4",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "jobId": "b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+      "instructions": "Use one off-center circle in a muted botanical palette, spacious and calm.",
+      "butlerInstructions": "Prepare the project folder and context; expect exactly 1 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "prompt": "Use one off-center circle in a muted botanical palette, spacious and calm.",
+      "createdAt": "2026-10-17T11:18:43.465Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+        "code": "R002",
+        "parent": "6110a622-8d69-4afa-b183-fa2f74979925",
+        "expectedResults": 1,
+        "operation": "generate"
+      },
+      "inputs": [],
+      "events": [
+        {
+          "id": "65cc3e51-81ad-411c-9304-8e9589b1b5f6",
+          "statementId": "cba00e94-48cd-4976-9157-02706a326b89",
+          "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "050a4ec2-6adb-46d6-b0fc-54a82e3f2b8c",
+            "sessionId": "Gen4",
+            "role": "worker",
+            "tier": "LUNA"
+          },
+          "kind": "produced",
+          "report": {
+            "text": "Assigned executor returned success; independent intake determines artifact validity"
+          },
+          "createdAt": "2026-10-17T11:18:43.545Z"
+        }
+      ],
+      "assignment": {
+        "jobId": "b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+        "assignmentId": "8c596b37-269e-43c1-990c-91daa2406a7a",
+        "status": "succeeded"
+      },
+      "verifiedArtifactId": "8d6a43bd-27a3-466b-bd8a-94f57363dc65",
+      "status": "succeeded"
+    },
+    {
+      "id": "773a6ca0-95c0-4381-af10-1946d4ce4460",
+      "code": "S007",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": null,
+      "jobId": null,
+      "instructions": "Prepare the project folder and context; expect exactly 1 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "butlerInstructions": "Prepare the project folder and context; expect exactly 1 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "prompt": null,
+      "createdAt": "2026-10-17T11:18:43.656Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+        "code": "R003",
+        "parent": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+        "expectedResults": 1,
+        "operation": "generate"
+      },
+      "inputs": [],
+      "events": [
+        {
+          "id": "2b90c707-1266-4a6f-a24a-816e726c5a1c",
+          "statementId": "773a6ca0-95c0-4381-af10-1946d4ce4460",
+          "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "ready",
+          "report": {
+            "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 1"
+          },
+          "createdAt": "2026-10-17T11:18:43.678Z"
+        },
+        {
+          "id": "a2a12558-ef74-43ab-9d07-5dcf4a94893b",
+          "statementId": "773a6ca0-95c0-4381-af10-1946d4ce4460",
+          "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "completed",
+          "report": {
+            "text": "All 1 expected originals accounted for by independent intake; concepts arranged for review."
+          },
+          "createdAt": "2026-10-17T11:18:43.878Z"
+        },
+        {
+          "id": "9b3cb16b-f69c-4c09-8251-ca62b51775ce",
+          "statementId": "773a6ca0-95c0-4381-af10-1946d4ce4460",
+          "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+            "sessionId": "C1",
+            "role": "conductor",
+            "tier": "SOL"
+          },
+          "kind": "disposition",
+          "report": {
+            "text": "The recorded follow-up direction is ready in BVE."
+          },
+          "createdAt": "2026-10-17T11:18:43.928Z"
+        }
+      ],
+      "assignment": null,
+      "verifiedArtifactId": null,
+      "status": "disposition"
+    },
+    {
+      "id": "e84a9110-e604-409e-9149-a816fbc14ff2",
+      "code": "S008",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": {
+        "bindingId": "1bb00b92-a39a-4399-95d7-09c481aefccc",
+        "sessionId": "Gen5",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "jobId": "c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+      "instructions": "Use one off-center circle in a muted botanical palette, spacious and calm.",
+      "butlerInstructions": "Prepare the project folder and context; expect exactly 1 production jobs; receive original images and completed statements, coordinate independent verification, present BVE review, and return the completed round to C1.",
+      "prompt": "Use one off-center circle in a muted botanical palette, spacious and calm.",
+      "createdAt": "2026-10-17T11:18:43.767Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+        "code": "R003",
+        "parent": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+        "expectedResults": 1,
+        "operation": "generate"
+      },
+      "inputs": [],
+      "events": [
+        {
+          "id": "3720930c-3b8b-4f21-9659-743df1ef3565",
+          "statementId": "e84a9110-e604-409e-9149-a816fbc14ff2",
+          "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "1bb00b92-a39a-4399-95d7-09c481aefccc",
+            "sessionId": "Gen5",
+            "role": "worker",
+            "tier": "LUNA"
+          },
+          "kind": "produced",
+          "report": {
+            "text": "Assigned executor returned success; independent intake determines artifact validity"
+          },
+          "createdAt": "2026-10-17T11:18:43.856Z"
+        }
+      ],
+      "assignment": {
+        "jobId": "c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+        "assignmentId": "54545a02-cf04-4f9b-817c-28dc0af6400f",
+        "status": "succeeded"
+      },
+      "verifiedArtifactId": "994838f5-6975-484a-bef4-9868c3172b19",
+      "status": "succeeded"
+    },
+    {
+      "id": "79e1847c-bb1d-401f-9de6-555be3d10724",
+      "code": "S009",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": null,
+      "jobId": null,
+      "instructions": "Show me the original three designs next to the latest selected direction. Arrange them so I can compare how the design has evolved.",
+      "butlerInstructions": "Show me the original three designs next to the latest selected direction. Arrange them so I can compare how the design has evolved.",
+      "prompt": null,
+      "createdAt": "2026-10-17T11:18:43.956Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "536407c3-ef3d-432f-a947-b0a12205ce89",
+        "code": "R004",
+        "parent": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+        "expectedResults": 0,
+        "operation": "compare"
+      },
+      "inputs": [
+        {
+          "artifactId": "fcd96f9b-2d31-4c03-ac08-5faa157580bf",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "19d7ea69-b145-480f-a83b-89851e52d265",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "8cfea4ab-5126-4476-8f6d-071b837af90c",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "994838f5-6975-484a-bef4-9868c3172b19",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "309a5058-1ab9-4105-b34d-be04a124509e",
+          "jobId": "c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "events": [
+        {
+          "id": "30b16a41-395b-48d7-a445-6c40edb515fd",
+          "statementId": "79e1847c-bb1d-401f-9de6-555be3d10724",
+          "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "ready",
+          "report": {
+            "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 0"
+          },
+          "createdAt": "2026-10-17T11:18:43.973Z"
+        },
+        {
+          "id": "3bbe2b5d-2494-4834-bdd6-6f8805fcd702",
+          "statementId": "79e1847c-bb1d-401f-9de6-555be3d10724",
+          "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "completed",
+          "report": {
+            "text": "Existing recorded originals arranged without regeneration."
+          },
+          "createdAt": "2026-10-17T11:18:44.000Z"
+        },
+        {
+          "id": "6ebfc9e5-2487-44b7-ba63-fab5fbdbc912",
+          "statementId": "79e1847c-bb1d-401f-9de6-555be3d10724",
+          "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+            "sessionId": "C1",
+            "role": "conductor",
+            "tier": "SOL"
+          },
+          "kind": "disposition",
+          "report": {
+            "text": "The comparison of the original three designs and latest selected direction is ready."
+          },
+          "createdAt": "2026-10-17T11:18:44.028Z"
+        }
+      ],
+      "assignment": null,
+      "verifiedArtifactId": null,
+      "status": "disposition"
+    },
+    {
+      "id": "efda12ca-ecb7-4e58-83cf-fa6d06226e4c",
+      "code": "S010",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+      "conductor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "butler": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "worker": null,
+      "jobId": null,
+      "instructions": "Let's return to the second design round and develop a different direction from there.",
+      "butlerInstructions": "Let's return to the second design round and develop a different direction from there.",
+      "prompt": null,
+      "createdAt": "2026-10-17T11:18:44.033Z",
+      "project": {
+        "id": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "name": "Iman Website",
+        "folder": "/tmp/bve-v2-test-sdB7lW/private/Projects/f575dd68-7010-4557-9be5-46cc5a4378f4"
+      },
+      "round": {
+        "id": "3155256e-468f-491e-af1f-62c9a45e873f",
+        "code": "R005",
+        "parent": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+        "expectedResults": 0,
+        "operation": "branch"
+      },
+      "inputs": [
+        {
+          "artifactId": "8d6a43bd-27a3-466b-bd8a-94f57363dc65",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "bd262792-9123-43ad-b539-e28363b3d739",
+          "jobId": "b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "events": [
+        {
+          "id": "50f21842-3cc4-42ab-8ee6-8e8a2710801e",
+          "statementId": "efda12ca-ecb7-4e58-83cf-fa6d06226e4c",
+          "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "ready",
+          "report": {
+            "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 0"
+          },
+          "createdAt": "2026-10-17T11:18:44.061Z"
+        },
+        {
+          "id": "969e036c-bc55-4b37-a22f-be95ec081337",
+          "statementId": "efda12ca-ecb7-4e58-83cf-fa6d06226e4c",
+          "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+            "sessionId": "B1",
+            "role": "butler",
+            "tier": "LUNA"
+          },
+          "kind": "completed",
+          "report": {
+            "text": "Branch recorded; later rounds preserved; no generation authorized by this operation."
+          },
+          "createdAt": "2026-10-17T11:18:44.075Z"
+        },
+        {
+          "id": "4cd94a2f-097c-4738-b622-f02fd56263ed",
+          "statementId": "efda12ca-ecb7-4e58-83cf-fa6d06226e4c",
+          "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "actor": {
+            "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+            "sessionId": "C1",
+            "role": "conductor",
+            "tier": "SOL"
+          },
+          "kind": "disposition",
+          "report": {
+            "text": "The branch from R002 is recorded; later history remains available."
+          },
+          "createdAt": "2026-10-17T11:18:44.108Z"
+        }
+      ],
+      "assignment": null,
+      "verifiedArtifactId": null,
+      "status": "disposition"
+    }
+  ],
+  "statementEvents": [
+    {
+      "id": "7054dff3-3d29-4390-aada-aed184fd3a58",
+      "statementId": "335cd336-f9aa-4251-808b-f251768a350b",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "ready",
+      "report": {
+        "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 3"
+      },
+      "createdAt": "2026-10-17T11:18:43.010Z"
+    },
+    {
+      "id": "32b2e40f-8293-4eae-a65e-9b4fc8d7ffbb",
+      "statementId": "f4a1c260-f499-419b-85d1-877654a17d91",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "7dec033d-b620-476b-b50e-b2a91327d905",
+        "sessionId": "Gen3",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "kind": "produced",
+      "report": {
+        "text": "Assigned executor returned success; independent intake determines artifact validity"
+      },
+      "createdAt": "2026-10-17T11:18:43.194Z"
+    },
+    {
+      "id": "79b292c1-8bd3-4ae8-8567-bc8d790f7a30",
+      "statementId": "5beb126e-a46a-4388-8748-c9d9f8eee980",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "1c663d57-a038-4a3f-b77a-987b4884e052",
+        "sessionId": "Gen2",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "kind": "produced",
+      "report": {
+        "text": "Assigned executor returned success; independent intake determines artifact validity"
+      },
+      "createdAt": "2026-10-17T11:18:43.265Z"
+    },
+    {
+      "id": "c185195c-f764-408b-aab9-2f8feb4d4e1a",
+      "statementId": "f7732f12-07da-43bb-af0e-084b0e1f9e19",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "aec2c34d-8de5-4aaa-a8c0-3063a48fd193",
+        "sessionId": "Gen1",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "kind": "produced",
+      "report": {
+        "text": "Assigned executor returned success; independent intake determines artifact validity"
+      },
+      "createdAt": "2026-10-17T11:18:43.332Z"
+    },
+    {
+      "id": "25cc07f7-b3df-486d-b08b-de0eca13a01f",
+      "statementId": "335cd336-f9aa-4251-808b-f251768a350b",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "completed",
+      "report": {
+        "text": "All 3 expected originals accounted for by independent intake; concepts arranged for review."
+      },
+      "createdAt": "2026-10-17T11:18:43.390Z"
+    },
+    {
+      "id": "bcba4e4b-320e-4e34-9fd0-d3bf7ecb8500",
+      "statementId": "335cd336-f9aa-4251-808b-f251768a350b",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "kind": "disposition",
+      "report": {
+        "text": "Your three homepage concepts are ready in BVE. Open Iman Website to review them and submit your feedback."
+      },
+      "createdAt": "2026-10-17T11:18:43.410Z"
+    },
+    {
+      "id": "a8fabeba-c22f-4f3a-95b4-4d5bbd3ddb71",
+      "statementId": "5910f783-d3ed-473d-93ac-9b3ccfd4c054",
+      "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "ready",
+      "report": {
+        "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 1"
+      },
+      "createdAt": "2026-10-17T11:18:43.440Z"
+    },
+    {
+      "id": "65cc3e51-81ad-411c-9304-8e9589b1b5f6",
+      "statementId": "cba00e94-48cd-4976-9157-02706a326b89",
+      "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "050a4ec2-6adb-46d6-b0fc-54a82e3f2b8c",
+        "sessionId": "Gen4",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "kind": "produced",
+      "report": {
+        "text": "Assigned executor returned success; independent intake determines artifact validity"
+      },
+      "createdAt": "2026-10-17T11:18:43.545Z"
+    },
+    {
+      "id": "dffefaa7-ca96-4dca-b0f7-3125c1bd12b0",
+      "statementId": "5910f783-d3ed-473d-93ac-9b3ccfd4c054",
+      "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "completed",
+      "report": {
+        "text": "All 1 expected originals accounted for by independent intake; concepts arranged for review."
+      },
+      "createdAt": "2026-10-17T11:18:43.582Z"
+    },
+    {
+      "id": "e88ea324-8b22-4b91-9e85-cd9faf869f2f",
+      "statementId": "5910f783-d3ed-473d-93ac-9b3ccfd4c054",
+      "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "kind": "disposition",
+      "report": {
+        "text": "The recorded follow-up direction is ready in BVE."
+      },
+      "createdAt": "2026-10-17T11:18:43.640Z"
+    },
+    {
+      "id": "2b90c707-1266-4a6f-a24a-816e726c5a1c",
+      "statementId": "773a6ca0-95c0-4381-af10-1946d4ce4460",
+      "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "ready",
+      "report": {
+        "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 1"
+      },
+      "createdAt": "2026-10-17T11:18:43.678Z"
+    },
+    {
+      "id": "3720930c-3b8b-4f21-9659-743df1ef3565",
+      "statementId": "e84a9110-e604-409e-9149-a816fbc14ff2",
+      "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "1bb00b92-a39a-4399-95d7-09c481aefccc",
+        "sessionId": "Gen5",
+        "role": "worker",
+        "tier": "LUNA"
+      },
+      "kind": "produced",
+      "report": {
+        "text": "Assigned executor returned success; independent intake determines artifact validity"
+      },
+      "createdAt": "2026-10-17T11:18:43.856Z"
+    },
+    {
+      "id": "a2a12558-ef74-43ab-9d07-5dcf4a94893b",
+      "statementId": "773a6ca0-95c0-4381-af10-1946d4ce4460",
+      "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "completed",
+      "report": {
+        "text": "All 1 expected originals accounted for by independent intake; concepts arranged for review."
+      },
+      "createdAt": "2026-10-17T11:18:43.878Z"
+    },
+    {
+      "id": "9b3cb16b-f69c-4c09-8251-ca62b51775ce",
+      "statementId": "773a6ca0-95c0-4381-af10-1946d4ce4460",
+      "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "kind": "disposition",
+      "report": {
+        "text": "The recorded follow-up direction is ready in BVE."
+      },
+      "createdAt": "2026-10-17T11:18:43.928Z"
+    },
+    {
+      "id": "30b16a41-395b-48d7-a445-6c40edb515fd",
+      "statementId": "79e1847c-bb1d-401f-9de6-555be3d10724",
+      "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "ready",
+      "report": {
+        "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 0"
+      },
+      "createdAt": "2026-10-17T11:18:43.973Z"
+    },
+    {
+      "id": "3bbe2b5d-2494-4834-bdd6-6f8805fcd702",
+      "statementId": "79e1847c-bb1d-401f-9de6-555be3d10724",
+      "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "completed",
+      "report": {
+        "text": "Existing recorded originals arranged without regeneration."
+      },
+      "createdAt": "2026-10-17T11:18:44.000Z"
+    },
+    {
+      "id": "6ebfc9e5-2487-44b7-ba63-fab5fbdbc912",
+      "statementId": "79e1847c-bb1d-401f-9de6-555be3d10724",
+      "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "kind": "disposition",
+      "report": {
+        "text": "The comparison of the original three designs and latest selected direction is ready."
+      },
+      "createdAt": "2026-10-17T11:18:44.028Z"
+    },
+    {
+      "id": "50f21842-3cc4-42ab-8ee6-8e8a2710801e",
+      "statementId": "efda12ca-ecb7-4e58-83cf-fa6d06226e4c",
+      "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "ready",
+      "report": {
+        "text": "B1 verified project and round identity, prepared folder/context and knows expected results: 0"
+      },
+      "createdAt": "2026-10-17T11:18:44.061Z"
+    },
+    {
+      "id": "969e036c-bc55-4b37-a22f-be95ec081337",
+      "statementId": "efda12ca-ecb7-4e58-83cf-fa6d06226e4c",
+      "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "kind": "completed",
+      "report": {
+        "text": "Branch recorded; later rounds preserved; no generation authorized by this operation."
+      },
+      "createdAt": "2026-10-17T11:18:44.075Z"
+    },
+    {
+      "id": "4cd94a2f-097c-4738-b622-f02fd56263ed",
+      "statementId": "efda12ca-ecb7-4e58-83cf-fa6d06226e4c",
+      "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "actor": {
+        "bindingId": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+        "sessionId": "C1",
+        "role": "conductor",
+        "tier": "SOL"
+      },
+      "kind": "disposition",
+      "report": {
+        "text": "The branch from R002 is recorded; later history remains available."
+      },
+      "createdAt": "2026-10-17T11:18:44.108Z"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "8369f982-2b7f-45f9-a507-6aefe410347a",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "parentRoundId": null,
+      "state": "completed",
+      "operation": "generate",
+      "expectedResults": 3,
+      "artifacts": [
+        {
+          "artifactId": "fcd96f9b-2d31-4c03-ac08-5faa157580bf",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "19d7ea69-b145-480f-a83b-89851e52d265",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "8cfea4ab-5126-4476-8f6d-071b837af90c",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "statementIds": [
+        "335cd336-f9aa-4251-808b-f251768a350b",
+        "f7732f12-07da-43bb-af0e-084b0e1f9e19",
+        "5beb126e-a46a-4388-8748-c9d9f8eee980",
+        "f4a1c260-f499-419b-85d1-877654a17d91"
+      ],
+      "statementEventIds": [
+        "7054dff3-3d29-4390-aada-aed184fd3a58",
+        "32b2e40f-8293-4eae-a65e-9b4fc8d7ffbb",
+        "79b292c1-8bd3-4ae8-8567-bc8d790f7a30",
+        "c185195c-f764-408b-aab9-2f8feb4d4e1a",
+        "25cc07f7-b3df-486d-b08b-de0eca13a01f"
+      ],
+      "presentationId": "5c35bd48-bde6-4189-a4ab-1db669e7cd6d",
+      "feedbackIds": [],
+      "committedAt": "2026-10-17T11:18:43.391Z"
+    },
+    {
+      "id": "0afd9d82-8858-4f0b-882f-368a71fc0842",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "parentRoundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "state": "completed",
+      "operation": "generate",
+      "expectedResults": 1,
+      "artifacts": [
+        {
+          "artifactId": "8d6a43bd-27a3-466b-bd8a-94f57363dc65",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "bd262792-9123-43ad-b539-e28363b3d739",
+          "jobId": "b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "statementIds": [
+        "5910f783-d3ed-473d-93ac-9b3ccfd4c054",
+        "cba00e94-48cd-4976-9157-02706a326b89"
+      ],
+      "statementEventIds": [
+        "a8fabeba-c22f-4f3a-95b4-4d5bbd3ddb71",
+        "65cc3e51-81ad-411c-9304-8e9589b1b5f6",
+        "dffefaa7-ca96-4dca-b0f7-3125c1bd12b0"
+      ],
+      "presentationId": "fd35b7d5-c1a0-4d5b-a214-7436d0bb31dc",
+      "feedbackIds": [],
+      "committedAt": "2026-10-17T11:18:43.592Z"
+    },
+    {
+      "id": "9762d882-5645-456d-a584-a70ddb2cd928",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "parentRoundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "state": "completed",
+      "operation": "generate",
+      "expectedResults": 1,
+      "artifacts": [
+        {
+          "artifactId": "994838f5-6975-484a-bef4-9868c3172b19",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "309a5058-1ab9-4105-b34d-be04a124509e",
+          "jobId": "c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "statementIds": [
+        "773a6ca0-95c0-4381-af10-1946d4ce4460",
+        "e84a9110-e604-409e-9149-a816fbc14ff2"
+      ],
+      "statementEventIds": [
+        "2b90c707-1266-4a6f-a24a-816e726c5a1c",
+        "3720930c-3b8b-4f21-9659-743df1ef3565",
+        "a2a12558-ef74-43ab-9d07-5dcf4a94893b"
+      ],
+      "presentationId": "9de716a8-5088-44cf-a805-fef9eaf25c98",
+      "feedbackIds": [],
+      "committedAt": "2026-10-17T11:18:43.889Z"
+    },
+    {
+      "id": "7bfec3e0-2edb-432f-8759-e3391cb4df58",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+      "parentRoundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "state": "completed",
+      "operation": "compare",
+      "expectedResults": 0,
+      "artifacts": [
+        {
+          "artifactId": "fcd96f9b-2d31-4c03-ac08-5faa157580bf",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "19d7ea69-b145-480f-a83b-89851e52d265",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "8cfea4ab-5126-4476-8f6d-071b837af90c",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "994838f5-6975-484a-bef4-9868c3172b19",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "309a5058-1ab9-4105-b34d-be04a124509e",
+          "jobId": "c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "statementIds": [
+        "79e1847c-bb1d-401f-9de6-555be3d10724"
+      ],
+      "statementEventIds": [
+        "30b16a41-395b-48d7-a445-6c40edb515fd",
+        "3bbe2b5d-2494-4834-bdd6-6f8805fcd702"
+      ],
+      "presentationId": "9b68a111-19d3-4461-afff-d2da55119187",
+      "feedbackIds": [],
+      "committedAt": "2026-10-17T11:18:44.002Z"
+    },
+    {
+      "id": "7d8db466-3503-4d40-a708-01f000810ac1",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+      "parentRoundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "state": "completed",
+      "operation": "branch",
+      "expectedResults": 0,
+      "artifacts": [
+        {
+          "artifactId": "8d6a43bd-27a3-466b-bd8a-94f57363dc65",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "bd262792-9123-43ad-b539-e28363b3d739",
+          "jobId": "b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "statementIds": [
+        "efda12ca-ecb7-4e58-83cf-fa6d06226e4c"
+      ],
+      "statementEventIds": [
+        "50f21842-3cc4-42ab-8ee6-8e8a2710801e",
+        "969e036c-bc55-4b37-a22f-be95ec081337"
+      ],
+      "presentationId": "d92832f0-db44-4d1e-84bb-bafad8129353",
+      "feedbackIds": [],
+      "committedAt": "2026-10-17T11:18:44.077Z"
+    }
+  ],
+  "presentations": [
+    {
+      "id": "5c35bd48-bde6-4189-a4ab-1db669e7cd6d",
+      "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "title": "R001 · Iman Website concepts",
+      "references": [
+        {
+          "artifactId": "fcd96f9b-2d31-4c03-ac08-5faa157580bf",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "19d7ea69-b145-480f-a83b-89851e52d265",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "8cfea4ab-5126-4476-8f6d-071b837af90c",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "createdAt": "2026-10-17T11:18:43.386Z"
+    },
+    {
+      "id": "fd35b7d5-c1a0-4d5b-a214-7436d0bb31dc",
+      "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "title": "R002 · Iman Website concepts",
+      "references": [
+        {
+          "artifactId": "8d6a43bd-27a3-466b-bd8a-94f57363dc65",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "bd262792-9123-43ad-b539-e28363b3d739",
+          "jobId": "b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "createdAt": "2026-10-17T11:18:43.551Z"
+    },
+    {
+      "id": "9de716a8-5088-44cf-a805-fef9eaf25c98",
+      "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "title": "R003 · Iman Website concepts",
+      "references": [
+        {
+          "artifactId": "994838f5-6975-484a-bef4-9868c3172b19",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "309a5058-1ab9-4105-b34d-be04a124509e",
+          "jobId": "c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "createdAt": "2026-10-17T11:18:43.862Z"
+    },
+    {
+      "id": "9b68a111-19d3-4461-afff-d2da55119187",
+      "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "title": "Original three designs and latest selected direction",
+      "references": [
+        {
+          "artifactId": "fcd96f9b-2d31-4c03-ac08-5faa157580bf",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+          "version": 1,
+          "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "19d7ea69-b145-480f-a83b-89851e52d265",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+          "version": 1,
+          "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "8cfea4ab-5126-4476-8f6d-071b837af90c",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "7564946b-b81f-49aa-b454-693cdd74cb5e",
+          "jobId": "e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        },
+        {
+          "artifactId": "994838f5-6975-484a-bef4-9868c3172b19",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "309a5058-1ab9-4105-b34d-be04a124509e",
+          "jobId": "c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "createdAt": "2026-10-17T11:18:43.995Z"
+    },
+    {
+      "id": "d92832f0-db44-4d1e-84bb-bafad8129353",
+      "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "title": "Branch from the second design round",
+      "references": [
+        {
+          "artifactId": "8d6a43bd-27a3-466b-bd8a-94f57363dc65",
+          "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+          "iterationId": "bd262792-9123-43ad-b539-e28363b3d739",
+          "jobId": "b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+          "version": 1,
+          "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
+          "width": 900,
+          "height": 650,
+          "role": "Recorded comparison reference",
+          "regions": []
+        }
+      ],
+      "actor": {
+        "bindingId": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+        "sessionId": "B1",
+        "role": "butler",
+        "tier": "LUNA"
+      },
+      "createdAt": "2026-10-17T11:18:44.069Z"
+    }
+  ],
+  "roster": [
+    {
+      "id": "72bcbc81-6cf7-4c55-81ee-fa3debe7ee79",
+      "role": "conductor",
+      "tier": "SOL",
+      "sessionId": "C1",
+      "sessionUrl": null,
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "jobId": null,
+      "hostReceipt": "Authored fixture chat C1",
+      "boundAt": "2026-10-17T11:18:42.985Z",
+      "hello": {
+        "id": "70418b4f-33b0-4486-a1ac-e9ea274d7dbf",
+        "sessionId": "C1",
+        "role": "conductor",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "readAt": "2026-10-17T11:18:44.093Z"
+      },
+      "revokedAt": "2026-10-17T11:18:44.110Z",
+      "active": false
+    },
+    {
+      "id": "6f2e6cd0-38b9-4464-ace4-75a4282c3ed3",
+      "role": "butler",
+      "tier": "LUNA",
+      "sessionId": "B1",
+      "sessionUrl": null,
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "jobId": null,
+      "hostReceipt": "Authored fixture provisioning f575dd68-7010-4557-9be5-46cc5a4378f4:butler:primary",
+      "boundAt": "2026-10-17T11:18:42.996Z",
+      "hello": {
+        "id": "cc92c2cb-1e2d-49d6-ae7d-8f4b04237cdf",
+        "sessionId": "B1",
+        "role": "butler",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "readAt": "2026-10-17T11:18:44.085Z"
+      },
+      "revokedAt": null,
+      "active": true
+    },
+    {
+      "id": "aec2c34d-8de5-4aaa-a8c0-3063a48fd193",
+      "role": "worker",
+      "tier": "LUNA",
+      "sessionId": "Gen1",
+      "sessionUrl": null,
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "jobId": "e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+      "hostReceipt": "Authored fixture provisioning f575dd68-7010-4557-9be5-46cc5a4378f4:worker:e2c39564-cc99-4ce2-aabf-d03cf050cc5c",
+      "boundAt": "2026-10-17T11:18:43.024Z",
+      "hello": {
+        "id": "233192d4-01ba-49c4-b7f0-b9c05cce104a",
+        "sessionId": "Gen1",
+        "role": "worker",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "readAt": "2026-10-17T11:18:43.270Z"
+      },
+      "revokedAt": "2026-10-17T11:18:43.416Z",
+      "active": false
+    },
+    {
+      "id": "1c663d57-a038-4a3f-b77a-987b4884e052",
+      "role": "worker",
+      "tier": "LUNA",
+      "sessionId": "Gen2",
+      "sessionUrl": null,
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "jobId": "e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+      "hostReceipt": "Authored fixture provisioning f575dd68-7010-4557-9be5-46cc5a4378f4:worker:e4aee1a0-0b91-4ea4-8ba5-57dfa5faf517",
+      "boundAt": "2026-10-17T11:18:43.045Z",
+      "hello": {
+        "id": "a96cdcf7-6a71-4e39-a0b2-026f460303de",
+        "sessionId": "Gen2",
+        "role": "worker",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "readAt": "2026-10-17T11:18:43.199Z"
+      },
+      "revokedAt": "2026-10-17T11:18:43.419Z",
+      "active": false
+    },
+    {
+      "id": "7dec033d-b620-476b-b50e-b2a91327d905",
+      "role": "worker",
+      "tier": "LUNA",
+      "sessionId": "Gen3",
+      "sessionUrl": null,
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "jobId": "aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+      "hostReceipt": "Authored fixture provisioning f575dd68-7010-4557-9be5-46cc5a4378f4:worker:aa2d834f-4d9a-4ab9-9c48-655bad85dd9e",
+      "boundAt": "2026-10-17T11:18:43.070Z",
+      "hello": {
+        "id": "08294caf-162d-4c20-a6c5-7c65d003c50c",
+        "sessionId": "Gen3",
+        "role": "worker",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "readAt": "2026-10-17T11:18:43.093Z"
+      },
+      "revokedAt": "2026-10-17T11:18:43.424Z",
+      "active": false
+    },
+    {
+      "id": "050a4ec2-6adb-46d6-b0fc-54a82e3f2b8c",
+      "role": "worker",
+      "tier": "LUNA",
+      "sessionId": "Gen4",
+      "sessionUrl": null,
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "jobId": "b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+      "hostReceipt": "Authored fixture provisioning f575dd68-7010-4557-9be5-46cc5a4378f4:worker:b81a45c9-30a1-4d1f-bd34-c8a85f7b81bf",
+      "boundAt": "2026-10-17T11:18:43.458Z",
+      "hello": {
+        "id": "95844e11-c9fb-43f8-80cc-9a38361ac288",
+        "sessionId": "Gen4",
+        "role": "worker",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "readAt": "2026-10-17T11:18:43.494Z"
+      },
+      "revokedAt": "2026-10-17T11:18:43.645Z",
+      "active": false
+    },
+    {
+      "id": "1bb00b92-a39a-4399-95d7-09c481aefccc",
+      "role": "worker",
+      "tier": "LUNA",
+      "sessionId": "Gen5",
+      "sessionUrl": null,
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "jobId": "c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+      "hostReceipt": "Authored fixture provisioning f575dd68-7010-4557-9be5-46cc5a4378f4:worker:c126770e-48e5-4b0d-9cfb-797f8107ed1b",
+      "boundAt": "2026-10-17T11:18:43.702Z",
+      "hello": {
+        "id": "e8ffaf3d-5cbb-4732-9a8d-f98a08fc67dc",
+        "sessionId": "Gen5",
+        "role": "worker",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "readAt": "2026-10-17T11:18:43.806Z"
+      },
+      "revokedAt": "2026-10-17T11:18:43.948Z",
+      "active": false
+    },
+    {
+      "id": "4ba4538e-aaa2-4e5d-a465-a9ed0632cb39",
+      "role": "conductor",
+      "tier": "SOL",
+      "sessionId": "C2",
+      "sessionUrl": null,
+      "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+      "jobId": null,
+      "hostReceipt": "Authored fixture chat C2",
+      "boundAt": "2026-10-17T11:18:44.110Z",
+      "hello": {
+        "id": "6bdc29cf-fcb9-4598-93b1-5cd8f4e74d62",
+        "sessionId": "C2",
+        "role": "conductor",
+        "projectId": "f575dd68-7010-4557-9be5-46cc5a4378f4",
+        "readAt": "2026-10-17T11:18:44.116Z"
+      },
+      "revokedAt": null,
+      "active": true
+    }
+  ],
+  "statementReceipts": [
+    {
+      "kind": "simulated",
+      "receivedBy": "B1",
+      "statementId": "335cd336-f9aa-4251-808b-f251768a350b"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "Gen1",
+      "statementId": "f7732f12-07da-43bb-af0e-084b0e1f9e19"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "Gen2",
+      "statementId": "5beb126e-a46a-4388-8748-c9d9f8eee980"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "Gen3",
+      "statementId": "f4a1c260-f499-419b-85d1-877654a17d91"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "B1",
+      "statementId": "5910f783-d3ed-473d-93ac-9b3ccfd4c054"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "Gen4",
+      "statementId": "cba00e94-48cd-4976-9157-02706a326b89"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "B1",
+      "statementId": "773a6ca0-95c0-4381-af10-1946d4ce4460"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "Gen5",
+      "statementId": "e84a9110-e604-409e-9149-a816fbc14ff2"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "B1",
+      "statementId": "79e1847c-bb1d-401f-9de6-555be3d10724"
+    },
+    {
+      "kind": "simulated",
+      "receivedBy": "B1",
+      "statementId": "efda12ca-ecb7-4e58-83cf-fa6d06226e4c"
+    }
+  ],
+  "completion": {
+    "mechanism": "authored fixture callback resumes exact Conductor and acknowledges durable round event",
+    "receipts": [
+      {
+        "sessionId": "C1",
+        "eventId": "6110a622-8d69-4afa-b183-fa2f74979925:round-complete",
+        "roundId": "6110a622-8d69-4afa-b183-fa2f74979925",
+        "checkpointId": "8369f982-2b7f-45f9-a507-6aefe410347a"
+      },
+      {
+        "sessionId": "C1",
+        "eventId": "6714d4f4-173f-467f-a52a-9c317d13f8d8:round-complete",
+        "roundId": "6714d4f4-173f-467f-a52a-9c317d13f8d8",
+        "checkpointId": "0afd9d82-8858-4f0b-882f-368a71fc0842"
+      },
+      {
+        "sessionId": "C1",
+        "eventId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2:round-complete",
+        "roundId": "c6d3e334-98a1-4c0e-ba80-1bef75837bb2",
+        "checkpointId": "9762d882-5645-456d-a584-a70ddb2cd928"
+      },
+      {
+        "sessionId": "C1",
+        "eventId": "536407c3-ef3d-432f-a947-b0a12205ce89:round-complete",
+        "roundId": "536407c3-ef3d-432f-a947-b0a12205ce89",
+        "checkpointId": "7bfec3e0-2edb-432f-8759-e3391cb4df58"
+      },
+      {
+        "sessionId": "C1",
+        "eventId": "3155256e-468f-491e-af1f-62c9a45e873f:round-complete",
+        "roundId": "3155256e-468f-491e-af1f-62c9a45e873f",
+        "checkpointId": "7d8db466-3503-4d40-a708-01f000810ac1"
+      }
+    ],
+    "actualHostAutomaticReturn": "unverified"
+  },
+  "limits": [
+    "Session identities/model tiers are authored fixtures, not actual SOL/LUNA host provisioning",
+    "Images are authored PNGs, not native production",
+    "Native original return, browser opening by Butler and automatic originating-chat notification require separate supported-host verification",
+    "No operator private runtime accessed; no image-model calls or design acceptance"
+  ]
+}

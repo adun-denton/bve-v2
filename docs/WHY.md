@@ -1,11 +1,9 @@
-# Why a reset
+# Why this organization
 
-BVE is an organization whose persistent responsibilities, jobs, protocols and artifacts survive executor replacement. Intelligence is an assignable resource, not the owner of state. A design workflow must resume from durable records after every AI conversation disappears.
+BVE is a durable project environment. Human intent and judgment guide work; replaceable sessions perform bounded responsibilities; software preserves authoritative records and validates artifacts independently. A conversation, an installer and an image-generation run are not the project.
 
-Previous architectural accumulation mixed creative feedback with generation administration and obscured images behind operational ceremonies. V2 starts independently. Passing isolated engineering tests cannot establish an effective human workflow or human design acceptance.
+The concrete [Examples A–C](EXAMPLES.md) define the supported working cycle: Iman Website activates on production intent, Butler receives the operation before workers, comparison can produce a new checkpoint without images, and a branch or replacement Conductor preserves existing reality. One SOL Conductor, one on-demand LUNA Butler and up to six bounded LUNA workers are sufficient. No supervisor is needed.
 
-The designer discusses intent, compares images, records feedback and makes creative judgments. A clear request authorizes its bounded operational cycle. Software handles file verification, registration, recovery and context assembly automatically. Ordinary operation must not require repeated confirmations, manual finalization, capture or an AI conversation to wake bookkeeping.
+Statements preserve original instructions and attributable progress. Each Conductor–Butler cycle records its outcome automatically, while unsent human notes retain independent autosave recovery. Human evidence, AI interpretation, independent verification and explicit design acceptance remain different records. Routine operations should require no repeated permissions or manual production-finalization ceremony.
 
-Human words and source-bound region geometry remain immutable evidence separate from creative interpretation. Native bitmap originals remain byte-identical. Fresh/Follow and optional Brand context are independent choices. No tool-independent promise of exact bitmap preservation is made.
-
-Scope is one local workspace and the complete two-iteration cycle. Deferred: Foreman, embedded chat, general organization/RBAC infrastructure, semantic/HTML composition, legacy migration, production hosting, billing, paid providers and assumed native-account automation.
+BVE's ontology remains open to future project and artifact work. This revision implements the established raster/record operations, not future website compilation, new artifact generators, a generic workflow system or advanced recovery organization. Unsupported tools and transports are explicit capability gaps, not simulations presented as native integration.

@@ -1,0 +1,33 @@
+{
+  "format": "bve-host-project-integration-v1",
+  "sourceCommit": "2a5be1effa25e23bf57cbe999fb8a686c6f5a366",
+  "generatedAt": "2026-10-17T10:42:46.275Z",
+  "kind": "integration-limits-with-authored-contract-evidence",
+  "contractResults": {
+    "total": 47,
+    "passed": 47,
+    "failed": 0
+  },
+  "currentRoster": {
+    "conductor": "1 SOL",
+    "butler": "1 on-demand LUNA",
+    "workers": "0–6 bounded LUNA",
+    "maximum": 8,
+    "supervisors": 0
+  },
+  "demonstrated": "See evidence/project-report.json and browser-report.json: authored scoped operations and browser presentation, not native staff",
+  "operationalInstallation": {
+    "status": "incomplete",
+    "preservedWindowsRootModified": false,
+    "readyConductorSessionUrl": null,
+    "reason": "No connected Windows project/root or demonstrated actual SOL/LUNA worker byte-return and initiating-interaction completion route in this run"
+  },
+  "unverified": [
+    "Actual host SOL/LUNA provisioning/resume under the current roster",
+    "Native image-tool original return from exact assigned worker",
+    "Butler opening the local browser through host tooling",
+    "Automatic completion in the originating user interaction",
+    "Actual native concurrency, OS recovery and human usefulness/acceptance"
+  ],
+  "historicalEvidence": "Previous role-session probe belongs to bdde9241e9afff2478a133a0c7586af8ca808587 and its earlier contract; it is not current project-workforce verification"
+}

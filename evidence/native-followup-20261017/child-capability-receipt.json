@@ -1,0 +1,74 @@
+{
+  "kind": "host-capability-only-no-project-or-image-request",
+  "nonce": "bd250d4e-8da4-4e3e-ab2a-9e669781a261",
+  "sessionId": null,
+  "taskId": "/root/native_capability_probe",
+  "sourcePath": "/workspace/scratch/b2b10aa4cbc1/bve-v2-verification-20261017",
+  "sourceCommit": "2a5be1effa25e23bf57cbe999fb8a686c6f5a366",
+  "tested": {
+    "shellExecution": true,
+    "readOriginalLocalBytes": true,
+    "challengeRead": true,
+    "sourceGitHeadRead": true
+  },
+  "exposedUntested": {
+    "nativeImageGeneration": [
+      "image_gen__imagegen"
+    ],
+    "browserControl": [
+      "mcp__codex_apps__browser_js",
+      "mcp__cua_repl.js",
+      "mcp__cua_repl.js_reset"
+    ],
+    "delegationAndSessionControl": [
+      "collaboration.spawn_agent",
+      "collaboration.send_message",
+      "collaboration.followup_task",
+      "collaboration.interrupt_agent",
+      "collaboration.list_agents",
+      "collaboration.wait_agent",
+      "exec_command",
+      "write_stdin"
+    ]
+  },
+  "imageCalls": 0,
+  "identity": {
+    "runtimeClaim": "Codex agent based on GPT-6 (from provided instruction context)",
+    "independentAttestation": null,
+    "exactRuntimeModelVerified": false
+  },
+  "userOpenableUrl": null,
+  "linkStatus": "Only task ID is available; no user-openable URL was exposed.",
+  "resumedTurn": true,
+  "sameCanonicalTaskIdentityConfirmed": true,
+  "challengeNonce": "bd250d4e-8da4-4e3e-ab2a-9e669781a261",
+  "byteProbe": {
+    "path": "/workspace/scratch/b2b10aa4cbc1/bve-v2-host-probe-20261017/byte-probe.bin",
+    "present": true,
+    "byteLength": 1024,
+    "sha256": "f1305624e9a6d905a63dc5ec25bee729df52db7ce7ff2c25716dd91303e8a699"
+  },
+  "priorReceiptExisted": true,
+  "resumeEvidence": {
+    "challengeReRead": true,
+    "toolsUsed": [
+      "exec_command",
+      "python3"
+    ]
+  },
+  "transportClaim": "This tests shared filesystem and follow-up task routing only; it does not establish native-image output transport, durable chat replacement, or end-user notification.",
+  "byteProbeHistory": [
+    {
+      "observedAt": "prior resumed turn",
+      "present": false,
+      "byteLength": null,
+      "sha256": null
+    }
+  ],
+  "imagegenMetadataCheck": {
+    "toolName": "image_gen__imagegen",
+    "exposed": true,
+    "checkedBy": "ALL_TOOLS metadata inspection only",
+    "called": false
+  }
+}
