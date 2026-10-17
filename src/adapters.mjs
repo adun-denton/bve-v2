@@ -7,7 +7,7 @@ export const capabilities=Object.freeze({
   notification:{status:'unavailable',reason:'Durable unread events and Conductor polling are available; no live push integration'},
   concurrency:{status:'unverified',enabled:1,reason:'Serial fallback; actual concurrent native execution has not been tested'}
 });
-// Generator is deterministic. Only queued/unsent assignments are ever entered.
+// Internal allocation and durable start are deterministic. Only queued/unsent assignments are ever entered.
 // A running/uncertain attempt must be reconciled with its original executor, never invoked again.
 export async function dispatch(kernel, credentials, adapter, jobIds) {
   if(!adapter || !['simulated','demonstrated'].includes(adapter.capability.status))return {gap:capabilities.nativeWorker.reason};

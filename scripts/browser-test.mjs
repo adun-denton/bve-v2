@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join,resolve } from 'node:path';
 import assert from 'node:assert/strict';
 import { serve } from '../src/server.mjs';
+import {runCanonicalExamples} from '../test/project-fixture.mjs';
 import { simulateCommission } from '../src/adapters.mjs';
 const require=createRequire(import.meta.url);const {chromium}=require('playwright');
 const root=join(mkdtempSync(join(tmpdir(),'bve-browser-')),'private');
@@ -112,7 +113,21 @@ try{
   const finalSnapshot=Object.fromEntries(['project','request','iteration','job','artifact','submission','continuation','event','acceptance','delivery','creativeContext'].map(kind=>[kind,app.kernel.read(app.credentials.human,kind)]));
   const secondId=second.id;await context.close();await app.stop();
   const reopened=await serve({root,port:0});
-  try{const c=await browser.newContext(),p=await c.newPage();await p.goto(`${reopened.origin}/#project=${second.projectId}&page=board&iteration=${secondId}`);await waitForCompleteBoard(p,second);check('Owner restart recovers all six expected loaded originals',await p.locator('#cards .art-button').count()===6);await p.waitForFunction(()=>document.querySelectorAll('#submissions .submission').length===2);await p.locator('#submissions p').filter({hasText:note.text}).waitFor({state:'attached'});check('Creative context survives owner and browser replacement',await p.locator('#submissions p').filter({hasText:note.text}).count()===1);check('Owner process restart reveals completed results and review history',await p.locator('#submissions .submission').count()===2);await c.close();}finally{await reopened.stop();}
+  try{const c=await browser.newContext(),p=await c.newPage();await p.goto(`${reopened.origin}/#project=${second.projectId}&page=board&iteration=${secondId}`);await waitForCompleteBoard(p,second);check('Owner restart recovers all six expected loaded originals',await p.locator('#cards .art-button').count()===6);await p.waitForFunction(()=>document.querySelectorAll('#submissions .submission').length===2);await p.locator('#submissions p').filter({hasText:note.text}).waitFor({state:'attached'});check('Creative context survives owner and browser replacement',await p.locator('#submissions p').filter({hasText:note.text}).count()===1);check('Owner process restart reveals completed results and review history',await p.locator('#submissions .submission').count()===2);
+    const scenario=await runCanonicalExamples({k:reopened.kernel,c:reopened.credentials,root});
+    const sourceDraft=reopened.kernel.call(reopened.credentials.human,'draft.save','comparison-source-draft',{iterationId:scenario.A.iteration.id,expectedVersion:0,feedback:{overall:'Iman source feedback remains unchanged.',images:[]}});
+    await p.goto(`${reopened.origin}/#project=${scenario.ctx.project.id}&page=board&round=${scenario.B.id}`);
+    await p.waitForFunction(()=>document.querySelectorAll('#cards img').length===4&&[...document.querySelectorAll('#cards img')].every(i=>i.complete&&i.naturalWidth>0));
+    check('Example B displays original three designs beside latest selected direction without new originals',await p.locator('#cards .art-button').count()===4&&reopened.kernel.read(reopened.credentials.human,'artifact').filter(a=>a.projectId===scenario.ctx.project.id).length===5);
+    check('Example B comparison hides generation review controls and shows R004 checkpoint',await p.locator('#review').isHidden()&&(await p.locator('#rounds').inputValue())===scenario.B.id);
+    await p.screenshot({path:join(evidence,'05-iman-comparison.png'),fullPage:true});
+    await p.reload();await p.waitForFunction(()=>document.querySelectorAll('#cards img').length===4&&[...document.querySelectorAll('#cards img')].every(i=>i.complete&&i.naturalWidth>0));
+    check('Recorded comparison route reopens after browser replacement',await p.locator('#cards .art-button').count()===4);
+    await p.locator('#cards .art-button').first().click();await p.locator('#focus-close').click();await p.waitForFunction(()=>document.querySelector('#overall').value==='Iman source feedback remains unchanged.');
+    check('Comparison opens the original board and preserves its source feedback',await p.getByLabel('Overall feedback',{exact:true}).inputValue()===sourceDraft.feedback.overall);
+    await p.getByLabel('Project rounds',{exact:true}).selectOption(scenario.C.id);await p.waitForURL(u=>u.hash.includes(scenario.C.id));await p.waitForFunction(()=>document.querySelectorAll('#cards img').length===1&&document.querySelector('#cards img').complete);
+    check('Example C branch is presented without destroying R003/R004 history',reopened.kernel.read(reopened.credentials.human,'round').filter(r=>r.projectId===scenario.ctx.project.id).length===5&&await p.locator('#cards .art-button').count()===1);
+    await c.close();}finally{await reopened.stop();}
   check('No browser JavaScript errors',errors.length===0);
   const report={sourceCommit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),generatedAt:new Date().toISOString(),kind:'authored-fixture-browser-evidence',environment:{node:process.version,browser:browser.version(),playwright:require('playwright/package.json').version,platform:process.platform},checks,errors,summary:{iterations:2,firstCandidates:6,secondCandidates:6,submissions:2,nativeWorker:'unverified',concurrency:'unverified; serial fixture only',liveNotifications:'unverified; durable poll simulated',humanAcceptance:'unverified; none recorded'},sourceGeometry:submission.feedback.images.find(f=>f.regions.length).regions,iterationIds:{first:submission.iterationId,second:secondId},parentReviewId:submission.id,continuation:finalSnapshot.continuation.find(c=>c.id===submission.id),workflow:finalSnapshot};
   writeFileSync(join(evidence,'browser-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({passed:checks.length,errors,report:'evidence/browser-report.json'},null,2));

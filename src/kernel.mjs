@@ -16,6 +16,7 @@ const integer = (n,min,max,label) => {requireThat(Number.isInteger(n)&&n>=min&&n
 const permissions={
   human:['project.create','request.create','draft.save','review.submit','design.accept'],
   conductor:['iteration.commission','creativeContext.supply','event.consume','event.ack'],
+  // Local-owner allocation compatibility only; never a project staff/session role.
   generator:['job.allocate','attempt.start'],
   butler:['event.delivery'],
 };
@@ -48,7 +49,7 @@ export class Kernel {
   #list(kind){return this.#db.prepare('SELECT doc FROM records WHERE kind=? ORDER BY rowid').all(kind).map(x=>JSON.parse(x.doc));}
   #get(kind,key){const row=this.#db.prepare('SELECT doc FROM records WHERE kind=? AND id=?').get(kind,key);requireThat(row,`Missing ${kind}: ${key}`,404);return JSON.parse(row.doc);}
   #put(kind,v){this.#db.prepare('INSERT INTO records VALUES(?,?,?) ON CONFLICT(kind,id) DO UPDATE SET doc=excluded.doc').run(kind,v.id,JSON.stringify(v));return v;}
-  #session(token){return this.#list('sessionBinding').find(s=>!s.revokedAt&&equal(hash(token??''),s.tokenHash));}
+  #session(token){return this.#list('sessionBinding').find(s=>!s.revokedAt&&['conductor','butler','worker'].includes(s.role)&&s.tier===(s.role==='conductor'?'SOL':'LUNA')&&equal(hash(token??''),s.tokenHash));}
   #role(token){const session=this.#session(token);if(session)return session.role;const role=Object.keys(this.#credentials).find(r=>equal(token,this.#credentials[r]));requireThat(role,'Invalid function credential',403);return role;}
 
   // Installation is a trusted local-owner API, deliberately absent from HTTP.
@@ -59,27 +60,36 @@ export class Kernel {
     if(state!==undefined)return this.#tx(()=>clone(this.#put('hostInstallation',{...clone(state),id:'active'})));
     return clone(this.#list('hostInstallation')[0]??null);
   }
-  bindSession(owner,{role,sessionId,sessionUrl=null,projectId,nonce,replace=false}){
-    this.#owner(owner);requireThat(['conductor','generator','butler'].includes(role),'Invalid installed role');
-    text(sessionId,'actual session identity',300);text(nonce,'verification challenge',200);
+  #safeBinding(b){const {token,tokenHash,nonce,...safe}=b;return safe;}
+  #bind({role,sessionId,sessionUrl=null,projectId,nonce,replace=false,tier,jobId=null,hostReceipt}){
+    requireThat(['conductor','butler','worker'].includes(role),'No such project staff role');
+    requireThat(tier===(role==='conductor'?'SOL':'LUNA'),'Incorrect staff model tier');
+    text(sessionId,'actual session identity',300);text(nonce,'verification challenge',200);text(hostReceipt,'actual host binding receipt',2000);
     if(projectId!==null)this.#get('project',projectId);
-    if(sessionUrl!==null){const u=new URL(sessionUrl);requireThat(u.protocol==='https:','Session link must use https');}
-    return this.#tx(()=>{
-      const active=this.#list('sessionBinding').filter(s=>!s.revokedAt),prior=active.find(s=>s.role===role);
-      requireThat(!active.some(s=>s.role!==role&&s.sessionId===sessionId),'Roles need distinct actual sessions',409);
-      if(prior&&prior.sessionId===sessionId&&prior.projectId===projectId)return clone(prior);
-      requireThat(!prior||replace,'Explicit replacement required; reuse the existing session',409);
-      if(prior){prior.revokedAt=now();this.#put('sessionBinding',prior);}
-      const installation=this.#list('hostInstallation')[0];if(installation){installation.status='incomplete';installation.gaps=['Role binding changed; verify connections and Conductor handoff'];delete installation.handoffReceipt;this.#put('hostInstallation',installation);}
-      const token=secret(),binding=this.#put('sessionBinding',{id:id(),role,sessionId,sessionUrl,projectId,nonce,token,tokenHash:hash(token),boundAt:now(),hello:null,revokedAt:null});
-      for(const d of this.#list('delegation').filter(d=>d.toRole===role&&d.projectId===projectId&&d.state!=='completed')){d.sessionId=sessionId;d.reboundAt=now();this.#put('delegation',d);}
-      return clone(binding);
-    });
+    requireThat(projectId!==null||role==='conductor','Only an exploring Conductor can be unbound');
+    if(sessionUrl!==null)requireThat(new URL(sessionUrl).protocol==='https:','Session link must use https');
+    const active=this.#list('sessionBinding').filter(b=>!b.revokedAt&&['conductor','butler','worker'].includes(b.role)&&b.tier===(b.role==='conductor'?'SOL':'LUNA'));
+    const same=active.find(b=>b.sessionId===sessionId);
+    requireThat(!same||same.projectId===projectId&&same.role===role&&same.jobId===jobId,'Session identity already belongs to another assignment/project',403);
+    if(same)return same;
+    const prior=role==='worker'||projectId===null?null:active.find(b=>b.role===role&&b.projectId===projectId);
+    requireThat(!prior||replace,'Explicit replacement required; reuse existing project staff',409);
+    if(role==='worker'){
+      const job=this.#get('job',jobId);requireThat(job.projectId===projectId&&job.roundId,'Worker job/project mismatch',403);
+      requireThat(this.#butlerReady(this.#get('round',job.roundId)),'Butler must be ready before workers are bound',409);
+      requireThat(!active.some(b=>b.role==='worker'&&b.jobId===jobId),'Job already has a worker',409);
+      requireThat(active.filter(b=>b.projectId===projectId&&b.role==='worker').length<6,'Maximum six active workers per project',409);
+      requireThat(job.staffProvisioning?.state==='pending','Reserve the worker slot before host creation',409);
+      job.staffProvisioning.state='bound';this.#put('job',job);
+    }
+    if(prior){prior.revokedAt=now();this.#put('sessionBinding',prior);}
+    const token=secret();return this.#put('sessionBinding',{id:id(),role,tier,sessionId,sessionUrl,projectId,jobId,nonce,token,tokenHash:hash(token),hostReceipt,boundAt:now(),hello:null,revokedAt:null});
   }
-  hostBindings(owner){this.#owner(owner);return clone(this.#list('sessionBinding').filter(s=>!s.revokedAt));}
-  hostRoutes(owner){this.#owner(owner);return clone(this.#list('delegation'));}
+  bindSession(owner,x){this.#owner(owner);return this.#tx(()=>clone(this.#bind(x)));}
+  hostBindings(owner){this.#owner(owner);return clone(this.#list('sessionBinding').filter(b=>!b.revokedAt&&['conductor','butler','worker'].includes(b.role)&&b.tier===(b.role==='conductor'?'SOL':'LUNA')));}
+  hostRoutes(owner){this.#owner(owner);return clone(this.#list('delegation'));} // Historical receipts remain readable by the owner.
   #belongs(v,kind,projectId){
-    if(projectId===null)return false; // No project exists yet: no ambient access.
+    if(projectId===null)return false;
     if(kind==='project')return v.id===projectId;
     if(v.projectId)return v.projectId===projectId;
     if(v.jobId)return this.#get('job',v.jobId).projectId===projectId;
@@ -90,51 +100,160 @@ export class Kernel {
     const s=this.#session(token);if(!s)return;
     let projectId=x.projectId;
     if(op==='iteration.commission')projectId=this.#get('request',x.requestId).projectId;
-    else if(op==='attempt.start')projectId=this.#get('job',this.#get('assignment',x.assignmentId).jobId).projectId;
-    else if(op==='job.allocate')projectId=this.#get('job',x.jobId).projectId;
     else if(op.startsWith('event.'))projectId=this.#get('event',x.eventId).projectId;
     requireThat(s.projectId!==null&&projectId===s.projectId,'Session project boundary rejected',403);
-    if(s.role==='generator'&&['job.allocate','attempt.start'].includes(op)){
-      const job=op==='job.allocate'?this.#get('job',x.jobId):this.#get('job',this.#get('assignment',x.assignmentId).jobId);
-      requireThat(this.#list('delegation').some(d=>d.kind==='dispatch'&&d.iterationId===job.iterationId&&d.sessionId===s.sessionId&&d.state!=='completed'),'No dispatch delegation for this session/iteration',403);
-    }
   }
   #hostCall(token,op,key,x){
     const s=this.#session(token);requireThat(s,'Installed session credential required',403);text(key,'host receipt key',200);
-    if(op==='host.resume'){
-      requireThat(x.nonce===s.nonce,'Session challenge mismatch',403);
-      const kinds={conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['job','delivery','event','observation','conflict']}[s.role];
-      const context=Object.fromEntries(kinds.map(k=>[k,this.read(token,k)]));
-      const receipt=this.#tx(()=>{
-        const value=this.#once('session:'+s.id+':'+op,key,x,()=>({id:id(),sessionId:s.sessionId,role:s.role,projectId:s.projectId,readAt:now(),latestIterationId:context.iteration?.at(-1)?.id??null,submissionIds:context.submission?.map(v=>v.id)??[]}));
-        s.hello=value;this.#put('sessionBinding',s);return value;
-      });
-      return {receipt,context,delegations:this.#list('delegation').filter(d=>d.projectId===s.projectId&&(s.role==='conductor'||d.sessionId===s.sessionId))};
+    requireThat(op==='host.resume','Use project statements for operational delegation',404);
+    requireThat(x.nonce===s.nonce,'Session challenge mismatch',403);
+    const common=['project','round','statement','statementEvent','checkpoint','projectInstruction','sessionBinding'];
+    const kinds=s.role==='worker'?[...common,'job','assignment']:s.role==='butler'?[...common,'iteration','job','artifact','submission','continuation','creativeContext','event','delivery','observation','conflict']:[...common,'request','iteration','job','artifact','submission','continuation','creativeContext','event'];
+    const context=Object.fromEntries(kinds.map(k=>[k,this.read(token,k)]));
+    const receipt=this.#tx(()=>{
+      const value=this.#once('session:'+s.id+':'+op,key,x,()=>({id:id(),sessionId:s.sessionId,role:s.role,projectId:s.projectId,readAt:now()}));
+      s.hello=value;this.#put('sessionBinding',s);return value;
+    });
+    const assignment=s.role==='worker'?this.#list('assignment').find(a=>a.jobId===s.jobId):null;
+    return {receipt,context,...(assignment?{assignmentAccess:clone({...assignment,specification:this.#get('job',s.jobId).specification})}:{})};
+  }
+  #actor(s){return {bindingId:s.id,sessionId:s.sessionId,role:s.role,tier:s.tier};}
+  #statementEvent(statement,s,kind,report){return this.#put('statementEvent',{id:id(),statementId:statement.id,roundId:statement.roundId,projectId:statement.projectId,actor:this.#actor(s),kind,report:clone(report),createdAt:now()});}
+  #butlerReady(round){return this.#list('statementEvent').some(e=>e.statementId===round.statementId&&e.kind==='ready'&&e.actor.bindingId===round.butler.bindingId);}
+  #statementView(st){
+    const events=this.#list('statementEvent').filter(e=>e.statementId===st.id),job=st.jobId?this.#get('job',st.jobId):null;
+    const project=this.#get('project',st.projectId),round=this.#get('round',st.roundId);
+    return {...st,project:{id:project.id,name:project.name,folder:join(this.root,'Projects',project.id)},round:{id:round.id,code:round.code,parent:round.parentRoundId,expectedResults:round.expectedResults,operation:round.operation},inputs:job?.specification.sources??round.references,events,assignment:job?{jobId:job.id,assignmentId:job.assignmentId??null,status:job.state}:null,verifiedArtifactId:job?.state==='succeeded'?job.artifactId:null,status:job?.state??events.at(-1)?.kind??'assigned'};
+  }
+  #roundView(r){const c=this.#list('checkpoint').find(c=>c.roundId===r.id);return {...r,state:c?.state??(this.#butlerReady(r)?'ready':'assigned'),checkpointId:c?.id??null};}
+  #newStatement(round,{jobId=null,worker=null,instructions,prompt=null}){
+    const code='S'+String(this.#list('statement').filter(s=>s.projectId===round.projectId).length+1).padStart(3,'0');
+    return this.#put('statement',{id:id(),code,projectId:round.projectId,roundId:round.id,conductor:round.conductor,butler:round.butler,worker,jobId,instructions,butlerInstructions:round.butlerInstructions,prompt,createdAt:now()});
+  }
+  #projectCall(token,op,key,x){
+    const s=this.#session(token);requireThat(s,'Project session binding required',403);text(key,'project operation key',200);
+    const allowed={conductor:['project.activate','project.instructions','staff.reserve','staff.bind','staff.retire','round.create','round.commission','worker.assign','round.disposition'],butler:['statement.report','round.present'],worker:['statement.report','worker.start']};
+    requireThat(allowed[s.role].includes(op),`${s.role} cannot call ${op}`,403);
+    if(op!=='project.activate'){
+      const projectId=x.roundId?this.#get('round',x.roundId).projectId:x.statementId?this.#get('statement',x.statementId).projectId:x.projectId;
+      requireThat(projectId===s.projectId&&projectId!==null,'Cross-project operation rejected',403);
     }
-    if(op==='host.delegate'){
-      requireThat(s.role==='conductor','Only Conductor delegates',403);
-      requireThat(['dispatch','reconcile','readiness'].includes(x.kind),'Invalid bounded delegation');
-      if(x.kind==='readiness')requireThat(s.projectId===x.projectId&&['generator','butler'].includes(x.toRole),'Invalid readiness scope',403);else this.#sessionScope(token,op,x);
-      const toRole=x.kind==='readiness'?x.toRole:x.kind==='dispatch'?'generator':'butler',target=this.#list('sessionBinding').find(b=>!b.revokedAt&&b.role===toRole&&b.projectId===s.projectId);
-      requireThat(target?.hello,'Destination session has not verified its scoped connection',409);
-      if(x.kind==='dispatch')requireThat(this.#get('iteration',x.iterationId).projectId===s.projectId,'Foreign delegated iteration',403);
-      return this.#tx(()=>this.#once('session:'+s.id+':'+op,key,x,()=>this.#put('delegation',{id:id(),projectId:s.projectId,kind:x.kind,iterationId:x.iterationId??null,fromSessionId:s.sessionId,toRole,sessionId:target.sessionId,state:'pending',createdAt:now(),receipts:[]})));
+    this.reconcile(this.#credentials.butler);
+    if(op==='worker.start'){const j=this.#get('job',s.jobId),a=this.#get('assignment',j.assignmentId);requireThat(j.state==='assigned'&&!a.startedAt,'Attempt already started or uncertain; no automatic re-invocation',409);}
+    const result=this.#tx(()=>this.#once('project-session:'+s.id+':'+op,key,x,()=>this.#projectOperate(s,op,x)));
+    this.reconcile(this.#credentials.butler);return clone(result);
+  }
+  #projectOperate(s,op,x){
+    if(op==='project.activate'){
+      requireThat(s.projectId===null,'Conductor already belongs to a project',409);
+      const p=this.#operate('human','project.create',x);p.code='P'+String(this.#list('project').length).padStart(3,'0');p.folder=join(this.root,'Projects',p.id);this.#put('project',p);
+      s.projectId=p.id;this.#put('sessionBinding',s);
+      const instructions=x.instructions??p.brief;text(instructions,'current project instructions',8000);this.#put('projectInstruction',{id:id(),projectId:p.id,version:1,text:instructions,actor:this.#actor(s),createdAt:now()});
+      const request=this.#request({projectId:p.id,intent:x.intent,count:x.count,direction:x.direction,brand:x.brand});return {project:p,request};
     }
-    if(op==='host.receipt'){
-      const d=this.#get('delegation',x.delegationId);requireThat(d.toRole===s.role&&d.sessionId===s.sessionId&&d.projectId===s.projectId,'Delegation recipient boundary rejected',403);
-      requireThat(['acknowledged','completed','blocked'].includes(x.status),'Invalid delegation receipt');text(x.detail,'delegation outcome',2000);
-      if(x.status==='completed'&&d.kind==='dispatch')requireThat(this.#get('iteration',d.iterationId).jobIds.every(j=>['succeeded','failed'].includes(this.#get('job',j).state)),'Dispatch is not completed; preserve uncertainty or partial work',409);
-      this.reconcile(this.#credentials.butler);
-      return this.#tx(()=>this.#once('session:'+s.id+':'+op,key,x,()=>{requireThat(d.state!=='completed','Delegation already completed',409);d.receipts.push({id:id(),sessionId:s.sessionId,status:x.status,detail:x.detail,at:now()});d.state=x.status;return this.#put('delegation',d);}));
+    if(op==='project.instructions'){
+      text(x.text,'current project instructions',8000);const revisions=this.#list('projectInstruction').filter(i=>i.projectId===s.projectId);
+      requireThat(x.expectedVersion===(revisions.at(-1)?.version??0),'Project instructions changed',409);
+      return this.#put('projectInstruction',{id:id(),projectId:s.projectId,version:revisions.length+1,text:x.text,actor:this.#actor(s),createdAt:now()});
     }
-    throw new Fault('Unknown host session operation',404);
+    if(op==='staff.reserve'){
+      requireThat(['butler','worker'].includes(x.role),'Invalid requested project staff');
+      const key=s.projectId+':'+x.role+':'+(x.jobId??'primary');
+      if(x.role==='worker'){
+        const j=this.#get('job',x.jobId);requireThat(j.projectId===s.projectId&&j.roundId,'Worker job/project mismatch',403);
+        requireThat(this.#butlerReady(this.#get('round',j.roundId)),'Butler must be ready before worker creation',409);
+        if(!j.staffProvisioning){
+          const active=this.#list('sessionBinding').filter(b=>!b.revokedAt&&b.projectId===s.projectId&&b.role==='worker').length;
+          const pending=this.#list('job').filter(j=>j.projectId===s.projectId&&j.staffProvisioning?.state==='pending').length;
+          requireThat(active+pending<6,'Maximum six active workers per project',409);
+          j.staffProvisioning={key,state:'pending',createdAt:now()};this.#put('job',j);
+        }
+      }
+      return {key};
+    }
+    if(op==='staff.bind'){
+      requireThat(['butler','worker'].includes(x.role),'Conductor assigns only Butler or workers');
+      return this.#bind({...x,projectId:s.projectId});
+    }
+    if(op==='staff.retire'){
+      const b=this.#get('sessionBinding',x.bindingId);requireThat(b.projectId===s.projectId&&b.role==='worker','Only own workers may be retired');
+      requireThat(['succeeded','failed'].includes(this.#get('job',b.jobId).state),'Unresolved worker must remain recorded; no advanced replacement scheduling',409);
+      b.revokedAt??=now();this.#put('sessionBinding',b);return this.#safeBinding(b);
+    }
+    if(op==='round.create'){
+      requireThat(['generate','compare','organize','branch'].includes(x.operation),'Unsupported operation; no workflow is invented');text(x.intent,'user operational intent');text(x.butlerInstructions,'original Butler instructions');
+      const butler=this.#list('sessionBinding').find(b=>!b.revokedAt&&b.projectId===s.projectId&&b.role==='butler');requireThat(butler?.hello,'Butler must receive and verify project scope first',409);
+      if(x.parentRoundId)requireThat(this.#get('round',x.parentRoundId).projectId===s.projectId,'Foreign parent round',403);
+      const references=this.#sourceReferences(x.references??[],s.projectId);
+      const feedbackIds=x.feedbackIds??[];requireThat(Array.isArray(feedbackIds)&&feedbackIds.length<=24,'Too many feedback references');for(const f of feedbackIds)requireThat(this.#get('submission',f).projectId===s.projectId,'Foreign feedback',403);
+      let request=null;if(x.operation==='generate'){request=this.#get('request',x.requestId);requireThat(request.projectId===s.projectId&&request.state==='waiting-for-conductor','No pending project generation request',409);requireThat(!this.#list('round').some(r=>r.requestId===request.id),'Request already belongs to a round',409);}
+      const r=this.#put('round',{id:id(),code:'R'+String(this.#list('round').filter(r=>r.projectId===s.projectId).length+1).padStart(3,'0'),projectId:s.projectId,parentRoundId:x.parentRoundId??null,operation:x.operation,intent:x.intent,requestId:request?.id??null,expectedResults:request?.count??0,conductor:this.#actor(s),butler:this.#actor(butler),butlerInstructions:x.butlerInstructions,references,feedbackIds,createdAt:now()});
+      const st=this.#newStatement(r,{instructions:x.butlerInstructions});r.statementId=st.id;this.#put('round',r);return r;
+    }
+    if(op==='round.commission'){
+      const r=this.#get('round',x.roundId);requireThat(r.operation==='generate'&&!r.iterationId,'Round is not awaiting generation commission',409);requireThat(this.#butlerReady(r),'Butler must be ready before production',409);
+      const i=this.#commission({requestId:r.requestId,specifications:x.specifications,interpretation:x.interpretation});i.roundId=r.id;this.#put('iteration',i);
+      for(const jobId of i.jobIds){const j=this.#get('job',jobId);j.roundId=r.id;j.code='J'+String(this.#list('job').filter(j=>j.projectId===r.projectId&&j.roundId).length+1).padStart(3,'0');this.#put('job',j);}
+      r.iterationId=i.id;this.#put('round',r);return i;
+    }
+    if(op==='worker.assign'){
+      const b=this.#get('sessionBinding',x.bindingId);requireThat(!b.revokedAt&&b.role==='worker'&&b.projectId===s.projectId&&b.hello,'Invalid or unverified worker binding',403);
+      const j=this.#get('job',b.jobId),r=this.#get('round',j.roundId);requireThat(this.#butlerReady(r),'Butler not ready');
+      if(j.assignmentId){const a=this.#get('assignment',j.assignmentId);requireThat(a.executor===b.sessionId,'Assignment worker changed',403);return {statement:this.#list('statement').find(st=>st.jobId===j.id),assignmentId:a.id};}
+      const a=this.#operate('generator','job.allocate',{jobId:j.id,executor:b.sessionId,capability:x.capability});
+      const st=this.#newStatement(r,{jobId:j.id,worker:this.#actor(b),instructions:j.specification.prompt,prompt:j.specification.prompt});
+      return {statement:st,assignmentId:a.id};
+    }
+    if(op==='worker.start'){
+      const j=this.#get('job',s.jobId);requireThat(this.#get('round',j.roundId).id===x.roundId,'Wrong worker round',403);
+      const a=this.#get('assignment',j.assignmentId);requireThat(a.executor===s.sessionId&&this.#list('statement').some(st=>st.jobId===j.id&&st.worker?.bindingId===s.id),'Worker does not own this exact assignment/statement',403);
+      return this.#operate('generator','attempt.start',{assignmentId:j.assignmentId});
+    }
+    if(op==='statement.report'){
+      const st=this.#get('statement',x.statementId),r=this.#get('round',st.roundId);text(x.text,'attributable statement report',8000);
+      requireThat(Object.keys(x).every(k=>['statementId','status','text'].includes(k)),'Reports cannot rewrite originating instructions');
+      if(s.role==='worker')requireThat(st.worker?.bindingId===s.id&&st.jobId===s.jobId&&['produced','failed','uncertain'].includes(x.status),'Worker statement assignment mismatch',403);
+      else requireThat(st.id===r.statementId&&r.butler.bindingId===s.id&&['ready','completed','incomplete','blocked'].includes(x.status),'Butler statement assignment mismatch',403);
+      if(s.role==='butler')requireThat(!this.#list('checkpoint').some(c=>c.roundId===r.id),'Round already checkpointed',409);
+      if(x.status==='ready'){
+        const p=this.#get('project',r.projectId);mkdirSync(join(this.root,'Projects',p.id),{recursive:true,mode:0o700});
+      }
+      if(['completed','incomplete'].includes(x.status)&&s.role==='butler'){
+        requireThat(this.#list('presentation').some(p=>p.roundId===r.id),'Butler must record the actual presentation first',409);
+        if(x.status==='completed'){
+          const shown=this.#list('presentation').filter(p=>p.roundId===r.id).at(-1).references;
+          const expected=r.operation==='generate'?this.#list('job').filter(j=>j.roundId===r.id&&j.state==='succeeded').map(j=>j.artifactId):r.references.map(ref=>ref.artifactId);
+          requireThat(shown.length===expected.length&&expected.every(id=>shown.some(ref=>ref.artifactId===id)),'Completed presentation omits assigned material',409);
+        }
+        if(x.status==='completed'&&r.operation==='generate'){
+          const jobs=this.#list('job').filter(j=>j.roundId===r.id);requireThat(jobs.length===r.expectedResults&&jobs.every(j=>['succeeded','failed'].includes(j.state)),'Expected batch is not accounted for',409);
+          for(const j of jobs)requireThat(this.#list('statementEvent').some(e=>e.statementId===this.#list('statement').find(st=>st.jobId===j.id)?.id&&['produced','failed'].includes(e.kind)),'Worker report is missing',409);
+        }
+      }
+      return this.#statementEvent(st,s,x.status,{text:x.text});
+    }
+    if(op==='round.present'){
+      const r=this.#get('round',x.roundId);requireThat(r.butler.bindingId===s.id&&this.#butlerReady(r),'Butler round mismatch/not ready',403);
+      requireThat(!this.#list('checkpoint').some(c=>c.roundId===r.id),'Checkpoint is immutable',409);
+      text(x.title,'presentation title',300);const refs=this.#sourceReferences(x.references??[],s.projectId);refs.forEach(ref=>this.#verifyArtifact(this.#get('artifact',ref.artifactId)));
+      if(r.operation==='generate')requireThat(refs.every(ref=>ref.iterationId===r.iterationId),'Presentation references another generation round');
+      else requireThat(refs.every(ref=>r.references.some(expected=>expected.artifactId===ref.artifactId)),'Unassigned comparison material');
+      return this.#put('presentation',{id:id(),roundId:r.id,projectId:r.projectId,title:x.title,references:refs,actor:this.#actor(s),createdAt:now()});
+    }
+    if(op==='round.disposition'){
+      const r=this.#get('round',x.roundId);requireThat(this.#list('checkpoint').some(c=>c.roundId===r.id),'Round has no checkpoint',409);text(x.text,'Conductor disposition',4000);
+      return this.#statementEvent(this.#get('statement',r.statementId),s,'disposition',{text:x.text});
+    }
+    throw new Fault('Unknown project operation',404);
   }
   #event(iteration,type,extra={}){const eid=`${iteration.id}:${type}`;if(this.#list('event').some(e=>e.id===eid))return;this.#put('event',{id:eid,projectId:iteration.projectId,iterationId:iteration.id,type,createdAt:now(),deliveryAttempts:[],acknowledgedAt:null,consumedAt:null,...extra});}
   call(token,op,key,input={}) {
     // No role property is interpreted; only the locally provisioned function credential selects operations.
     if(op==='result.deliver') return this.#deliver(token,key,input);
     const role=this.#role(token);
+    if(['project.activate','project.instructions','staff.reserve','staff.bind','staff.retire','round.create','round.commission','worker.assign','worker.start','statement.report','round.present','round.disposition'].includes(op))return this.#projectCall(token,op,key,input);
     if(op.startsWith('host.'))return this.#hostCall(token,op,key,input);
+    if(op==='iteration.commission'&&this.#session(token))throw new Fault('Use round.commission after Butler readiness',403);
     this.#sessionScope(token,op,input);
     requireThat(permissions[role].includes(op),`${role} cannot call ${op}`,403);
     text(key,'idempotency key',200);
@@ -155,9 +274,8 @@ export class Kernel {
       case 'project.create': {
         const p={id:id(),name:text(x.name,'project name',200),brief:text(x.brief,'brief'),page:'board',createdAt:now(),fixture:x.fixture===true,
           defaults:{count:integer(x.count??1,1,6,'candidate count'),direction:x.direction??'Fresh',brand:x.brand??null},standingRemaining:integer(x.standingIterations??0,0,20,'standing iterations')};
+        p.code='P'+String(this.#list('project').length+1).padStart(3,'0');p.folder=join(this.root,'Projects',p.id);
         requireThat(['Fresh','Follow'].includes(p.defaults.direction),'Invalid direction'); if(p.defaults.brand!==null)text(p.defaults.brand,'brand context');this.#put('project',p);
-        for(const b of this.#list('sessionBinding').filter(b=>!b.revokedAt&&b.projectId===null)){b.projectId=p.id;this.#put('sessionBinding',b);}
-        const installation=this.#list('hostInstallation')[0];if(installation&&installation.projectId===null){installation.projectId=p.id;this.#put('hostInstallation',installation);}
         return p;
       }
       case 'request.create': return this.#request(x);
@@ -424,20 +542,44 @@ export class Kernel {
           creativeContext:notes,optional:{screenshots:{status:'unavailable',required:false},conductorNotes:{status:notes.length?'available':'unavailable',required:false,references:notes.map(n=>({id:n.id,contextId:n.contextId,version:n.version})),sourceIssues:notes.flatMap(n=>this.#dependencyIssues(n.sources).map(issue=>({contextId:n.id,...issue}))) }},preparedAt:now()});
         if(s.requestId)this.#event(i,'continuation:'+s.id,{submissionId:s.id,requestId:s.requestId});
       }
+      for(const r of this.#list('round')){
+        if(this.#butlerReady(r))mkdirSync(join(this.root,'Projects',r.projectId),{recursive:true,mode:0o700});
+        if(this.#list('checkpoint').some(c=>c.roundId===r.id))continue;
+        const completion=this.#list('statementEvent').filter(e=>e.statementId===r.statementId&&['completed','incomplete'].includes(e.kind)).at(-1);
+        if(!completion)continue;
+        const presentation=this.#list('presentation').filter(p=>p.roundId===r.id).at(-1),jobs=this.#list('job').filter(j=>j.roundId===r.id);
+        const state=completion.kind==='completed'&&jobs.every(j=>j.state==='succeeded')?'completed':'incomplete';
+        const checkpoint=this.#put('checkpoint',{id:id(),projectId:r.projectId,roundId:r.id,parentRoundId:r.parentRoundId,state,operation:r.operation,expectedResults:r.expectedResults,artifacts:presentation.references,statementIds:this.#list('statement').filter(st=>st.roundId===r.id).map(st=>st.id),statementEventIds:this.#list('statementEvent').filter(e=>e.roundId===r.id).map(e=>e.id),presentationId:presentation.id,feedbackIds:r.feedbackIds,committedAt:now()});
+        this.#event(r,'round-complete',{roundId:r.id,iterationId:r.iterationId??null,checkpointId:checkpoint.id,state});
+      }
       return {ok:true};
     });
   }
   read(token,kind){
     const role=this.#role(token);
-    const allowed={human:['project','request','iteration','job','artifact','draft','submission','continuation','acceptance','creativeContext','event','delivery','conflict','observation'],conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['job','assignment','delivery','event','conflict','observation']};
-    requireThat(allowed[role].includes(kind),'Read boundary rejected',403);
+    const common=['round','statement','statementEvent','checkpoint','presentation','projectInstruction','sessionBinding'];
+    const allowed={human:['project','request','iteration','job','artifact','draft','submission','continuation','acceptance','creativeContext','event','delivery','conflict','observation'],conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['project','iteration','artifact','submission','continuation','creativeContext','job','assignment','delivery','event','conflict','observation'],worker:['project','job','assignment']};
+    requireThat([...allowed[role],...common].includes(kind),'Read boundary rejected',403);
     const binding=this.#session(token);
-    return clone(this.#list(kind).filter(v=>!binding||this.#belongs(v,kind,binding.projectId)).map(v=>{const {token,tokenHash,...rest}=v;return rest;}));
+    const values=this.#list(kind).filter(v=>!binding||this.#belongs(v,kind,binding.projectId)).filter(v=>{
+      if(binding?.role!=='worker')return true;
+      if(kind==='job')return v.id===binding.jobId;
+      if(kind==='assignment'||kind==='statement')return v.jobId===binding.jobId;
+      if(kind==='statementEvent')return this.#get('statement',v.statementId).jobId===binding.jobId;
+      if(kind==='sessionBinding')return v.id===binding.id||['conductor','butler'].includes(v.role);
+      if(kind==='round')return v.id===this.#get('job',binding.jobId).roundId;
+      return kind==='project';
+    });
+    return clone(values.map(v=>kind==='statement'?this.#statementView(v):kind==='round'?this.#roundView(v):kind==='project'?{...v,folder:join(this.root,'Projects',v.id)}:kind==='sessionBinding'?{...this.#safeBinding(v),active:!v.revokedAt&&['conductor','butler','worker'].includes(v.role)&&v.tier===(v.role==='conductor'?'SOL':'LUNA')}:this.#safeBinding(v)));
+  }
+  round(token,roundId){
+    const round=this.read(token,'round').find(r=>r.id===roundId);requireThat(round,'Round outside caller scope',403);
+    return {round,statements:this.read(token,'statement').filter(s=>s.roundId===roundId),checkpoint:this.read(token,'checkpoint').find(c=>c.roundId===roundId)??null,presentation:this.read(token,'presentation').filter(p=>p.roundId===roundId).at(-1)??null};
   }
   assignment(token){const a=this.#assignment(token),j=this.#get('job',a.jobId);const {token:t,tokenHash,...safe}=a;return {...safe,specification:j.specification,state:j.state};}
   original(token,artifactId){
     try{this.#role(token);}catch{const assigned=this.#assignment(token),job=this.#get('job',assigned.jobId);requireThat(job.specification.sources.some(ref=>ref.artifactId===artifactId),'Executor can only read assigned source originals',403);}
-    const a=this.#get('artifact',artifactId),binding=this.#session(token);if(binding)requireThat(binding.role==='conductor'&&a.projectId===binding.projectId,'Session original boundary rejected',403);this.#verifyArtifact(a);return Buffer.from(this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256).data);}
+    const a=this.#get('artifact',artifactId),binding=this.#session(token);if(binding)requireThat(['conductor','butler'].includes(binding.role)&&a.projectId===binding.projectId,'Session original boundary rejected',403);this.#verifyArtifact(a);return Buffer.from(this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256).data);}
   portable(token,submissionId,{jobId=null}={}){
     const role=this.#role(token);requireThat(['human','conductor'].includes(role),'Portable review boundary',403);
     this.reconcile(this.#credentials.butler);

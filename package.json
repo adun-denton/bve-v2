@@ -14,6 +14,7 @@
     "verify": "npm test && npm run test:browser",
     "install:host": "node scripts/install-host.mjs",
     "backup": "node scripts/backup.mjs",
+    "evidence:projects": "node scripts/project-evidence.mjs",
     "evidence:repairs": "node scripts/repair-evidence.mjs"
   },
   "devDependencies": {

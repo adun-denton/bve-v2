@@ -6,7 +6,7 @@ const el=(tag,content,cls)=>{const e=document.createElement(tag);if(content!==un
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').hidden=true,6000);}
 async function api(path,options={}){const r=await fetch(path,{...options,headers:{'Authorization':`Bearer ${state.token}`,...options.headers}});if(!r.ok){let v=await r.json();throw Error(v.error||'Request failed');}return r.json();}
 const op=(op,input,key=uid())=>api('/api/op',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op,key,input})});
-const kinds=['project','iteration','job','artifact','draft','submission','continuation','request','event','acceptance'];
+const kinds=['project','iteration','job','artifact','draft','submission','continuation','request','event','acceptance','round','statement','checkpoint','presentation','projectInstruction'];
 async function readAll(){const values=await Promise.all(kinds.map(kind=>api('/api/read?kind='+kind)));state.data=Object.fromEntries(kinds.map((k,n)=>[k,values[n]]));}
 function route(p,i){location.hash=new URLSearchParams({project:p.id,page:'board',...(i?{iteration:i.id}:{})});localStorage.setItem('bve:last',location.hash);}
 function sourceFeedback(a){let f=state.feedback.images.find(f=>f.artifactId===a.id);if(!f){f={artifactId:a.id,version:a.version,sha256:a.sha256,width:a.width,height:a.height,note:'',favorite:false,regions:[]};state.feedback.images.push(f);}return f;}
@@ -98,14 +98,18 @@ async function refresh(force=false){
     if(next?.iterationId&&next.iterationId!==i?.id){i=iterations.find(i=>i.id===next.iterationId);route(p,i);localStorage.removeItem(`bve:waiting:${p.id}`);}
     state.project=p;state.iteration=i;
     $('runtime').textContent=p.fixture?'Authored fixtures · simulation':'Private · local workspace';
-    const signature=JSON.stringify({p,selectedIterationId:i?.id,continuations:state.data.continuation.filter(c=>c.projectId===p.id).map(c=>({id:c.id,historicalCoverage:c.historicalCoverage,creativeContext:c.creativeContext})),iterations,jobs:state.data.job.filter(j=>j.projectId===p.id),submissions:state.data.submission.filter(s=>s.projectId===p.id),requests:state.data.request.filter(r=>r.projectId===p.id),acceptance:state.data.acceptance});
+    const projectRounds=state.data.round.filter(r=>r.projectId===p.id),selectedRound=projectRounds.find(r=>r.id===q.get('round'));
+    const selectedPresentation=state.data.presentation.filter(v=>v.roundId===selectedRound?.id).at(-1);
+    const signature=JSON.stringify({p,selectedRound,selectedPresentation,projectRounds,selectedIterationId:i?.id,continuations:state.data.continuation.filter(c=>c.projectId===p.id).map(c=>({id:c.id,historicalCoverage:c.historicalCoverage,creativeContext:c.creativeContext})),iterations,jobs:state.data.job.filter(j=>j.projectId===p.id),submissions:state.data.submission.filter(s=>s.projectId===p.id),requests:state.data.request.filter(r=>r.projectId===p.id),acceptance:state.data.acceptance});
     if(!force&&signature===state.lastSignature){if(!$('inspector').hidden)$('inspection').textContent=JSON.stringify(inspect(),null,2);return;}
     state.lastSignature=signature;
     $('empty').hidden=true;$('workspace').hidden=false;
-    if(!q.get('project')||!q.get('iteration')&&i)route(p,i);
+    if(!q.get('project')||!q.get('round')&&!q.get('iteration')&&i)route(p,i);
     $('projects').replaceChildren(...projects.map(pj=>{const o=el('option',pj.name);o.value=pj.id;return o;}));$('projects').value=p.id;
     $('iterations').replaceChildren(...iterations.map((it,n)=>{const o=el('option',`Iteration ${String(n+1).padStart(2,'0')}${it.parentReviewId?' · Follow-up':''}`);o.value=it.id;return o;}));$('iterations').value=i?.id||'';
-    $('project-title').textContent=p.name;$('project-context').textContent='Visual exploration / '+(p.fixture?'Authored fixture workspace':'Private local workspace');
+    $('iterations').hidden=Boolean(selectedRound);$('cards').classList.toggle('comparison',Boolean(selectedRound&&selectedRound.operation==='compare'));
+    $('rounds').hidden=!projectRounds.length;$('rounds').replaceChildren(el('option','Production boards'),...projectRounds.map(r=>{const o=el('option',r.code+' · '+r.operation+' · '+r.state);o.value=r.id;return o;}));$('rounds').options[0].value='';$('rounds').value=selectedRound?.id??'';
+    $('project-title').textContent=p.name;$('project-context').textContent='Project workspace / '+(p.fixture?'Authored fixture workspace':'Private local workspace');
     const jobs=state.data.job.filter(j=>j.iterationId===i?.id),good=jobs.filter(j=>j.state==='succeeded').length;
     $('board-status').textContent=i?`${good} of ${i.count} images available · ${jobs.every(j=>['succeeded','failed'].includes(j.state))?'Ready for your review':'Partial board · work remains unresolved'}`:'Your exploration request is saved.';
     $('iteration-context').replaceChildren(el('span',i?.direction||p.defaults.direction),el('span',`Brand context: ${(i?i.brand:p.defaults.brand)||'None'}`));
@@ -114,7 +118,14 @@ async function refresh(force=false){
     $('request-gap').hidden=!pending.length;
     if(pending.length)$('request-gap').textContent='Next creative step saved. '+pending.at(-1).gap+'. Review and saved feedback remain available.';
     if(previous?.id!==i?.id||force)await restoreDraft();
-    renderFeedback();renderHistory();$('review').hidden=!i;await renderCards($('cards'),artifacts());
+    renderFeedback();renderHistory();$('review').hidden=!i||Boolean(selectedRound);
+    if(selectedRound){
+      $('board-status').textContent=(selectedPresentation?.title??selectedRound.intent)+' · '+selectedRound.state;
+      $('iteration-context').replaceChildren(el('span',selectedRound.code+' / '+selectedRound.operation),el('span',selectedRound.parentRoundId?'From '+(projectRounds.find(r=>r.id===selectedRound.parentRoundId)?.code??'recorded parent'):'Project operation'));
+      const chosen=(selectedPresentation?.references??selectedRound.references).map(ref=>state.data.artifact.find(a=>a.id===ref.artifactId)).filter(Boolean);
+      await renderCards($('cards'),chosen,{library:true});
+    }else await renderCards($('cards'),artifacts());
+    $('project-work').replaceChildren(...projectRounds.map(r=>{const box=el('details'),summary=el('summary',r.code+' · '+r.operation+' · '+r.state);box.append(summary,el('p',r.intent));for(const st of state.data.statement.filter(st=>st.roundId===r.id)){box.append(el('p',st.code+' / '+(st.worker?.sessionId??st.butler.sessionId)+' · '+st.status));for(const e of st.events)box.append(el('p',e.actor.sessionId+' / '+e.kind+': '+e.report.text));}return box;}));
     if(!$('library').hidden)await renderCards($('library-cards'),state.data.artifact.filter(a=>a.projectId===p.id),{library:true});
     $('inspection').textContent=JSON.stringify(inspect(),null,2);
   }catch(e){toast(e.message);}finally{polling=false;}
@@ -163,6 +174,7 @@ $('image-stage').onpointercancel=()=>{start=null;state.region=null;$('region-pre
 $('add-region').onclick=()=>{if(!state.region||!$('region-text').value.trim())return;const f=sourceFeedback(state.data.artifact.find(a=>a.id===state.focusId));f.regions.push({...state.region,text:$('region-text').value});state.region=null;$('region-editor').hidden=true;$('region-preview').hidden=true;changed();renderFocusNotes();};
 $('accept-design').onclick=async()=>{try{await op('design.accept',{artifactId:state.focusId,judgment:'accept'});await readAll();renderFocusNotes();toast('Explicit design acceptance recorded.');}catch(e){toast(e.message);}};
 $('projects').onchange=async()=>{await saveDraft();route(state.data.project.find(p=>p.id===$('projects').value),null);await refresh(true);};
+$('rounds').onchange=async()=>{await saveDraft();const roundId=$('rounds').value;if(!roundId){route(state.project,state.iteration);}else{location.hash=new URLSearchParams({project:state.project.id,page:'board',round:roundId});localStorage.setItem('bve:last',location.hash);}await refresh(true);};
 $('iterations').onchange=async()=>{await saveDraft();route(state.project,state.data.iteration.find(i=>i.id===$('iterations').value));await refresh(true);};
 $('new-project').onclick=async()=>{await saveDraft();$('workspace').hidden=true;$('empty').hidden=false;$('library').hidden=true;};
 $('project-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;try{

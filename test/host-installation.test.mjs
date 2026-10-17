@@ -1,201 +1,163 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync,readFileSync,existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync,readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { randomUUID } from 'node:crypto';
-import { serve } from '../src/server.mjs';
-import { installHost,installationStatus,unavailableHost } from '../src/host-installation.mjs';
-import { sessionCall,resumeSession,sessionOriginal } from '../scripts/session.mjs';
-import { fixtureSpecifications,capabilities } from '../src/adapters.mjs';
-import { fixturePNG } from '../src/png.mjs';
-const disposable=()=>join(mkdtempSync(join(tmpdir(),'bve-host-')),'private');
-const invoke=(a,op,input,key=randomUUID())=>sessionCall(a,{op,input,key});
-export function fixtureHost(){
-  const access={},ids={},keys={},created=[];
-  return {id:'authored-fixture-host',kind:'fixture',access,ids,keys,created,
-    async discover(){return Object.fromEntries(['sessions','delegation','resume','image','originalBytes','userHandoff'].map(k=>[k,{status:'tested',paid:false,formats:['image/png'],evidence:'Authored simulated host; no native image/session integration'}]));},
-    async ensureSession({role,key,previous}){keys[role]=key;ids[role]??=previous?.id??`fixture-${role}-${randomUUID()}`;if(!created.includes(ids[role]))created.push(ids[role]);return {id:ids[role],url:`https://example.invalid/fixture/${ids[role]}`,receipt:`simulated:${key}`};},
-    async verifySession({role,accessFile}){access[role]=JSON.parse(readFileSync(accessFile));await resumeSession(access[role]);},
-    async verifyDelegation({projectId}){
-      for(const role of ['generator','butler']){
-        const d=await invoke(access.conductor,'host.delegate',{kind:'readiness',toRole:role,projectId});
-        await resumeSession(access[role]);
-        await invoke(access[role],'host.receipt',{delegationId:d.id,status:'completed',detail:'Simulated role received readiness; no image call'});
-      }
-    },
-    async startConductor(){await resumeSession(access.conductor);}
-  };
-}
-const create=(app,name='Authored operational fixture')=>app.kernel.call(app.credentials.human,'project.create',randomUUID(),{name,brief:'A disposable installation contract test',count:1});
-const setup=async()=>{const app=await serve({root:disposable(),port:0}),project=create(app),host=fixtureHost();const result=await installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host,projectId:project.id});return {app,project,host,result};};
+import { Kernel } from '../src/kernel.mjs';
+import { workspace,feedback } from './helpers.mjs';
+import { installHost,unavailableHost } from '../src/host-installation.mjs';
+import { fixtureAdapter,fixtureSpecifications,capabilities } from '../src/adapters.mjs';
+import { ensureStaff,runWorker,returnRound } from '../src/host-runtime.mjs';
+import { resumeSession,sessionOriginal } from '../scripts/session.mjs';
+import { conductor,fixtureHost,activate,prepare,generation,retire,runCanonicalExamples,call,ref } from './project-fixture.mjs';
 
-test('installation verifies scoped reads/routes, backs up, and safely reuses three fixture sessions',async()=>{
-  const {app,project,host,result}=await setup();try{
-    assert.equal(result.status,'fixture-verified');assert.equal(result.conductor,null);assert.equal(host.created.length,3);
-    assert.ok(result.sessions.every(s=>s.readReceipt));assert.ok(existsSync(app.kernel.hostState(app.credentials).backup+'/workspace.sqlite'));
-    const before=result.sessions.map(s=>s.sessionId);const second=await installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host,projectId:project.id});
-    assert.deepEqual(second.sessions.map(s=>s.sessionId),before);assert.equal(host.created.length,3);
-    assert.equal(app.kernel.read(app.credentials.human,'request').length,0);assert.equal(app.kernel.read(app.credentials.generator,'assignment').length,0);
-  }finally{await app.stop();}
+test('Example A: exploration activates Iman Website only on production; B1 ready precedes exactly Gen1–Gen3',async()=>{
+ const w=workspace();try{
+  const C1=conductor(w);assert.equal(w.k.read(w.c.human,'project').length,0);assert.equal(w.k.hostBindings(w.c).length,1);assert.equal(w.k.read(w.c.human,'round').length,0);
+  // The same existing C1 is used by the canonical activation helper.
+  const ctx=await activate(w);assert.equal(ctx.C1.sessionId,C1.sessionId);assert.equal(ctx.project.name,'Iman Website');assert.equal(ctx.project.code,'P001');assert.equal(ctx.project.folder,join(w.root,'Projects',ctx.project.id));
+  assert.equal(ctx.host.created.length,1);assert.equal(ctx.host.created[0].id,'B1');assert.equal(existsSync(ctx.project.folder),false);
+  const A=await generation(ctx);assert.ok(existsSync(ctx.project.folder));assert.equal(A.round.code,'R001');assert.equal(A.round.expectedResults,3);
+  assert.deepEqual(ctx.host.created.map(s=>s.id),['B1','Gen1','Gen2','Gen3']);assert.deepEqual(ctx.host.received.map(r=>r.receivedBy),['B1','Gen1','Gen2','Gen3']);assert.equal(w.k.hostBindings(w.c).length,5);
+  assert.ok(w.k.hostBindings(w.c).every(b=>['conductor','butler','worker'].includes(b.role)));
+  for(const st of A.statements){assert.equal(st.projectId,ctx.project.id);assert.equal(st.butler.sessionId,'B1');assert.equal(st.butlerInstructions,A.round.butlerInstructions);assert.equal(st.prompt,w.k.read(w.c.generator,'job').find(j=>j.id===st.jobId).specification.prompt);}
+  const checkpoints=w.k.read(w.c.human,'checkpoint');assert.equal(checkpoints.length,1);assert.equal(checkpoints[0].state,'completed');assert.equal(checkpoints[0].artifacts.length,3);
+  assert.equal(ctx.host.notifications.length,1);assert.equal(ctx.host.notifications[0].sessionId,'C1');assert.equal(w.k.read(w.c.human,'event').find(e=>e.roundId===A.round.id).consumedAt,null);
+  assert.ok(w.k.read(w.c.human,'statementEvent').some(e=>e.kind==='disposition'&&e.actor.sessionId==='C1'));
+ }finally{w.k.close();}
 });
 
-test('missing controls, documented-only support, fake probes and fake routes cannot complete installation',async()=>{
-  const app=await serve({root:disposable(),port:0});try{
-    let r=await installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host:unavailableHost});
-    assert.equal(r.status,'incomplete');assert.equal(r.sessions.length,0);
-    assert.ok(r.gaps.some(g=>g.includes('sessions')));
-  }finally{await app.stop();}
-  for(const failure of ['documented','probe','routes']){
-    const app=await serve({root:disposable(),port:0}),host=fixtureHost();
-    if(failure==='documented')host.discover=async()=>({sessions:{status:'documented',evidence:'Vendor page'}});
-    if(failure==='probe')host.verifySession=async()=>true;
-    if(failure==='routes')host.verifyDelegation=async()=>true;
-    try{const r=await installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host});assert.equal(r.status,'incomplete');assert.ok(r.gaps.length);}finally{await app.stop();}
-  }
+test('Examples B/C: R004 comparison and R005 branch preserve history and recover C2 without duplicate workforce',async()=>{
+ const w=workspace();try{
+  const {ctx,A,R2,R3,B,C,C2,resumed}=await runCanonicalExamples(w);
+  assert.equal(B.code,'R004');assert.equal(B.expectedResults,0);assert.equal(C.code,'R005');assert.equal(C.parentRoundId,R2.round.id);
+  assert.equal(ctx.host.created.length,6); // one Butler plus 3+1+1 past workers; none for B/C
+  assert.equal(w.k.read(w.c.human,'artifact').length,5);assert.equal(w.k.read(w.c.generator,'assignment').length,5);
+  const comparison=w.k.read(w.c.human,'checkpoint').find(c=>c.roundId===B.id);assert.deepEqual(comparison.artifacts.map(r=>r.artifactId),[...A.artifacts.map(a=>a.id),R3.artifacts[0].id]);
+  const roundIds=resumed.context.round.map(r=>r.id);assert.ok([R2.round.id,R3.round.id,B.id,C.id].every(id=>roundIds.includes(id)));
+  assert.equal(resumed.context.sessionBinding.filter(b=>!b.revokedAt&&b.role==='butler').length,1);assert.equal(resumed.context.sessionBinding.filter(b=>b.role==='worker').length,5);
+  await assert.rejects(()=>resumeSession(ctx.C1),/Invalid function credential/);assert.equal(resumed.context.projectInstruction[0].text,'Develop Iman Website from the recorded brief; preserve original references and human judgments.');
+  await ensureStaff(C2,ctx.host,{role:'butler'});assert.equal(ctx.host.created.length,6);
+  assert.equal(resumed.context.checkpoint.length,5);assert.equal(w.k.read(w.c.human,'acceptance').length,0);
+  assert.deepEqual(await sessionOriginal(C2,A.artifacts[0].id),w.k.original(w.c.human,A.artifacts[0].id));
+ }finally{w.k.close();}
 });
 
-test('session scope rejects wrong roles, foreign jobs/events/originals and labels granting authority',async()=>{
-  const {app,project,host}=await setup();try{
-    const other=create(app,'Foreign fixture'),r=app.kernel.call(app.credentials.human,'request.create','foreign-request',{projectId:other.id,intent:'One authored candidate'});
-    const i=app.kernel.call(app.credentials.conductor,'iteration.commission','foreign-commission',{requestId:r.id,specifications:fixtureSpecifications({brief:other.brief,count:1})});
-    await assert.rejects(()=>invoke(host.access.conductor,'job.allocate',{role:'generator',jobId:i.jobIds[0]}),/boundary|cannot call/);
-    await assert.rejects(()=>invoke(host.access.generator,'job.allocate',{jobId:i.jobIds[0]}),/boundary/);
-    await assert.rejects(()=>invoke(host.access.butler,'iteration.commission',{requestId:r.id}),/boundary|cannot call/);
-    assert.equal((await resumeSession(host.access.conductor)).context.project.length,1);
-    assert.equal((await resumeSession(host.access.conductor)).context.project[0].id,project.id);
-    assert.throws(()=>app.kernel.bindSession(app.credentials,{role:'generator',sessionId:host.ids.conductor,projectId:project.id,nonce:'valid-nonce',replace:true}),/distinct actual sessions/);
-    assert.throws(()=>app.kernel.hostBindings({conductor:app.credentials.conductor}),/Local installation/);
-    assert.throws(()=>app.kernel.reconcile(host.access.butler.token),/deterministic Butler/);
-  }finally{await app.stop();}
+test('identity, readiness, tier, project and exact worker assignment boundaries are enforced',async()=>{
+ const w=workspace();try{
+  const ctx=await activate(w),round=await call(ctx.C1,'round.create',{projectId:ctx.project.id,operation:'generate',requestId:ctx.request.id,intent:ctx.request.intent,butlerInstructions:'Expect exactly three original results and preserve these instructions.'});
+  await assert.rejects(()=>call(ctx.C1,'iteration.commission',{requestId:ctx.request.id,specifications:fixtureSpecifications({brief:'x',count:3})}),/round.commission/);
+  await assert.rejects(()=>call(ctx.C1,'round.commission',{roundId:round.id,specifications:fixtureSpecifications({brief:'x',count:3})}),/Butler must be ready/);
+  await assert.rejects(()=>call(ctx.C1,'staff.bind',{projectId:ctx.project.id,role:'generator',tier:'LUNA'}),/only Butler or workers/);
+  await assert.rejects(()=>call(ctx.C1,'staff.bind',{projectId:ctx.project.id,role:'butler',tier:'SOL',sessionId:'wrong',nonce:'n',hostReceipt:'test'}),/model tier/);
+  await call(ctx.host.access.B1,'statement.report',{statementId:round.statementId,status:'ready',text:'Verified expected three'});
+  const i=await call(ctx.C1,'round.commission',{roundId:round.id,specifications:fixtureSpecifications({brief:ctx.project.brief,count:3})});
+  const b=await ensureStaff(ctx.C1,ctx.host,{role:'worker',jobId:i.jobIds[0]});await call(ctx.C1,'worker.assign',{projectId:ctx.project.id,bindingId:b.id,capability:capabilities.fixtureWorker});
+  const worker=ctx.host.access[b.sessionId],own=(await resumeSession(worker)).context;
+  assert.equal(own.job.length,1);assert.equal(own.job[0].id,i.jobIds[0]);assert.equal(own.statement.length,1);
+  await assert.rejects(()=>call(worker,'statement.report',{statementId:round.statementId,status:'produced',text:'Cross assignment'}),/mismatch/);
+  await assert.rejects(()=>call(worker,'statement.report',{statementId:own.statement[0].id,status:'produced',text:'Report',butlerInstructions:'rewritten'}),/cannot rewrite/);
+  await assert.rejects(()=>call(worker,'round.commission',{roundId:round.id}),/cannot call/);
+  const other=w.call('human','project.create',{name:'Other',brief:'Another scope'});
+  assert.throws(()=>w.k.bindSession(w.c,{role:'conductor',tier:'SOL',sessionId:'C1',projectId:other.id,nonce:'n',hostReceipt:'test'}),/another assignment\/project/);
+  await assert.rejects(()=>call(ctx.C1,'round.create',{projectId:other.id,operation:'compare'}),/Cross-project/);
+  await assert.rejects(()=>call(ctx.host.access.B1,'statement.report',{statementId:round.statementId,status:'completed',text:'Only one arrived'}),/presentation first/);
+ }finally{w.k.close();}
 });
 
-test('delegated fixture cycle preserves original intake, feedback, event distinctions and replacement context',async()=>{
-  const {app,project,host}=await setup();try{
-    const request=app.kernel.call(app.credentials.human,'request.create','native-request-fixture',{projectId:project.id,intent:'One authored fixture candidate'});
-    const iteration=await invoke(host.access.conductor,'iteration.commission',{requestId:request.id,specifications:fixtureSpecifications({brief:project.brief,count:1})});
-    const delegation=await invoke(host.access.conductor,'host.delegate',{projectId:project.id,kind:'dispatch',iterationId:iteration.id});
-    await assert.rejects(()=>invoke(host.access.butler,'host.receipt',{delegationId:delegation.id,status:'acknowledged',detail:'Wrong recipient'}),/recipient boundary/);
-    const inbox=await resumeSession(host.access.generator);assert.ok(inbox.delegations.some(d=>d.id===delegation.id));
-    await invoke(host.access.generator,'host.receipt',{delegationId:delegation.id,status:'acknowledged',detail:'Received via simulated durable polling'});
-    const a=await invoke(host.access.generator,'job.allocate',{jobId:iteration.jobIds[0],executor:'fixture-only',capability:capabilities.fixtureWorker},'host-allocate');
-    await invoke(host.access.generator,'attempt.start',{assignmentId:a.id},'host-start');
-    await assert.rejects(()=>invoke(host.access.generator,'attempt.start',{assignmentId:a.id},'host-start'),/already started/);
-    await assert.rejects(()=>invoke(host.access.generator,'host.receipt',{delegationId:delegation.id,status:'completed',detail:'Premature'}),/not completed/);
-    const bytes=fixturePNG(0);const receipt=app.kernel.call(a.token,'result.deliver','host-delivery',{assignmentId:a.id,outcome:'success',bytes:bytes.toString('base64'),evidence:{kind:'simulated',model:null,usage:null,cost:null}});
-    const b=await invoke(host.access.conductor,'host.delegate',{kind:'reconcile',projectId:project.id});
-    await invoke(host.access.butler,'host.receipt',{delegationId:b.id,status:'completed',detail:'Independent service reconciled fixture original'});
-    await invoke(host.access.generator,'host.receipt',{delegationId:delegation.id,status:'completed',detail:'Kernel reports all assigned jobs resolved'});
-    const artifact=app.kernel.read(app.credentials.human,'artifact')[0];assert.equal(artifact.deliveryId,receipt.deliveryId);assert.deepEqual(app.kernel.original(app.credentials.human,artifact.id),bytes);
-    const board=await resumeSession(host.access.conductor);assert.equal(board.context.artifact[0].id,artifact.id);
-    assert.deepEqual(await sessionOriginal({...host.access.conductor,transport:'kernel',root:app.kernel.root},artifact.id),bytes);
-    await assert.rejects(()=>sessionOriginal({...host.access.generator,transport:'kernel',root:app.kernel.root},artifact.id),/original boundary/);
-    assert.throws(()=>app.kernel.original(host.access.generator.token,artifact.id),/original boundary/);
-    const feedback={overall:'Preserve this submitted human wording',images:[{artifactId:artifact.id,sha256:artifact.sha256,version:1,width:artifact.width,height:artifact.height,note:'Quiet shape',favorite:true,regions:[]}]};
-    const draft=app.kernel.call(app.credentials.human,'draft.save','draft-host',{iterationId:iteration.id,expectedVersion:0,feedback});
-    const submission=app.kernel.call(app.credentials.human,'review.submit','submit-host',{iterationId:iteration.id,draftVersion:draft.version,intent:'iterate'});
-    const old=host.access.conductor,bind=app.kernel.bindSession(app.credentials,{role:'conductor',sessionId:'replacement-conductor',sessionUrl:'https://example.invalid/replacement',projectId:project.id,nonce:'replacement-nonce',replace:true});
-    const replacement={...old,token:bind.token,nonce:bind.nonce};
-    await assert.rejects(()=>resumeSession(old),/Invalid function credential/);
-    const resume=await resumeSession(replacement);assert.deepEqual(resume.context.continuation.find(c=>c.submissionId===submission.id).feedback,feedback);
-    const event=resume.context.event.find(e=>e.submissionId===submission.id);assert.equal(event.acknowledgedAt,null);assert.equal(event.consumedAt,null);
-    await invoke(replacement,'event.ack',{eventId:event.id,receipt:'actual simulated polling read'});
-    assert.equal(app.kernel.read(app.credentials.conductor,'event').find(e=>e.id===event.id).consumedAt,null);
-    await invoke(replacement,'event.consume',{eventId:event.id});
-    assert.equal(app.kernel.read(app.credentials.generator,'assignment').length,1);assert.equal(app.kernel.read(app.credentials.human,'acceptance').length,0);
-  }finally{await app.stop();}
+test('maximum staff, stable provisioning reuse and current project instruction revisions survive restart',async()=>{
+ const w=workspace();try{
+  const ctx=await activate(w);await ensureStaff(ctx.C1,ctx.host,{role:'butler'});assert.equal(ctx.host.created.length,1);
+  const r=w.call('human','request.create',{projectId:ctx.project.id,intent:'Six bounded concepts',count:6});const round=await prepare(ctx,{requestId:r.id});
+  const i=await call(ctx.C1,'round.commission',{roundId:round.id,specifications:fixtureSpecifications({brief:'six',count:6})});
+  for(const jobId of i.jobIds)await ensureStaff(ctx.C1,ctx.host,{role:'worker',jobId});
+  assert.equal(w.k.hostBindings(w.c).filter(b=>b.projectId===ctx.project.id).length,8);
+  const next=w.call('human','request.create',{projectId:ctx.project.id,intent:'A further bounded request',count:1});const nr=await prepare(ctx,{requestId:next.id});const ni=await call(ctx.C1,'round.commission',{roundId:nr.id,specifications:fixtureSpecifications({brief:'next',count:1})});
+  await assert.rejects(()=>ensureStaff(ctx.C1,ctx.host,{role:'worker',jobId:ni.jobIds[0]}),/Maximum six/);assert.equal(ctx.host.created.length,7);
+  await call(ctx.C1,'project.instructions',{projectId:ctx.project.id,expectedVersion:1,text:'Current concise project instructions.'});
+  await assert.rejects(()=>call(ctx.C1,'project.instructions',{projectId:ctx.project.id,expectedVersion:1,text:'Stale overwrite'}),/instructions changed/);
+  w.k.close();w.k=new Kernel(w.root);assert.equal((await resumeSession(ctx.C1)).context.projectInstruction.at(-1).text,'Current concise project instructions.');assert.equal(w.k.hostBindings(w.c).length,8);
+ }finally{w.k.close();}
 });
 
-test('owner restart recovers committed inbox and unread events; uncertain attempts are not restarted',async()=>{
-  let {app,project,host}=await setup();const root=app.kernel.root;
-  const r=app.kernel.call(app.credentials.human,'request.create','recovery-request',{projectId:project.id,intent:'Two authored fixture candidates',count:2});
-  const i=await invoke(host.access.conductor,'iteration.commission',{requestId:r.id,specifications:fixtureSpecifications({brief:project.brief,count:2})});
-  await invoke(host.access.conductor,'host.delegate',{projectId:project.id,kind:'dispatch',iterationId:i.id});
-  const assignments=[];
-  for(const jobId of i.jobIds){const a=await invoke(host.access.generator,'job.allocate',{jobId,executor:'fixture',capability:capabilities.fixtureWorker});await invoke(host.access.generator,'attempt.start',{assignmentId:a.id});assignments.push(a);}
-  const payload={assignmentId:assignments[0].id,outcome:'success',bytes:fixturePNG(1).toString('base64'),evidence:{kind:'simulated'}};
-  app.kernel.call(assignments[0].token,'result.deliver','interrupted-delivery',payload);await app.stop();
-  app=await serve({root,port:0});try{
-    const jobs=app.kernel.read(app.credentials.generator,'job');assert.equal(jobs[0].state,'succeeded');assert.equal(jobs[1].state,'uncertain');
-    const receipt=app.kernel.call(assignments[0].token,'result.deliver','interrupted-delivery',payload);assert.equal(receipt.replayed,true);
-    assert.throws(()=>app.kernel.call(assignments[0].token,'result.deliver','cross-assignment',{...payload,assignmentId:assignments[1].id}),/another assignment/);
-    host.access.generator.origin=app.origin;
-    await assert.rejects(()=>invoke(host.access.generator,'attempt.start',{assignmentId:assignments[1].id}),/uncertain/);
-    const context=await resumeSession({...host.access.conductor,origin:app.origin});assert.ok(context.context.event.some(e=>!e.consumedAt));
-    assert.equal(installationStatus(app.kernel,app.credentials).sessions.length,3);
-  }finally{await app.stop();}
+test('worker success report alone cannot complete delivery; replay and uncertainty retain original attempt',async()=>{
+ const w=workspace();try{
+  const ctx=await activate(w),round=await prepare(ctx);const i=await call(ctx.C1,'round.commission',{roundId:round.id,specifications:fixtureSpecifications({brief:'three',count:3})});
+  const b=await ensureStaff(ctx.C1,ctx.host,{role:'worker',jobId:i.jobIds[0]});await call(ctx.C1,'worker.assign',{projectId:ctx.project.id,bindingId:b.id,capability:capabilities.fixtureWorker});
+  const a=ctx.host.access[b.sessionId],st=(await resumeSession(a)).context.statement[0];
+  await call(a,'statement.report',{statementId:st.id,status:'produced',text:'Claimed success without bytes'});
+  assert.equal(w.k.read(w.c.human,'artifact').length,0);assert.equal(w.k.read(w.c.human,'checkpoint').length,0);
+  let calls=0;await runWorker(a,{capability:capabilities.fixtureWorker,async execute(){calls++;throw Error('Unknown external return');}},st.id);
+  await runWorker(a,fixtureAdapter(),st.id);assert.equal(calls,1);assert.equal(w.k.read(w.c.generator,'job')[0].state,'uncertain');
+  await assert.rejects(()=>call(a,'worker.start',{roundId:round.id}),/already started|uncertain/);
+  const assignment=(await resumeSession(a)).assignmentAccess,bytes=(await fixtureAdapter().execute({...assignment,specification:w.k.read(w.c.generator,'job')[0].specification})).bytes;
+  const input={assignmentId:assignment.id,outcome:'success',bytes,evidence:{kind:'simulated'}};
+  const delivered=w.k.call(assignment.token,'result.deliver','late-exact-delivery',input);w.k.reconcile(w.c.butler);
+  assert.equal(w.k.call(assignment.token,'result.deliver','late-exact-delivery',input).replayed,true);assert.ok(delivered.deliveryId);
+  assert.equal(w.k.read(w.c.generator,'job')[0].invocationsStarted,1);assert.equal(w.k.read(w.c.human,'artifact').length,1);
+ }finally{w.k.close();}
 });
 
-test('lost session creation response reuses stable provisioning key without duplicate sessions',async()=>{
-  const app=await serve({root:disposable(),port:0}),host=fixtureHost(),ensure=host.ensureSession;let once=true;
-  host.ensureSession=async args=>{const r=await ensure(args);if(once){once=false;throw Error('Lost host response');}return r;};
-  try{
-    const first=await installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host});assert.equal(first.status,'incomplete');
-    const key=host.keys.conductor;
-    const second=await installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host});assert.equal(second.status,'fixture-verified');assert.equal(host.keys.conductor,key);assert.equal(host.created.length,3);
-    const p=create(app);const read=await resumeSession(host.access.conductor);assert.equal(read.context.project[0].id,p.id);
-    assert.equal(app.kernel.hostBindings(app.credentials).find(b=>b.role==='conductor').projectId,p.id);
-  }finally{await app.stop();}
+test('comparison preserves unsent/saved notes and rejects omitted or foreign presentation material',async()=>{
+ const w=workspace();try{
+  const ctx=await activate(w),A=await generation(ctx);
+  const draft=w.call('human','draft.save',{iterationId:A.iteration.id,expectedVersion:0,feedback:feedback(A.artifacts)});
+  const B=await prepare(ctx,{operation:'compare',parentRoundId:A.round.id,references:A.artifacts.map(ref),intent:'Compare these recorded designs'});
+  await call(ctx.host.access.B1,'round.present',{roundId:B.id,title:'Partial comparison',references:A.artifacts.slice(0,1).map(ref)});
+  await assert.rejects(()=>call(ctx.host.access.B1,'statement.report',{statementId:B.statementId,status:'completed',text:'Incorrect complete claim'}),/omits assigned material/);
+  await call(ctx.host.access.B1,'round.present',{roundId:B.id,title:'Complete comparison',references:A.artifacts.map(ref)});
+  await call(ctx.host.access.B1,'statement.report',{statementId:B.statementId,status:'completed',text:'Same originals arranged'});
+  assert.deepEqual(w.k.read(w.c.human,'draft')[0],draft);assert.equal(w.k.read(w.c.human,'artifact').length,3);assert.equal(w.k.read(w.c.generator,'assignment').length,3);
+  assert.equal(w.k.read(w.c.human,'checkpoint').find(c=>c.roundId===B.id).state,'completed');
+ }finally{w.k.close();}
 });
 
-test('role runtime helpers perform serial delegated work and skip already completed/uncertain attempts',async()=>{
-  const {runGenerator,runButler}=await import('../src/host-runtime.mjs');
-  const {app,project,host}=await setup();try{
-    const r=app.kernel.call(app.credentials.human,'request.create','runtime-request',{projectId:project.id,intent:'Two authored fixtures',count:2});
-    const i=await invoke(host.access.conductor,'iteration.commission',{requestId:r.id,specifications:fixtureSpecifications({brief:project.brief,count:2})});
-    await assert.rejects(()=>invoke(host.access.generator,'job.allocate',{jobId:i.jobIds[0],executor:'fake',capability:capabilities.fixtureWorker}),/No dispatch delegation/);
-    const d=await invoke(host.access.conductor,'host.delegate',{projectId:project.id,kind:'dispatch',iterationId:i.id});
-    let calls=0;
-    const adapter={id:'fixture-runtime',capability:capabilities.fixtureWorker,async execute(){calls++;if(calls===2)throw Error('Uncertain external return');return {outcome:'success',bytes:fixturePNG(0).toString('base64'),evidence:{kind:'simulated'}};}};
-    const outcome=await runGenerator(host.access.generator,adapter,d.id);assert.equal(outcome.state,'blocked');assert.equal(calls,2);
-    await runGenerator(host.access.generator,adapter,d.id);assert.equal(calls,2);
-    const b=await invoke(host.access.conductor,'host.delegate',{projectId:project.id,kind:'reconcile'});
-    assert.equal((await runButler(host.access.butler,b.id)).state,'completed');
-    const jobs=app.kernel.read(app.credentials.generator,'job');assert.deepEqual(jobs.map(j=>j.state),['succeeded','uncertain']);
-    assert.equal(app.kernel.read(app.credentials.generator,'assignment').length,2);
-  }finally{await app.stop();}
+test('installation provisions no project staff and reports unavailable native integration accurately',async()=>{
+ const w=workspace();try{
+  const r=await installHost({kernel:w.k,owner:w.c,host:unavailableHost});assert.equal(r.status,'incomplete');assert.equal(w.k.hostBindings(w.c).length,0);assert.equal(w.k.read(w.c.human,'project').length,0);
+ }finally{w.k.close();}
+ const x=workspace();try{const host=fixtureHost();const first=await installHost({kernel:x.k,owner:x.c,host});const second=await installHost({kernel:x.k,owner:x.c,host});assert.equal(first.status,'fixture-verified');assert.equal(second.staffProvisionedByInstaller,0);assert.equal(host.created.length,0);assert.ok(existsSync(join(x.k.hostState(x.c).backup,'workspace.sqlite')));}finally{x.k.close();}
 });
 
-test('replacement revokes old scope, rebinds unfinished routes and requires fresh installation probes',async()=>{
-  const {app,project,host}=await setup();try{
-    const d=await invoke(host.access.conductor,'host.delegate',{projectId:project.id,kind:'readiness',toRole:'generator'});
-    const old=host.access.generator;
-    const replacement=app.kernel.bindSession(app.credentials,{role:'generator',sessionId:'new-generator',projectId:project.id,nonce:'new-generator-nonce',replace:true});
-    assert.equal(installationStatus(app.kernel,app.credentials).status,'incomplete');
-    await assert.rejects(()=>resumeSession(old),/Invalid function credential/);
-    const next={...old,token:replacement.token,nonce:replacement.nonce};assert.ok((await resumeSession(next)).delegations.some(v=>v.id===d.id));
-    host.ids.generator='new-generator';
-    host.verifySession=async()=>true;
-    const result=await installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host,projectId:project.id});
-    assert.equal(result.status,'incomplete');assert.match(result.gaps[0],/session-originated scoped read/);
-  }finally{await app.stop();}
+test('concurrent installation and failed session creation do not create duplicate staff',async()=>{
+ const w=workspace();let release,entered;const waiting=new Promise(ok=>release=ok),start=new Promise(ok=>entered=ok);
+ try{const host=fixtureHost();const discover=host.discover;host.discover=async()=>{entered();await waiting;return discover();};const first=installHost({kernel:w.k,owner:w.c,host});await start;await assert.rejects(()=>installHost({kernel:w.k,owner:w.c,host}),/already running/);release();await first;
+ const ctx=await activate(w),ensure=ctx.host.ensureSession;let lost=true;ctx.host.ensureSession=async args=>{const r=await ensure(args);if(lost){lost=false;throw Error('Lost creation response');}return r;};
+ const req=w.call('human','request.create',{projectId:ctx.project.id,intent:'One extra fixture',count:1}),round=await prepare(ctx,{requestId:req.id});const i=await call(ctx.C1,'round.commission',{roundId:round.id,specifications:fixtureSpecifications({brief:'one',count:1})});
+ await assert.rejects(()=>ensureStaff(ctx.C1,ctx.host,{role:'worker',jobId:i.jobIds[0]}),/Lost creation response/);const resumed=await ensureStaff(ctx.C1,ctx.host,{role:'worker',jobId:i.jobIds[0]});assert.equal(resumed.sessionId,'Gen1');assert.equal(ctx.host.created.length,2);
+ }finally{release();w.k.close();}
 });
 
-test('scoped Kernel command transport preserves roles without taking owner status or marking running attempts uncertain',async()=>{
-  const {app,project,host}=await setup();try{
-    const access={...host.access.conductor,transport:'kernel',root:app.kernel.root,origin:'http://127.0.0.1:1'};
-    const resume=await resumeSession(access);assert.equal(resume.context.project[0].id,project.id);
-    const r=app.kernel.call(app.credentials.human,'request.create','kernel-transport-request',{projectId:project.id,intent:'One fixture'});
-    const i=await invoke(access,'iteration.commission',{requestId:r.id,specifications:fixtureSpecifications({brief:project.brief,count:1})});
-    await invoke(access,'host.delegate',{projectId:project.id,kind:'dispatch',iterationId:i.id});
-    const gen={...host.access.generator,transport:'kernel',root:app.kernel.root};
-    const a=await invoke(gen,'job.allocate',{jobId:i.jobIds[0],executor:'fixture',capability:capabilities.fixtureWorker});await invoke(gen,'attempt.start',{assignmentId:a.id});
-    await resumeSession(access);assert.equal(app.kernel.read(app.credentials.generator,'job')[0].state,'running');
-    await assert.rejects(()=>invoke(access,'attempt.start',{assignmentId:a.id}),/cannot call/);
-    await assert.rejects(()=>serve({root:app.kernel.root,port:0}),/running owner/);
-  }finally{await app.stop();}
+test('project backup restores statements/checkpoints and reconstructs local folder without changing original bytes',async()=>{
+ const {backupRoot}=await import('../scripts/backup.mjs');
+ const {mkdtempSync}=await import('node:fs');const {tmpdir}=await import('node:os');
+ const w=workspace();let restored;try{
+  const ctx=await activate(w),A=await generation(ctx),dest=join(mkdtempSync(join(tmpdir(),'bve-project-backup-')),'restored');
+  const bytes=w.k.original(w.c.human,A.artifacts[0].id);await backupRoot(w.root,dest);restored=new Kernel(dest);
+  const owner=JSON.parse(readFileSync(join(dest,'credentials.json'))),p=restored.read(owner.human,'project')[0];
+  assert.equal(p.folder,join(dest,'Projects',p.id));assert.ok(existsSync(p.folder));assert.equal(restored.read(owner.human,'checkpoint').length,1);assert.deepEqual(restored.original(owner.human,A.artifacts[0].id),bytes);
+  assert.equal(restored.hostBindings(owner).length,5);assert.equal(restored.read(owner.human,'statement').filter(st=>st.jobId).length,3);
+ }finally{restored?.close();w.k.close();}
 });
 
-test('concurrent installers cannot duplicate provisioning; native claim without a fresh handoff read stays incomplete',async()=>{
-  const app=await serve({root:disposable(),port:0}),host=fixtureHost();
-  let release,entered;const wait=new Promise(ok=>release=ok),start=new Promise(ok=>entered=ok);const discover=host.discover;
-  host.discover=async()=>{entered();await wait;return discover();};
-  try{
-    const first=installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host});await start;
-    await assert.rejects(()=>installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host}),/already running/);
-    release();assert.equal((await first).status,'fixture-verified');assert.equal(host.created.length,3);
-    host.kind='native';host.startConductor=async()=>true;
-    const noRead=await installHost({kernel:app.kernel,owner:app.credentials,origin:app.origin,host});
-    assert.equal(noRead.status,'incomplete');assert.match(noRead.gaps[0],/fresh durable context read/);
-  }finally{release();await app.stop();}
+test('round retrieval is scoped over HTTP and incomplete operations cannot be relabeled complete',async()=>{
+ const {serve}=await import('../src/server.mjs');const {mkdtempSync}=await import('node:fs');const {tmpdir}=await import('node:os');
+ const app=await serve({root:join(mkdtempSync(join(tmpdir(),'bve-project-http-')),'root'),port:0});
+ try{
+  const w={k:app.kernel,c:app.credentials,root:app.kernel.root},ctx=await activate(w),A=await generation(ctx);
+  const get=async token=>fetch(app.origin+'/api/round?id='+A.round.id,{headers:{Authorization:'Bearer '+token}});
+  const view=await get(app.credentials.human);assert.equal(view.status,200);assert.equal((await view.json()).presentation.references.length,3);
+  assert.equal((await get('unbound-label-C1')).status,403);
+  const other=app.kernel.call(app.credentials.human,'project.create','another-project',{name:'Cross-project negative control',brief:'Never a replacement scenario'});
+  const b=app.kernel.bindSession(app.credentials,{role:'conductor',tier:'SOL',sessionId:'foreign-C',projectId:other.id,nonce:'foreign-nonce',hostReceipt:'Authored negative control'});
+  assert.equal((await get(b.token)).status,403);
+  const foreign={...ctx.C1,token:b.token,nonce:b.nonce,sessionId:b.sessionId},fb=app.kernel.bindSession(app.credentials,{role:'butler',tier:'LUNA',sessionId:'foreign-B',projectId:other.id,nonce:'foreign-b-nonce',hostReceipt:'Authored negative control'});
+  await resumeSession({...foreign,token:fb.token,nonce:fb.nonce,sessionId:fb.sessionId});
+  const foreignRound=await call(foreign,'round.create',{projectId:other.id,operation:'branch',intent:'Negative boundary control',butlerInstructions:'Belongs only to the foreign project'});
+  await assert.rejects(()=>call(ctx.host.access.B1,'statement.report',{statementId:foreignRound.statementId,status:'ready',text:'Cross-project statement claim'}),/Cross-project/);
+  const comparison=await prepare(ctx,{operation:'compare',references:A.artifacts.map(ref),intent:'Record an incomplete comparison operation'});
+  await call(ctx.host.access.B1,'round.present',{roundId:comparison.id,title:'Partial selected material',references:A.artifacts.slice(0,1).map(ref)});
+  await call(ctx.host.access.B1,'statement.report',{statementId:comparison.statementId,status:'incomplete',text:'Only one selected reference presented; the operation remains incomplete.'});
+  assert.equal(app.kernel.read(app.credentials.human,'checkpoint').find(c=>c.roundId===comparison.id).state,'incomplete');
+  await assert.rejects(()=>call(ctx.host.access.B1,'statement.report',{statementId:comparison.statementId,status:'completed',text:'Change historical outcome'}),/checkpointed/);
+ }finally{await app.stop();}
 });

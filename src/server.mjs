@@ -39,6 +39,7 @@ export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Numbe
       if(req.method==='GET'&&url.pathname==='/api/read'){
         json(200,kernel.read(credential,url.searchParams.get('kind')));return;
       }
+      if(req.method==='GET'&&url.pathname==='/api/round'){json(200,kernel.round(credential,url.searchParams.get('id')));return;}
       if(req.method==='GET'&&url.pathname==='/api/assignment'){json(200,kernel.assignment(credential));return;}
       if(req.method==='GET'&&url.pathname==='/api/original'){
         const bytes=kernel.original(credential,url.searchParams.get('id'));
@@ -64,6 +65,6 @@ export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Numbe
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const app=await serve({demo:process.argv.includes('--demo')});
-  console.log(`BVE V2 development candidate: ${app.origin}\nPrivate root: ${app.kernel.root}\n${process.argv.includes('--demo')?'SIMULATION: authored fixtures. No native workers.':'Native worker and Conductor adapters unavailable; saved projects/reviews remain usable.'}\nStop with Ctrl+C; resume with the same BVE_ROOT.`);
+  console.log(`BVE V2 development candidate: ${app.origin}\nPrivate root: ${app.kernel.root}\n${process.argv.includes('--demo')?'SIMULATION: authored fixtures. No native workers.':'Project records are available. Native project staffing/return requires the installed host driver; see installation status.'}\nStop with Ctrl+C; resume with the same BVE_ROOT.`);
   for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>app.stop().then(()=>process.exit(0)));
 }
