@@ -1,0 +1,8 @@
+node_modules/
+.bve/
+*.sqlite*
+*.db*
+.env*
+private/
+playwright-report/
+test-results/
