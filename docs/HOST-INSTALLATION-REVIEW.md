@@ -1,6 +1,6 @@
 # Operational installation change: implementation and limits
 
-This is a user-directed requirement change dated 17 October 2026. Earlier source did not promise or implement verified role-session installation. The new lifecycle is implemented around existing function contracts; operational installation of the preserved Windows workspace remains **incomplete** in this cloud environment. See candidate.json and evidence/checks.json for exact source identities.
+This is a user-directed requirement change dated 17 October 2026. Earlier source did not promise or implement verified role-session installation. The new lifecycle is implemented around existing function contracts; operational installation of the preserved Windows workspace remains **incomplete** in this cloud environment. Tested source: `dcee826c8fd8d08d5c1eaeb4848879f337ba94ae`. See candidate.json and evidence/checks.json for source identities and committed hashes.
 
 ## Implemented
 

@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-17T06:38:00.052Z",
-  "sourceCommit": "19c24e1f9787fb62fdc9e5a0565d09a85ad7215d",
+  "generatedAt": "2026-10-17T07:41:54.242Z",
+  "sourceCommit": "dcee826c8fd8d08d5c1eaeb4848879f337ba94ae",
   "sourceBytes": "committed Git blobs; no checkout line-ending conversion",
   "result": "passed",
-  "command": "BVE_BROWSER_EXECUTABLE=/tmp/bve-repair-chromium npm run verify; npm run evidence:repairs",
+  "command": "BVE_BROWSER_EXECUTABLE=/tmp/bve-host-chromium npm run verify; npm run evidence:repairs; node scripts/host-evidence.mjs VERIFICATION_LOG DISPOSABLE_PROBE_ROOT",
   "runtime": "v24.19.0",
   "playwright": "1.62.1",
   "browserEnvironment": {
@@ -13,9 +13,14 @@
     "provisioning": "Test-only @sparticuz/chromium 153.0.0 from npm registry"
   },
   "contracts": {
-    "total": 37,
-    "passed": 37,
+    "total": 47,
+    "passed": 47,
     "failed": 0
+  },
+  "hostInstallation": {
+    "report": "evidence/host-installation-report.json",
+    "operational": "incomplete",
+    "probe": "incomplete"
   },
   "browser": {
     "passed": 28,
@@ -36,22 +41,31 @@
     "GitHub-hosted CI"
   ],
   "sourceHashes": {
+    "docs/roles/BUTLER.md": "be3a789b4a1474548e6dc2903c7b1df84d7d8a0900ae488f9544191c6de16ec8",
+    "docs/roles/CONDUCTOR.md": "bd61079f53f7d06a565ec7eb5bf7e3a796a7ae64626c3c1aff71102d297dba48",
+    "docs/roles/GENERATOR.md": "5c0eb9750fb878af39123ac5f0250e2d70f4249d2cd3004b85e813d7139ab2b1",
     "package-lock.json": "4addd6ea24d4e11e5873d45e52da9527339c77d61dfce0cff7f28541aa6bf987",
-    "package.json": "629f79db18f44f36238ec332e43af59e9ca36ad5fc1cbd480f87d5032bb91128",
+    "package.json": "dea0b81ded0bea065495b8b82e8c4144bed4cf6c3a5bfc0d6e7ba1dc20be2f99",
     "public/app.js": "e1415e055449e658895def7375839e036ea1dc1727b8efc717978840d7dcbad9",
     "public/index.html": "32713a724ed33ac8f1d656cbd1c0eb5eeaa1b0e38f40517eedfda6150e2a60ef",
     "public/style.css": "a0de7109594f107eeac39bf3360814bf28d507dfd841c2e8fdf95b80dcb7eafe",
     "scripts/backup.mjs": "03e35c485d274004f5509538378d615302a1fa0c3734452bfe59843988259455",
     "scripts/browser-test.mjs": "f7c78ce98bd74be2f2ededdcaa894ec232ee1c14fb5dbec72af09cb173fb9589",
     "scripts/conductor.mjs": "3d338d84a4ec8a28a58d862e5b9a5f652f801e9e3ba1dd012d726ed36bc4a954",
+    "scripts/host-evidence.mjs": "86346a115223bf27b38d0e856d94a5543f6b9b99c0a6afee54b1312fe90d35ca",
+    "scripts/install-host.mjs": "b348e003437ced7eccdb962a555e263d0fa7fbbadf01511f27f4f61768a4dce9",
     "scripts/repair-evidence.mjs": "56987c6a374c140370ebe49d7e50f9e207b275987125adc1542ce620b10bf4c8",
-    "scripts/source-evidence.mjs": "cef02a145fd2e32561b32a88022ac724757aefa84e602d0f868772ca7a2acfcb",
+    "scripts/session.mjs": "5eaf81595f901dbe49e936cf8bfc1d830ccc4fcefa80d125747589fabfc47020",
+    "scripts/source-evidence.mjs": "4fb80d730668bc8f1ef003ef8c8fd5d490857a92536db39679a2ecfd6f1c5d73",
     "src/adapters.mjs": "d743c627998faf091f03aa5277622c280887b68cfd89f2f8733b994f68b7492d",
-    "src/kernel.mjs": "d1b0002fe3574d7a03de3e2359ef08b1a3e0e44b473b9d39603cbe97634f555c",
+    "src/host-installation.mjs": "ad3d3c0acfabf2b21c79146642575fe5049e698d825fd210efbfe5be9fb6d50e",
+    "src/host-runtime.mjs": "a6468c0fa68df59fa4e7020cf42302cd637d1504e727a68e066801e5e48f596a",
+    "src/kernel.mjs": "048e1fa43844a03df5b6a3f74da8dec2a8c2fc790cde6e96a583173b3b890790",
     "src/png.mjs": "4cc044503b36e3815da1f886785130a380fcd8a054bea826fea39e576fc99474",
     "src/server.mjs": "accfaea4b5670e52d8aae60d273463a51f7f81d735dde643f3be352b102e32e7",
     "test/backup.test.mjs": "f029944649833591dbd5afeb18f74b38084d0d10ecc7b49a6aa4b82ca6607cb7",
     "test/helpers.mjs": "91a8be582ab24be2fac97a65af951cb844c1366fcbc9597c5d44ded03f7651b5",
+    "test/host-installation.test.mjs": "651ef701d4d410a465989e8c9e579198ae9676aeea07d00ee26fd46253af0a2c",
     "test/http.test.mjs": "e0f6d4c5bb4ee7307962b4302dc9e8b1031c1c9c1936f86b253cc9bb94d2977c",
     "test/kernel.test.mjs": "e44b179417e23cac6f5d54d4d6497c5f1d50e9c1f378475f4d3b3a26aabdccf8",
     "test/repairs.test.mjs": "77f88b5d6a879d67d84b107adbb639604d2966c231ccfcaa5304ac23ac04a065"

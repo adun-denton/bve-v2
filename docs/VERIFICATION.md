@@ -7,10 +7,13 @@ This repaired candidate demonstrates deterministic function contracts and a brow
 ```sh
 npm ci --ignore-scripts
 npx playwright install chromium
-npm run verify
+npm run verify > /private/captured-verify.log 2>&1
 npm run evidence:repairs
-node scripts/source-evidence.mjs /path/to/captured-verify.log
+node scripts/host-evidence.mjs /private/captured-verify.log
+node scripts/source-evidence.mjs /private/captured-verify.log
 ```
+
+An independent rerun without the optional disposable actual-probe root records that probe as not-run; it must not reuse historical role receipts as a fresh host demonstration.
 
 `npm test` exercises kernel/HTTP/backup contracts in temporary private roots. `npm run test:browser` starts its own loopback owner and Chromium, seeds six distinct authored candidates, records source-bound review through UI controls, commissions a source-linked second six-candidate iteration through the Conductor interface, dispatches simulated completions through Generator, and lets Butler register originals. It submits second feedback without requesting generation and reopens the owner/browser. No test calls an image model or a paid provider.
 

@@ -1,6 +1,6 @@
 # Consolidated V2 repair review checkpoint
 
-This is the bounded correction of the existing candidate, based on PR head 115a07a34bd35d84ac00e45253671db4bb254888. It is for final independent technical review before an operator decides to begin the pilot. PR #1 remains draft/unmerged; there is no stable release, native call or operator installation in this coding phase. The machine-readable source commit is recorded in evidence/checks.json. Documentation/evidence commits may follow it without changing tested source bytes.
+Historical consolidated repair checkpoint (the later user-directed installation change is documented at the end of this file): based on PR head 115a07a34bd35d84ac00e45253671db4bb254888. It is for final independent technical review before an operator decides to begin the pilot. PR #1 remains draft/unmerged; there is no stable release, native call or operator installation in this coding phase. The machine-readable source commit is recorded in evidence/checks.json. Documentation/evidence commits may follow it without changing tested source bytes.
 
 | ID | Disposition | Evidence / boundary |
 |---|---|---|

@@ -1,7 +1,7 @@
 {
   "format": "bve-v2-repairs-evidence-v1",
-  "sourceCommit": "19c24e1f9787fb62fdc9e5a0565d09a85ad7215d",
-  "generatedAt": "2026-10-17T06:37:59.542Z",
+  "sourceCommit": "dcee826c8fd8d08d5c1eaeb4848879f337ba94ae",
+  "generatedAt": "2026-10-17T07:40:41.637Z",
   "kind": "authored-fixtures-and-simulated-executors",
   "baseline": "115a07a34bd35d84ac00e45253671db4bb254888",
   "dispositions": {
@@ -20,15 +20,15 @@
   },
   "humanEvidence": {
     "submission": {
-      "id": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-      "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-      "projectId": "aebbce06-117f-4995-8148-23efd995962e",
+      "id": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+      "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+      "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
       "draftVersion": 1,
       "feedback": {
         "overall": "Prefer the quiet circle; add breathing room in the marked area.",
         "images": [
           {
-            "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
+            "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
             "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
             "version": 1,
             "width": 900,
@@ -47,7 +47,7 @@
             ]
           },
           {
-            "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
+            "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
             "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
             "version": 1,
             "width": 900,
@@ -57,7 +57,7 @@
             "regions": []
           },
           {
-            "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
+            "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
             "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
             "version": 1,
             "width": 900,
@@ -67,7 +67,7 @@
             "regions": []
           },
           {
-            "artifactId": "7fdc537c-d3bf-4701-9a5b-23851e610520",
+            "artifactId": "8befcf27-5eea-4eaf-8173-c75cd0099384",
             "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
             "version": 1,
             "width": 900,
@@ -77,7 +77,7 @@
             "regions": []
           },
           {
-            "artifactId": "fe113f95-058c-4adf-8f5c-c9f116516dcc",
+            "artifactId": "86d51cff-eb0c-4745-8ed8-ef9b2f38d29e",
             "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
             "version": 1,
             "width": 900,
@@ -87,7 +87,7 @@
             "regions": []
           },
           {
-            "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
+            "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
             "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
             "version": 1,
             "width": 900,
@@ -100,60 +100,60 @@
       },
       "sourceArtifacts": [
         {
-          "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "0d11df31-9b8b-4919-b981-38585fdb258c",
+          "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "cba1b393-f633-4d03-be09-c868049d0500",
           "version": 1,
           "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "fe113f95-058c-4adf-8f5c-c9f116516dcc",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "44fa14db-9d18-49f8-b82f-8cbfb090fcd0",
+          "artifactId": "86d51cff-eb0c-4745-8ed8-ef9b2f38d29e",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "e3a55081-e57e-47eb-8204-990d9a137cba",
           "version": 1,
           "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "7fdc537c-d3bf-4701-9a5b-23851e610520",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "8465c361-1ef7-4556-96a5-dbcdafd920bc",
+          "artifactId": "8befcf27-5eea-4eaf-8173-c75cd0099384",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "848703d3-6d4a-4833-b44c-7ef4e236fcd6",
           "version": 1,
           "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "d8395c7b-e59b-4dec-8b45-f15dbb6ff440",
+          "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "abca3556-ff59-42d0-a960-d688afda5f4c",
           "version": 1,
           "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "807b49b7-b874-43b9-be7e-aba5b413fc9f",
+          "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "ffb22743-783a-41a7-ac3b-5ec3c42f5aae",
           "version": 1,
           "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+          "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
           "version": 1,
           "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
           "width": 900,
@@ -161,18 +161,18 @@
         }
       ],
       "intent": "feedback",
-      "submittedAt": "2026-10-17T06:37:57.334Z"
+      "submittedAt": "2026-10-17T07:40:40.842Z"
     },
     "recoveredSubmission": {
-      "id": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-      "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-      "projectId": "aebbce06-117f-4995-8148-23efd995962e",
+      "id": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+      "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+      "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
       "draftVersion": 1,
       "feedback": {
         "overall": "Prefer the quiet circle; add breathing room in the marked area.",
         "images": [
           {
-            "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
+            "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
             "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
             "version": 1,
             "width": 900,
@@ -191,7 +191,7 @@
             ]
           },
           {
-            "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
+            "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
             "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
             "version": 1,
             "width": 900,
@@ -201,7 +201,7 @@
             "regions": []
           },
           {
-            "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
+            "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
             "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
             "version": 1,
             "width": 900,
@@ -211,7 +211,7 @@
             "regions": []
           },
           {
-            "artifactId": "7fdc537c-d3bf-4701-9a5b-23851e610520",
+            "artifactId": "8befcf27-5eea-4eaf-8173-c75cd0099384",
             "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
             "version": 1,
             "width": 900,
@@ -221,7 +221,7 @@
             "regions": []
           },
           {
-            "artifactId": "fe113f95-058c-4adf-8f5c-c9f116516dcc",
+            "artifactId": "86d51cff-eb0c-4745-8ed8-ef9b2f38d29e",
             "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
             "version": 1,
             "width": 900,
@@ -231,7 +231,7 @@
             "regions": []
           },
           {
-            "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
+            "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
             "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
             "version": 1,
             "width": 900,
@@ -244,60 +244,60 @@
       },
       "sourceArtifacts": [
         {
-          "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "0d11df31-9b8b-4919-b981-38585fdb258c",
+          "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "cba1b393-f633-4d03-be09-c868049d0500",
           "version": 1,
           "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "fe113f95-058c-4adf-8f5c-c9f116516dcc",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "44fa14db-9d18-49f8-b82f-8cbfb090fcd0",
+          "artifactId": "86d51cff-eb0c-4745-8ed8-ef9b2f38d29e",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "e3a55081-e57e-47eb-8204-990d9a137cba",
           "version": 1,
           "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "7fdc537c-d3bf-4701-9a5b-23851e610520",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "8465c361-1ef7-4556-96a5-dbcdafd920bc",
+          "artifactId": "8befcf27-5eea-4eaf-8173-c75cd0099384",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "848703d3-6d4a-4833-b44c-7ef4e236fcd6",
           "version": 1,
           "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "d8395c7b-e59b-4dec-8b45-f15dbb6ff440",
+          "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "abca3556-ff59-42d0-a960-d688afda5f4c",
           "version": 1,
           "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "807b49b7-b874-43b9-be7e-aba5b413fc9f",
+          "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "ffb22743-783a-41a7-ac3b-5ec3c42f5aae",
           "version": 1,
           "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+          "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
           "version": 1,
           "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
           "width": 900,
@@ -305,7 +305,7 @@
         }
       ],
       "intent": "feedback",
-      "submittedAt": "2026-10-17T06:37:57.334Z"
+      "submittedAt": "2026-10-17T07:40:40.842Z"
     },
     "unchanged": true,
     "lateDeliveryProtection": "Covered by regression suite"
@@ -318,21 +318,21 @@
       "sourceIssues": []
     },
     "original": {
-      "id": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
-      "contextId": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
+      "id": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
+      "contextId": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
       "version": 1,
       "supersedes": null,
-      "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-      "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-      "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+      "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+      "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+      "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
       "kind": "rationale",
       "text": "Authored optional rationale: choose a quiet composition and keep the human region comment separate from this interpretation.",
       "sources": [
         {
-          "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+          "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
           "version": 1,
           "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
           "width": 900,
@@ -349,24 +349,24 @@
         "executor": "authored-Conductor-fixture",
         "tool": null
       },
-      "createdAt": "2026-10-17T06:37:57.574Z"
+      "createdAt": "2026-10-17T07:40:40.866Z"
     },
     "revision": {
-      "id": "79d9857c-aded-48e9-bf02-cf2637bba874",
-      "contextId": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
+      "id": "85126112-c35a-4076-8b47-707a57777229",
+      "contextId": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
       "version": 2,
-      "supersedes": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
-      "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-      "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-      "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+      "supersedes": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
+      "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+      "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+      "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
       "kind": "rationale",
       "text": "Authored revision: only explicitly selected inputs are required; Fresh may start from words alone.",
       "sources": [
         {
-          "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+          "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
           "version": 1,
           "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
           "width": 900,
@@ -383,25 +383,25 @@
         "executor": "authored-Conductor-fixture",
         "tool": null
       },
-      "createdAt": "2026-10-17T06:37:57.646Z"
+      "createdAt": "2026-10-17T07:40:40.893Z"
     },
     "recovered": [
       {
-        "id": "79d9857c-aded-48e9-bf02-cf2637bba874",
-        "contextId": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
+        "id": "85126112-c35a-4076-8b47-707a57777229",
+        "contextId": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
         "version": 2,
-        "supersedes": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+        "supersedes": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
         "kind": "rationale",
         "text": "Authored revision: only explicitly selected inputs are required; Fresh may start from words alone.",
         "sources": [
           {
-            "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-            "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-            "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-            "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+            "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+            "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+            "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+            "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
             "version": 1,
             "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
             "width": 900,
@@ -418,7 +418,7 @@
           "executor": "authored-Conductor-fixture",
           "tool": null
         },
-        "createdAt": "2026-10-17T06:37:57.646Z"
+        "createdAt": "2026-10-17T07:40:40.893Z"
       }
     ],
     "optional": {
@@ -431,8 +431,8 @@
         "required": false,
         "references": [
           {
-            "id": "79d9857c-aded-48e9-bf02-cf2637bba874",
-            "contextId": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
+            "id": "85126112-c35a-4076-8b47-707a57777229",
+            "contextId": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
             "version": 2
           }
         ],
@@ -441,67 +441,67 @@
     }
   },
   "continuation": {
-    "id": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-    "submissionId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-    "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-    "projectId": "aebbce06-117f-4995-8148-23efd995962e",
+    "id": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+    "submissionId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+    "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+    "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
     "status": "ready",
     "reviewEvidence": [
       {
-        "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "jobId": "0d11df31-9b8b-4919-b981-38585fdb258c",
+        "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "jobId": "cba1b393-f633-4d03-be09-c868049d0500",
         "version": 1,
         "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
         "width": 900,
         "height": 650
       },
       {
-        "artifactId": "fe113f95-058c-4adf-8f5c-c9f116516dcc",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "jobId": "44fa14db-9d18-49f8-b82f-8cbfb090fcd0",
+        "artifactId": "86d51cff-eb0c-4745-8ed8-ef9b2f38d29e",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "jobId": "e3a55081-e57e-47eb-8204-990d9a137cba",
         "version": 1,
         "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
         "width": 900,
         "height": 650
       },
       {
-        "artifactId": "7fdc537c-d3bf-4701-9a5b-23851e610520",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "jobId": "8465c361-1ef7-4556-96a5-dbcdafd920bc",
+        "artifactId": "8befcf27-5eea-4eaf-8173-c75cd0099384",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "jobId": "848703d3-6d4a-4833-b44c-7ef4e236fcd6",
         "version": 1,
         "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
         "width": 900,
         "height": 650
       },
       {
-        "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "jobId": "d8395c7b-e59b-4dec-8b45-f15dbb6ff440",
+        "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "jobId": "abca3556-ff59-42d0-a960-d688afda5f4c",
         "version": 1,
         "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
         "width": 900,
         "height": 650
       },
       {
-        "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "jobId": "807b49b7-b874-43b9-be7e-aba5b413fc9f",
+        "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "jobId": "ffb22743-783a-41a7-ac3b-5ec3c42f5aae",
         "version": 1,
         "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
         "width": 900,
         "height": 650
       },
       {
-        "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+        "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
         "version": 1,
         "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
         "width": 900,
@@ -512,7 +512,7 @@
       "overall": "Prefer the quiet circle; add breathing room in the marked area.",
       "images": [
         {
-          "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
+          "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
           "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
           "version": 1,
           "width": 900,
@@ -531,7 +531,7 @@
           ]
         },
         {
-          "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
+          "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
           "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
           "version": 1,
           "width": 900,
@@ -541,7 +541,7 @@
           "regions": []
         },
         {
-          "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
+          "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
           "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
           "version": 1,
           "width": 900,
@@ -551,7 +551,7 @@
           "regions": []
         },
         {
-          "artifactId": "7fdc537c-d3bf-4701-9a5b-23851e610520",
+          "artifactId": "8befcf27-5eea-4eaf-8173-c75cd0099384",
           "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
           "version": 1,
           "width": 900,
@@ -561,7 +561,7 @@
           "regions": []
         },
         {
-          "artifactId": "fe113f95-058c-4adf-8f5c-c9f116516dcc",
+          "artifactId": "86d51cff-eb0c-4745-8ed8-ef9b2f38d29e",
           "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
           "version": 1,
           "width": 900,
@@ -571,7 +571,7 @@
           "regions": []
         },
         {
-          "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
+          "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
           "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
           "version": 1,
           "width": 900,
@@ -586,50 +586,50 @@
       "status": "limited",
       "availableSources": [
         {
-          "artifactId": "fe113f95-058c-4adf-8f5c-c9f116516dcc",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "44fa14db-9d18-49f8-b82f-8cbfb090fcd0",
+          "artifactId": "86d51cff-eb0c-4745-8ed8-ef9b2f38d29e",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "e3a55081-e57e-47eb-8204-990d9a137cba",
           "version": 1,
           "sha256": "7976288069853a56a27c68d80b833b0602fa8d313b5b223ac9a0688a10a1344b",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "7fdc537c-d3bf-4701-9a5b-23851e610520",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "8465c361-1ef7-4556-96a5-dbcdafd920bc",
+          "artifactId": "8befcf27-5eea-4eaf-8173-c75cd0099384",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "848703d3-6d4a-4833-b44c-7ef4e236fcd6",
           "version": 1,
           "sha256": "effef7505bc48443044cc2b311bf807e53f2dc340674f7a1ad3b7be5975f000a",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "d8395c7b-e59b-4dec-8b45-f15dbb6ff440",
+          "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "abca3556-ff59-42d0-a960-d688afda5f4c",
           "version": 1,
           "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "807b49b7-b874-43b9-be7e-aba5b413fc9f",
+          "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "ffb22743-783a-41a7-ac3b-5ec3c42f5aae",
           "version": 1,
           "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
           "width": 900,
           "height": 650
         },
         {
-          "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+          "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
           "version": 1,
           "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
           "width": 900,
@@ -638,28 +638,28 @@
       ],
       "issues": [
         {
-          "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
-          "reason": "Corrupt original 28909c34-d731-49f8-80af-1d4563241317: Unsupported or oversized image: PNG required"
+          "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
+          "reason": "Corrupt original 21ca0d44-c585-43a4-8ebd-cd988963ee46: Unsupported or oversized image: PNG required"
         }
       ]
     },
     "creativeContext": [
       {
-        "id": "79d9857c-aded-48e9-bf02-cf2637bba874",
-        "contextId": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
+        "id": "85126112-c35a-4076-8b47-707a57777229",
+        "contextId": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
         "version": 2,
-        "supersedes": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+        "supersedes": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
         "kind": "rationale",
         "text": "Authored revision: only explicitly selected inputs are required; Fresh may start from words alone.",
         "sources": [
           {
-            "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-            "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-            "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-            "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+            "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+            "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+            "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+            "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
             "version": 1,
             "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
             "width": 900,
@@ -676,7 +676,7 @@
           "executor": "authored-Conductor-fixture",
           "tool": null
         },
-        "createdAt": "2026-10-17T06:37:57.646Z"
+        "createdAt": "2026-10-17T07:40:40.893Z"
       }
     ],
     "optional": {
@@ -689,86 +689,86 @@
         "required": false,
         "references": [
           {
-            "id": "79d9857c-aded-48e9-bf02-cf2637bba874",
-            "contextId": "6ebdfda4-a133-4ddd-8418-e6fb9a9550ba",
+            "id": "85126112-c35a-4076-8b47-707a57777229",
+            "contextId": "6006e4d5-9249-4d8d-ae04-5c7ca3b719e1",
             "version": 2
           }
         ],
         "sourceIssues": []
       }
     },
-    "preparedAt": "2026-10-17T06:37:59.520Z"
+    "preparedAt": "2026-10-17T07:40:41.630Z"
   },
   "childIterations": [
     {
-      "id": "8ff88289-637f-42b7-a4f3-b6fefe47cdff",
-      "projectId": "aebbce06-117f-4995-8148-23efd995962e",
+      "id": "a1f9f59d-7860-45a8-80e7-5f713735aae4",
+      "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
       "page": "board",
-      "requestId": "fa016309-7c71-4ab9-909d-ae8a6831fe5d",
-      "parentReviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-      "parentIterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-      "createdAt": "2026-10-17T06:37:57.837Z",
+      "requestId": "942aff36-c80d-4d88-b54a-9b2ef95ba2fc",
+      "parentReviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+      "parentIterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+      "createdAt": "2026-10-17T07:40:40.952Z",
       "count": 2,
       "direction": "Follow",
       "brand": "Muted green",
       "jobIds": [
-        "dd1ac701-17ce-4f81-8838-8c12ba3e688c",
-        "0777e1bf-db77-49dd-8c54-6bb959d7866c"
+        "c2b9a975-18b9-441a-9afa-04ab60d70cc7",
+        "dbfbc4ea-5039-4067-9a69-7c1f72944df9"
       ],
       "interpretation": {
-        "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+        "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
         "text": "Authored independent interpretation for Follow chosen one/two references",
-        "createdAt": "2026-10-17T06:37:57.837Z"
+        "createdAt": "2026-10-17T07:40:40.952Z"
       }
     },
     {
-      "id": "b7ddfa5b-8d2f-4fb8-89b9-29238fa2b4cc",
-      "projectId": "aebbce06-117f-4995-8148-23efd995962e",
+      "id": "0265c43f-c51f-4a6b-96c5-b877bdbb6ef2",
+      "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
       "page": "board",
-      "requestId": "c77d5b02-6bf7-43f6-982b-95e5ba44712f",
-      "parentReviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-      "parentIterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-      "createdAt": "2026-10-17T06:37:58.578Z",
+      "requestId": "743d2b4a-561b-4384-9bab-806b80cf1dfc",
+      "parentReviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+      "parentIterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+      "createdAt": "2026-10-17T07:40:41.249Z",
       "count": 2,
       "direction": "Fresh",
       "brand": null,
       "jobIds": [
-        "04a834d6-fa00-420d-a0b6-32b0045af5e4",
-        "93d24023-2663-477d-bac3-67908cc633c8"
+        "86b20a54-51c2-4c6e-900d-2b38a7142b9a",
+        "d32feaba-b7e1-4a28-ba29-4c6029d775db"
       ],
       "interpretation": {
-        "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+        "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
         "text": "Authored independent interpretation for Fresh independent and explicit-content variants",
-        "createdAt": "2026-10-17T06:37:58.578Z"
+        "createdAt": "2026-10-17T07:40:41.249Z"
       }
     },
     {
-      "id": "56d68a7c-b5b5-450f-b9eb-aaf8dc71c86a",
-      "projectId": "aebbce06-117f-4995-8148-23efd995962e",
+      "id": "7ae8b205-a77d-461f-8a65-0800efb6905c",
+      "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
       "page": "board",
-      "requestId": "02ef4402-905d-43ce-8009-dfa46bed7c32",
-      "parentReviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-      "parentIterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-      "createdAt": "2026-10-17T06:37:59.156Z",
+      "requestId": "f77f2e1b-70f9-492c-889f-9b4973a8f3aa",
+      "parentReviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+      "parentIterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+      "createdAt": "2026-10-17T07:40:41.486Z",
       "count": 2,
       "direction": "Follow",
       "brand": null,
       "jobIds": [
-        "3c944304-24f9-43ae-a12c-12b4eb93759c",
-        "89ebb5a6-21a6-4375-b2bf-1ae518af96aa"
+        "7ade2e00-0299-4642-8ccc-327bf0d9d2ed",
+        "dfd67b1b-95ca-45f8-813c-a2880a538051"
       ],
       "interpretation": {
-        "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+        "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
         "text": "Authored independent interpretation for Mixed dependency work; preserve independent job",
-        "createdAt": "2026-10-17T06:37:59.156Z"
+        "createdAt": "2026-10-17T07:40:41.486Z"
       }
     }
   ],
   "workerEnvelopes": [
     {
-      "id": "d980e313-6c5c-47e0-a175-d9eb6b105204",
-      "jobId": "dd1ac701-17ce-4f81-8838-8c12ba3e688c",
-      "attemptId": "da3f93bc-03c2-4bf9-ae97-1583d7145012",
+      "id": "3c046828-f569-43d9-a630-caa24b725375",
+      "jobId": "c2b9a975-18b9-441a-9afa-04ab60d70cc7",
+      "attemptId": "4dd782a8-cb41-4920-aa2d-250d260a1c90",
       "executor": "authored-fixture-executor",
       "capability": {
         "status": "simulated",
@@ -780,8 +780,8 @@
         "concurrency": 1,
         "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
       },
-      "allocatedAt": "2026-10-17T06:37:57.952Z",
-      "startedAt": "2026-10-17T06:37:58.080Z",
+      "allocatedAt": "2026-10-17T07:40:40.994Z",
+      "startedAt": "2026-10-17T07:40:41.024Z",
       "specification": {
         "directionId": "direction-1",
         "label": "Soft orbit · refinement",
@@ -790,10 +790,10 @@
         "prompt": "Use one off-center circle in a muted botanical palette, spacious and calm. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
         "sources": [
           {
-            "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-            "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-            "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-            "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+            "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+            "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+            "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+            "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
             "version": 1,
             "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
             "width": 900,
@@ -808,7 +808,7 @@
                 "h": 0.25,
                 "meaning": "Give the marked area breathing room",
                 "reviewRegion": {
-                  "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+                  "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
                   "index": 0
                 }
               }
@@ -828,25 +828,25 @@
         "direction": "Follow",
         "brand": "Muted green",
         "lineage": {
-          "parentReviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-          "parentIterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de"
+          "parentReviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+          "parentIterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004"
         },
         "allowance": {
           "primaryAttempts": 1,
           "maxRetries": 0
         },
         "destination": {
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "8ff88289-637f-42b7-a4f3-b6fefe47cdff"
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "a1f9f59d-7860-45a8-80e7-5f713735aae4"
         },
         "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
       },
       "state": "running"
     },
     {
-      "id": "68396b54-2ab2-40d6-8c86-e8d10756c606",
-      "jobId": "0777e1bf-db77-49dd-8c54-6bb959d7866c",
-      "attemptId": "13d488b3-3413-4e54-95d8-b4679164a3c0",
+      "id": "022425da-93cd-4202-99e8-c6ce9f05336a",
+      "jobId": "dbfbc4ea-5039-4067-9a69-7c1f72944df9",
+      "attemptId": "5d7f7599-b8c1-44bc-bb29-e86ce7620df0",
       "executor": "authored-fixture-executor",
       "capability": {
         "status": "simulated",
@@ -858,8 +858,8 @@
         "concurrency": 1,
         "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
       },
-      "allocatedAt": "2026-10-17T06:37:58.310Z",
-      "startedAt": "2026-10-17T06:37:58.374Z",
+      "allocatedAt": "2026-10-17T07:40:41.135Z",
+      "startedAt": "2026-10-17T07:40:41.164Z",
       "specification": {
         "directionId": "direction-2",
         "label": "Editorial block · refinement",
@@ -868,10 +868,10 @@
         "prompt": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
         "sources": [
           {
-            "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
-            "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-            "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-            "jobId": "807b49b7-b874-43b9-be7e-aba5b413fc9f",
+            "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
+            "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+            "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+            "jobId": "ffb22743-783a-41a7-ac3b-5ec3c42f5aae",
             "version": 1,
             "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
             "width": 900,
@@ -880,10 +880,10 @@
             "regions": []
           },
           {
-            "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
-            "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-            "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-            "jobId": "d8395c7b-e59b-4dec-8b45-f15dbb6ff440",
+            "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
+            "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+            "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+            "jobId": "abca3556-ff59-42d0-a960-d688afda5f4c",
             "version": 1,
             "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
             "width": 900,
@@ -905,25 +905,25 @@
         "direction": "Follow",
         "brand": "Muted green",
         "lineage": {
-          "parentReviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-          "parentIterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de"
+          "parentReviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+          "parentIterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004"
         },
         "allowance": {
           "primaryAttempts": 1,
           "maxRetries": 0
         },
         "destination": {
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "8ff88289-637f-42b7-a4f3-b6fefe47cdff"
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "a1f9f59d-7860-45a8-80e7-5f713735aae4"
         },
         "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
       },
       "state": "running"
     },
     {
-      "id": "f0ccb611-9b5a-466c-bb40-a1c6e3d58762",
-      "jobId": "04a834d6-fa00-420d-a0b6-32b0045af5e4",
-      "attemptId": "38491895-449b-446d-a40a-4cdbe0f042fa",
+      "id": "27efc63a-25a3-440c-adee-b0495b210361",
+      "jobId": "86b20a54-51c2-4c6e-900d-2b38a7142b9a",
+      "attemptId": "8cc20bd2-559c-4519-a1b4-620844d4e715",
       "executor": "authored-fixture-executor",
       "capability": {
         "status": "simulated",
@@ -935,8 +935,8 @@
         "concurrency": 1,
         "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
       },
-      "allocatedAt": "2026-10-17T06:37:58.664Z",
-      "startedAt": "2026-10-17T06:37:58.710Z",
+      "allocatedAt": "2026-10-17T07:40:41.291Z",
+      "startedAt": "2026-10-17T07:40:41.313Z",
       "specification": {
         "directionId": "direction-1",
         "label": "Soft orbit · refinement",
@@ -957,25 +957,25 @@
         "direction": "Fresh",
         "brand": null,
         "lineage": {
-          "parentReviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-          "parentIterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de"
+          "parentReviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+          "parentIterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004"
         },
         "allowance": {
           "primaryAttempts": 1,
           "maxRetries": 0
         },
         "destination": {
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "b7ddfa5b-8d2f-4fb8-89b9-29238fa2b4cc"
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "0265c43f-c51f-4a6b-96c5-b877bdbb6ef2"
         },
         "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
       },
       "state": "running"
     },
     {
-      "id": "91ffc3e7-1b53-4c17-a844-f236236819d5",
-      "jobId": "93d24023-2663-477d-bac3-67908cc633c8",
-      "attemptId": "05b23b56-e746-433a-aa96-dc9f6169f68b",
+      "id": "444424ee-f2ba-4991-855b-ccf0ed7aa62c",
+      "jobId": "d32feaba-b7e1-4a28-ba29-4c6029d775db",
+      "attemptId": "6a1dbe90-f69e-4019-aa50-4f1c59cdc039",
       "executor": "authored-fixture-executor",
       "capability": {
         "status": "simulated",
@@ -987,8 +987,8 @@
         "concurrency": 1,
         "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
       },
-      "allocatedAt": "2026-10-17T06:37:58.897Z",
-      "startedAt": "2026-10-17T06:37:58.941Z",
+      "allocatedAt": "2026-10-17T07:40:41.396Z",
+      "startedAt": "2026-10-17T07:40:41.415Z",
       "specification": {
         "directionId": "direction-2",
         "label": "Editorial block · refinement",
@@ -997,10 +997,10 @@
         "prompt": "Use a tall rectangular focal block on the right, balanced by open left space and warm clay. Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.",
         "sources": [
           {
-            "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
-            "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-            "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-            "jobId": "807b49b7-b874-43b9-be7e-aba5b413fc9f",
+            "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
+            "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+            "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+            "jobId": "ffb22743-783a-41a7-ac3b-5ec3c42f5aae",
             "version": 1,
             "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
             "width": 900,
@@ -1022,25 +1022,25 @@
         "direction": "Fresh",
         "brand": null,
         "lineage": {
-          "parentReviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-          "parentIterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de"
+          "parentReviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+          "parentIterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004"
         },
         "allowance": {
           "primaryAttempts": 1,
           "maxRetries": 0
         },
         "destination": {
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "b7ddfa5b-8d2f-4fb8-89b9-29238fa2b4cc"
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "0265c43f-c51f-4a6b-96c5-b877bdbb6ef2"
         },
         "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
       },
       "state": "running"
     },
     {
-      "id": "1f5a98d2-e994-4ae9-a1b7-96e93937ee4e",
-      "jobId": "89ebb5a6-21a6-4375-b2bf-1ae518af96aa",
-      "attemptId": "2e81507b-9f92-4bf6-8229-45e175671796",
+      "id": "f71ab72d-e9e5-4da3-9eea-561507f9c1a6",
+      "jobId": "dfd67b1b-95ca-45f8-813c-a2880a538051",
+      "attemptId": "ee613946-215b-4224-96f4-336afc8b70d7",
       "executor": "authored-fixture-executor",
       "capability": {
         "status": "simulated",
@@ -1052,8 +1052,8 @@
         "concurrency": 1,
         "evidence": "Authored PNG fixtures; no image model invocation; model, cost and usage unknown"
       },
-      "allocatedAt": "2026-10-17T06:37:59.235Z",
-      "startedAt": "2026-10-17T06:37:59.294Z",
+      "allocatedAt": "2026-10-17T07:40:41.529Z",
+      "startedAt": "2026-10-17T07:40:41.546Z",
       "specification": {
         "directionId": "direction-2",
         "label": "Editorial block · refinement",
@@ -1074,16 +1074,16 @@
         "direction": "Follow",
         "brand": null,
         "lineage": {
-          "parentReviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
-          "parentIterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de"
+          "parentReviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
+          "parentIterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004"
         },
         "allowance": {
           "primaryAttempts": 1,
           "maxRetries": 0
         },
         "destination": {
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "56d68a7c-b5b5-450f-b9eb-aaf8dc71c86a"
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "7ae8b205-a77d-461f-8a65-0800efb6905c"
         },
         "completion": "Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance"
       },
@@ -1092,14 +1092,14 @@
   ],
   "dependencyOutcomes": [
     {
-      "jobId": "dd1ac701-17ce-4f81-8838-8c12ba3e688c",
+      "jobId": "c2b9a975-18b9-441a-9afa-04ab60d70cc7",
       "state": "succeeded",
       "sources": [
         {
-          "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+          "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
           "version": 1,
           "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
           "width": 900,
@@ -1114,7 +1114,7 @@
               "h": 0.25,
               "meaning": "Give the marked area breathing room",
               "reviewRegion": {
-                "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+                "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
                 "index": 0
               }
             }
@@ -1126,14 +1126,14 @@
       "invocationsStarted": 1
     },
     {
-      "jobId": "0777e1bf-db77-49dd-8c54-6bb959d7866c",
+      "jobId": "dbfbc4ea-5039-4067-9a69-7c1f72944df9",
       "state": "succeeded",
       "sources": [
         {
-          "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "807b49b7-b874-43b9-be7e-aba5b413fc9f",
+          "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "ffb22743-783a-41a7-ac3b-5ec3c42f5aae",
           "version": 1,
           "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
           "width": 900,
@@ -1142,10 +1142,10 @@
           "regions": []
         },
         {
-          "artifactId": "b7dab326-7ab7-40db-bc6d-570620b47ba4",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "d8395c7b-e59b-4dec-8b45-f15dbb6ff440",
+          "artifactId": "2020f48d-b1c4-4336-b0e1-474fb8423e94",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "abca3556-ff59-42d0-a960-d688afda5f4c",
           "version": 1,
           "sha256": "2183904074d674e29bbc61e79f4359c3634cf0ec8619f48785d350e9d07ccb70",
           "width": 900,
@@ -1159,7 +1159,7 @@
       "invocationsStarted": 1
     },
     {
-      "jobId": "04a834d6-fa00-420d-a0b6-32b0045af5e4",
+      "jobId": "86b20a54-51c2-4c6e-900d-2b38a7142b9a",
       "state": "succeeded",
       "sources": [],
       "dependencyIssues": [],
@@ -1167,14 +1167,14 @@
       "invocationsStarted": 1
     },
     {
-      "jobId": "93d24023-2663-477d-bac3-67908cc633c8",
+      "jobId": "d32feaba-b7e1-4a28-ba29-4c6029d775db",
       "state": "succeeded",
       "sources": [
         {
-          "artifactId": "254074ba-820e-41f9-95d2-fe2faa177709",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "807b49b7-b874-43b9-be7e-aba5b413fc9f",
+          "artifactId": "6f00a5cd-e8ce-4af5-8dcf-544a0e5ce81b",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "ffb22743-783a-41a7-ac3b-5ec3c42f5aae",
           "version": 1,
           "sha256": "41291b4150777eefe69e3e539362a8956354089af6bb00ded408b1ec9de60ad8",
           "width": 900,
@@ -1188,14 +1188,14 @@
       "invocationsStarted": 1
     },
     {
-      "jobId": "3c944304-24f9-43ae-a12c-12b4eb93759c",
+      "jobId": "7ade2e00-0299-4642-8ccc-327bf0d9d2ed",
       "state": "blocked",
       "sources": [
         {
-          "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
-          "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-          "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-          "jobId": "0d11df31-9b8b-4919-b981-38585fdb258c",
+          "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
+          "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+          "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+          "jobId": "cba1b393-f633-4d03-be09-c868049d0500",
           "version": 1,
           "sha256": "fe8e436bcc6f7ed9c37a1c0232585ac512d4fd41843f86075c6e987d6e2f4187",
           "width": 900,
@@ -1206,15 +1206,15 @@
       ],
       "dependencyIssues": [
         {
-          "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
-          "reason": "Corrupt original 28909c34-d731-49f8-80af-1d4563241317: Unsupported or oversized image: PNG required"
+          "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
+          "reason": "Corrupt original 21ca0d44-c585-43a4-8ebd-cd988963ee46: Unsupported or oversized image: PNG required"
         }
       ],
       "allowanceReserved": 0,
       "invocationsStarted": 0
     },
     {
-      "jobId": "89ebb5a6-21a6-4375-b2bf-1ae518af96aa",
+      "jobId": "dfd67b1b-95ca-45f8-813c-a2880a538051",
       "state": "succeeded",
       "sources": [],
       "dependencyIssues": [],
@@ -1235,12 +1235,12 @@
       "historical": "limited",
       "missing": [
         {
-          "artifactId": "28909c34-d731-49f8-80af-1d4563241317",
-          "reason": "Corrupt original 28909c34-d731-49f8-80af-1d4563241317: Unsupported or oversized image: PNG required"
+          "artifactId": "21ca0d44-c585-43a4-8ebd-cd988963ee46",
+          "reason": "Corrupt original 21ca0d44-c585-43a4-8ebd-cd988963ee46: Unsupported or oversized image: PNG required"
         }
       ],
       "expectedArtifactIds": [
-        "28909c34-d731-49f8-80af-1d4563241317"
+        "21ca0d44-c585-43a4-8ebd-cd988963ee46"
       ],
       "includedArtifactIds": []
     },
@@ -1249,18 +1249,18 @@
       "historical": "limited",
       "missing": [],
       "expectedArtifactIds": [
-        "7ea617b4-6399-4eff-be5d-65b9cc1e9a93"
+        "b8a66945-d6bd-4554-b3c3-75158ba703a1"
       ],
       "includedArtifactIds": [
-        "7ea617b4-6399-4eff-be5d-65b9cc1e9a93"
+        "b8a66945-d6bd-4554-b3c3-75158ba703a1"
       ]
     },
     "selectedOriginalIdentities": [
       {
-        "artifactId": "7ea617b4-6399-4eff-be5d-65b9cc1e9a93",
-        "projectId": "aebbce06-117f-4995-8148-23efd995962e",
-        "iterationId": "1b2dbd23-8ac0-4649-915d-4dcefad0c4de",
-        "jobId": "42183cb4-447d-41c5-84bd-7597b5ba0154",
+        "artifactId": "b8a66945-d6bd-4554-b3c3-75158ba703a1",
+        "projectId": "b263fe66-6d75-473e-9b83-9127722debe8",
+        "iterationId": "9459fbe1-a1ec-40ba-a9d2-edba3c9dd004",
+        "jobId": "509273e3-1f38-4c35-bd68-d7c2b8f266c7",
         "version": 1,
         "sha256": "dda509f3af9b7985518c0252004713a74f765a12626239b8c55e940f36d3b377",
         "width": 900,
@@ -1275,7 +1275,7 @@
             "h": 0.25,
             "meaning": "Give the marked area breathing room",
             "reviewRegion": {
-              "reviewId": "1f3db2fd-f50f-4e77-bfd4-976336ea8175",
+              "reviewId": "0ff1870a-df58-4622-8f62-34338b2fb8c3",
               "index": 0
             }
           }

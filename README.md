@@ -2,13 +2,13 @@
 
 **Operational host-installation contract change — development candidate.** [PR #1](https://github.com/adun-denton/bve-v2/pull/1) remains draft/unmerged. The installation lifecycle now provisions and verifies actual role sessions through a narrow host driver; server startup alone is incomplete. The earlier checkpoint did not implement this requirement.
 
-See candidate.json for the exact tested source and [host installation review](docs/HOST-INSTALLATION-REVIEW.md) for results, actual cloud probe identities and missing capabilities. Fixtures do not establish native operational installation. The existing Windows installation and prior operator work were not accessed or modified here. A native driver and user-facing Conductor handoff remain unavailable in this cloud host.
+Tested source: [dcee826c8fd8d08d5c1eaeb4848879f337ba94ae](https://github.com/adun-denton/bve-v2/tree/dcee826c8fd8d08d5c1eaeb4848879f337ba94ae). **47 contract checks and 28 unmodified browser checks pass**, with zero page errors. See candidate.json for the exact tested source and [host installation review](docs/HOST-INSTALLATION-REVIEW.md) for results, actual cloud probe identities and missing capabilities. Fixtures do not establish native operational installation. The existing Windows installation and prior operator work were not accessed or modified here. A native driver and user-facing Conductor handoff remain unavailable in this cloud host.
 
 A local, image-first AI–human design workspace. Humans judge designs; replaceable executors perform bounded work; durable software owns authority and continuity.
 
 This is a clean architectural reset with independent history. The [historical BVE](https://github.com/adun-denton/brand-visual-engine) remains a reference. No legacy source, runtime database, compatibility architecture, or private project material is imported.
 
-**Development candidate; no approved stable release or demonstrated native image integration.** The implementation checkpoint includes offline and browser evidence using authored fixtures. No paid provider or production deployment is part of this candidate.
+**Development candidate; no approved stable release.** This checkpoint includes authored fixture/browser evidence and an active cloud role probe. Earlier local session-assisted native intake is operator-reported history and was not inspected here. No paid provider or production deployment is part of this candidate.
 
 Start with [WHY](docs/WHY.md), [architecture and ontology](docs/ARCHITECTURE.md), and [operating contracts](docs/CONTRACTS.md). These govern implementation, rather than historical personas or workflows.
 
