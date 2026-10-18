@@ -49,6 +49,17 @@ test('mapping/project/receipt CAS rejects conflicts atomically; replay precedes 
   assert.equal(w.k.read(w.c.human,'project').length,1);assert.equal(w.k.read(w.c.human,'request').length,0);
 });
 
+test('later conflicting product identity rolls back every earlier bulk-adoption link and receipt',t=>{
+  const w=prepared(t),id='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',p=product(id);p.productCode=null;
+  const edit=noop(w.store.read().reference,'second-product');edit.changes=[{kind:'product',id,expectedRevision:0,record:p}];w.store.commit(edit);
+  const db=new DatabaseSync(path.join(w.runtimeRoot,'workspace.sqlite'));try{
+    db.prepare("INSERT INTO records VALUES('project',?,?)").run(id,JSON.stringify({id,name:'Authored conflicting binding',domainWorkspaceId:PRODUCT}));
+    const before=databaseFingerprint(db);rejects(()=>w.k.adoptWorkspace(w.c,adoption(w)),'WORKSPACE_MISMATCH');
+    assert.equal(databaseFingerprint(db),before);assert.equal(db.prepare("SELECT count(*) AS n FROM records WHERE kind='project'").get().n,1);
+    assert.equal(db.prepare("SELECT count(*) AS n FROM records WHERE kind='workspaceAcknowledgement'").get().n,0);
+  }finally{db.close();}
+});
+
 test('explicit legacy migration requires a current verified private backup; exact-ID adoption preserves unrelated projects',async t=>{
   const w=prepared(t,{connect:false});w.k=new Kernel(w.runtimeRoot);w.c=JSON.parse(fs.readFileSync(path.join(w.runtimeRoot,'credentials.json')));
   const linked=w.k.call(w.c.human,'project.create','legacy-linked',{name:'Legacy operational name',brief:'Preserve this operational brief'});
@@ -150,6 +161,12 @@ test('active runtime root replacement refuses reads and writes',t=>{
   const w=prepared(t);w.k.adoptWorkspace(w.c,adoption(w));
   try{fs.renameSync(w.runtimeRoot,w.runtimeRoot+'-preserved');}catch(e){if(process.platform==='win32'&&['EPERM','EBUSY','EACCES'].includes(e.code)){t.skip('Windows refused moving the open SQLite root; replacement scenario unsupported here');return;}throw e;}
   fs.mkdirSync(w.runtimeRoot);rejects(()=>w.k.read(w.c.human,'project'),'ROOT_CHANGED');rejects(()=>w.call('human','project.create',{name:'Authored',brief:'Authored'}),'ROOT_CHANGED');
+});
+
+test('active domain root replacement cannot rebind knowledge or product folders',t=>{
+  const w=prepared(t);w.k.adoptWorkspace(w.c,adoption(w));fs.renameSync(w.domainRoot,w.domainRoot+'-preserved');fs.mkdirSync(w.domainRoot);
+  rejects(()=>w.k.read(w.c.human,'project'),'ROOT_CHANGED');rejects(()=>w.call('human','request.create',{projectId:PRODUCT,intent:'Must not use a replacement root'}),'DOMAIN_UNAVAILABLE');
+  assert.deepEqual(fs.readdirSync(w.domainRoot),[]);
 });
 
 test('files own current names/codes/facts; projection rebuild and historical selection survive edits/restart',t=>{
