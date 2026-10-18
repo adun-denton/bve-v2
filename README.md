@@ -10,6 +10,8 @@ One SOL Conductor, one on-demand LUNA Butler, 0–6 LUNA Gen workers; maximum ei
 
 Node 24.x is required (tested 24.19.0). Runtime dependencies are zero. Use a pinned checkout and exact private BVE_ROOT. Preserve existing roots/work and back up before runtime changes. Never replace an existing installation with an empty workspace.
 
+The optional [prepared 3DJAT workspace integration candidate](docs/3DJAT-WORKSPACE.md) connects reviewed file identities, a disposable domain projection and combined private recovery. It does not authorize production setup or establish native readiness.
+
 ```sh
 npm ci --omit=dev --ignore-scripts
 npm test

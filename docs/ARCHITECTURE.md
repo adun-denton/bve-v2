@@ -8,6 +8,8 @@ A round is a Conductor–Butler operational cycle, not necessarily generation. A
 
 The authoritative SQLite records/transactions/receipts remain the storage boundary. Additional round, statement, statementEvent, presentation, checkpoint and projectInstruction records use the same records table; no second database or workflow engine exists. Native originals remain immutable BLOBs. Project folders under BVE_ROOT/Projects/IMMUTABLE_ID are prepared on Butler readiness and reconstructed after backup restoration. Readable P001/R001/J001/S001 codes accompany internal IDs. The folder is not a Codex project.
 
+For explicitly connected [3DJAT workspaces](3DJAT-WORKSPACE.md), business records remain authoritative in the accepted domain files. Their exact UUIDs are reused as projects, current SQLite projections are disposable, and selected historical bytes are immutable operational snapshots. Adopted folders resolve through the approved product path map; ordinary projects retain the default above.
+
 | Actor/service | Authority |
 |---|---|
 | Conductor | Activate/resume project, version current instructions, assign Butler/workers, commission bounded rounds, interpret feedback, append disposition |
