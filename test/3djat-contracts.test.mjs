@@ -331,21 +331,120 @@ test('positive command matrix is executable and result references retain the com
     'template.promote': promote, 'candidate.decide': candidate, 'workspace.adopt': w,
     'workspace.export': { workspaceId: V, head: R(V), includeAttachments: true }
   };
+  // Independent command examples: current CAS subject revisions, not child/snapshot revisions.
+  const currentRevisions = {
+    'product.create': 0, 'product.read': 1, 'product.proposal.submit': 1, 'product.proposal.decide': 1, 'product.note.add': 1,
+    'template.ingest': 0, 'template.adopt': 1, 'operation.request': 0, 'operation.commission': 4,
+    'asset.import.stage': 0, 'asset.import.commit': 2, 'attachment.register': 0, 'calibration.create': 0,
+    'calibration.review': 1, 'template.promote': 1, 'candidate.decide': 0, 'workspace.adopt': 0, 'workspace.export': 1
+  };
   assert.deepEqual(Object.keys(inputs).sort(), Object.keys(COMMANDS).sort());
   for (const [operation, input] of Object.entries(inputs)) {
-    ok(validateCommand(command(operation, input, operation === 'product.create' ? 0 : 1), { authenticatedCaller: COMMANDS[operation].callers[0] }));
+    const packet = command(operation, input, currentRevisions[operation]);
+    const context = { authenticatedCaller: COMMANDS[operation].callers[0], currentRevision: currentRevisions[operation], currentHead: R(V), projectId: U };
+    if (operation === 'workspace.adopt') { packet.expected.domainHead = null; context.currentHead = null; }
+    ok(validateCommand(packet, context));
+    fails(validateCommand(packet, { ...context, currentRevision: currentRevisions[operation] + 1 }), 'REVISION_CONFLICT', '/expected/entityRevision');
+    fails(validateCommand(packet, { ...context, currentHead: R(V, 2) }), 'REVISION_CONFLICT', '/expected/domainHead');
+    fails(validateCommand(packet, { ...context, authenticatedCaller: 'worker' }), 'INVALID_SCOPE');
+    if (input.productId !== undefined) fails(validateCommand(packet, { ...context, projectId: V }), 'INVALID_SCOPE', '/input/productId');
     const result = { schemaVersion: '3djat.result.v1', operation, key: 'fixture-key', receipt: R(), owner: COMMANDS[operation].owner, committedRevision: 1,
       outputType: COMMANDS[operation].output, reference: R() };
     ok(validate('result', result)); result.outputType = 'invalid'; fails(validate('result', result), 'INVALID_VALUE');
   }
 });
-test('execution telemetry distinguishes service attribution, null unknowns, failure and uncertain outcomes', () => {
+test('R1: template creation and advancement distinguish proposed revision from expected lineage', () => {
+  const c = { authenticatedCaller: 'human', currentRevision: 0, currentHead: R(V) };
+  const first = command('template.ingest', template(), 0); ok(validateCommand(first, c));
+  first.input.revision = 2; fails(validateCommand(first, c), 'REVISION_CONFLICT', '/input/revision');
+  first.input.revision = 1; first.input.supersedes = R('fixture-operation'); fails(validateCommand(first, c), 'REVISION_CONFLICT', '/input/supersedes');
+  const next = command('template.ingest', { ...template(), revision: 2, supersedes: R('fixture-operation') }, 1);
+  c.currentRevision = 1; c.template = { reference: R('fixture-operation'), record: template() }; ok(validateCommand(next, c));
+  for (const revision of [1, 3]) { const bad = clone(next); bad.input.revision = revision; fails(validateCommand(bad, c), 'REVISION_CONFLICT', '/input/revision'); }
+  const missing = clone(next); missing.input.supersedes = null; fails(validateCommand(missing, c), 'REVISION_CONFLICT', '/input/supersedes');
+  const drift = clone(next); drift.input.supersedes.sha256 = 'b'.repeat(64); fails(validateCommand(drift, c), 'EVIDENCE_MISMATCH');
+  const unrelated = clone(c); unrelated.template.record.templateId = 'another-template'; fails(validateCommand(next, unrelated), 'EVIDENCE_MISMATCH');
+  ok(validate('template', next.input, { currentRevision: 2 })); // Reading stored revision 2, not proposing it.
+  fails(validate('template', next.input, { currentRevision: 1 }), 'REVISION_CONFLICT', '/revision');
+});
+test('R1: first workspace adoption has explicitly absent head; proposed mapping revisions advance exactly once', () => {
+  const w = { schemaVersion: '3djat.workspace.v1', workspaceId: V, revision: 1, domainHead: R(V),
+    paths: { business: 'Business', products: 'Products', templates: 'Templates', operations: 'Operations' }, contractVersion: '3djat.v1', sourceCommit: 'a'.repeat(40) };
+  const p = command('workspace.adopt', w, 0); p.expected.domainHead = null;
+  const c = { authenticatedCaller: 'human', currentRevision: 0, currentHead: null }; ok(validateCommand(p, c));
+  // Legacy authoring/inspection callers may omit context; mutation integrations must provide it.
+  ok(validateCommand(p, { authenticatedCaller: 'human', currentRevision: 0 }));
+  const invalid = clone(p); invalid.input.revision = 2; fails(validateCommand(invalid, c), 'REVISION_CONFLICT');
+  fails(validateCommand(p, { ...c, currentHead: R(V) }), 'REVISION_CONFLICT', '/expected/domainHead');
+  p.expected.domainHead = R(V); p.expected.entityRevision = 1; p.input.revision = 2;
+  ok(validateCommand(p, { authenticatedCaller: 'human', currentRevision: 1, currentHead: R(V) }));
+  p.expected.domainHead = null; fails(validateCommand(p, { authenticatedCaller: 'human', currentRevision: 1, currentHead: null }), 'INVALID_SCOPE');
+});
+test('R1: calibration creation requires absent experiment 0 and draft revision 1, not product or template revision', () => {
+  const e = calibration(); e.revision = 1; e.lifecycle = 'draft'; e.receipt = null;
+  e.variants[0].outcome = 'draft'; e.variants[0].roundId = null; e.variants[0].outputs = [];
+  e.variants[0].template.revision = 9; e.commonSources[0].version = 7;
+  const p = command('calibration.create', e, 0), c = { authenticatedCaller: 'human', currentRevision: 0, currentHead: R(V), projectId: U };
+  ok(validateCommand(p, c));
+  const bad = clone(p); bad.input.revision = 2; fails(validateCommand(bad, c), 'REVISION_CONFLICT', '/input/revision');
+  bad.expected.entityRevision = 1; fails(validateCommand(bad, { ...c, currentRevision: 1 }), 'REVISION_CONFLICT', '/expected/entityRevision');
+  bad.input.lifecycle = 'running'; fails(validateCommand(bad, c), 'INVALID_SCOPE');
+});
+test('R1: adoption pointer and candidate decision stream start at zero and do not use selected template/artifact versions', () => {
+  const d = decision(); d.expectedRevision = 0; d.template.revision = 8;
+  const c = { authenticatedCaller: 'human', currentHead: R(V), currentRevision: 0 };
+  ok(validateCommand(command('template.adopt', d, 0), c));
+  d.expectedRevision = 5; ok(validateCommand(command('template.adopt', d, 5), { ...c, currentRevision: 5 }));
+  fails(validateCommand(command('template.adopt', d, 4), { ...c, currentRevision: 4 }), 'REVISION_CONFLICT', '/input/expectedRevision');
+  const candidate = { schemaVersion: '3djat.candidate-decision.v1', decisionId: U, productId: U, artifact: { ...artifact(), version: 8 }, action: 'retain',
+    purpose: 'Authored retention', channel: null, reason: 'Authored reason', decidedAt: NOW, humanActionReceipt: R(), supersedesDecision: null };
+  ok(validateCommand(command('candidate.decide', candidate, 0), c));
+  fails(validateCommand(command('candidate.decide', candidate, 1), { ...c, currentRevision: 1 }), 'REVISION_CONFLICT', '/input/supersedesDecision');
+  candidate.supersedesDecision = R('prior-decision'); ok(validateCommand(command('candidate.decide', candidate, 5), { ...c, currentRevision: 5 }));
+  fails(validateCommand(command('candidate.decide', candidate, 0), c), 'REVISION_CONFLICT', '/input/supersedesDecision');
+});
+test('R1: exact read/export heads and calibration review experiment revisions match the explicit CAS subject', () => {
+  const c = { authenticatedCaller: 'human', currentHead: R(V), currentRevision: 1 };
+  const read = command('product.read', { productId: U, atHead: R(V) }); ok(validateCommand(read, c));
+  read.input.atHead.sha256 = 'b'.repeat(64); fails(validateCommand(read, c), 'REVISION_CONFLICT', '/input/atHead');
+  const exp = command('workspace.export', { workspaceId: V, head: R(V), includeAttachments: true }); ok(validateCommand(exp, c));
+  exp.input.head.revision = 2; fails(validateCommand(exp, c), 'REVISION_CONFLICT');
+  const review = command('calibration.review', { schemaVersion: '3djat.calibration-review.v1', reviewId: U, experiment: R(V), comments: 'Authored review', selectedVariants: [], humanActionReceipt: R(), reviewedAt: NOW });
+  ok(validateCommand(review, { ...c, experiment: { reference: R(V), record: calibration() } }));
+  review.input.experiment.revision = 2; fails(validateCommand(review, c), 'REVISION_CONFLICT', '/input/experiment/revision');
+});
+test('R2: execution costs keep their closed telemetry shape for null, zero and positive values in every supported currency', () => {
   const r = { schemaVersion: '3djat.execution-result.v1', runId: U, productId: U, roundId: U, jobId: U, assignmentId: V,
     outputRole: 'fixture-output', outcome: 'succeeded', executorKind: 'service', executorId: 'fixture-editor', artifact: artifact(), receipt: R(),
     recipeHash: H, parameters: { opacity: 0.5 }, tool: 'Authored editor', model: null, version: 'fixture-1', startedAt: NOW, finishedAt: NOW,
     cost: null, usage: null, exitCode: 0, failureCode: null };
   ok(validate('execution-result', r));
+  for (const currency of ['USD', 'EUR', 'IRR', 'IRT']) {
+    for (const amount of ['0', '0.00', '1', '12.345678']) {
+      r.cost = { amount, currency }; ok(validate('execution-result', r));
+    }
+    r.cost = { amount: '1', currency, unit: currency === 'IRR' ? 'rial' : currency === 'IRT' ? 'toman' : 'major' };
+    fails(validate('execution-result', r), 'UNKNOWN_FIELD', '/cost/unit');
+  }
+  for (const amount of [0, '', '-1', '1e2', '01', 'NaN', '1.1234567', '10000000000000000']) {
+    r.cost = { amount, currency: 'USD' }; assert.equal(validate('execution-result', r).ok, false, `Malformed cost: ${amount}`);
+  }
+  r.cost = { amount: '1', currency: 'GBP' }; fails(validate('execution-result', r), 'INVALID_VALUE', '/cost/currency');
+  r.cost = null; ok(validate('execution-result', r));
   mutate('execution-result', r, x => x.artifact = null, 'EVIDENCE_MISMATCH');
   r.outcome = 'uncertain'; r.artifact = null; r.finishedAt = null; r.exitCode = null; ok(validate('execution-result', r));
   r.outcome = 'failed'; fails(validate('execution-result', r), 'INVALID_VALUE'); r.failureCode = 'CAPABILITY_UNAVAILABLE'; ok(validate('execution-result', r));
+});
+test('R2: direct and nested product prices still require type-specific currency/unit agreement', () => {
+  for (const [currency, unit] of [['IRR', 'rial'], ['IRT', 'toman'], ['USD', 'major'], ['EUR', 'major'], ['GBP', 'major'], ['AED', 'major']]) {
+    const price = { amount: '12.25', currency, unit, per: 'item', effectiveDate: '2026-01-01' };
+    ok(validate('price', price));
+    const p = product(); p.facts.sellingPrice = accepted(price); ok(validate('product', p));
+    const change = proposal(); change.changes[0] = { field: 'sellingPrice', fact: { state: 'accepted', value: price, sourceRefs: [source()] } };
+    ok(validate('proposal', change));
+    price.unit = unit === 'major' ? 'rial' : 'major';
+    fails(validate('price', price), 'INVALID_VALUE', '/unit');
+    fails(validate('product', p), 'INVALID_VALUE', '/facts/sellingPrice/value/unit');
+    fails(validateCommand(command('product.proposal.submit', change), { authenticatedCaller: 'source-proposer', currentHead: R(V), currentRevision: 1 }), 'INVALID_VALUE', '/unit');
+  }
 });

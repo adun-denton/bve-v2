@@ -114,7 +114,7 @@ record('operational-assessment', { assessmentId: uuid, template: T, run: R, exec
 record('visual-assessment', { assessmentId: uuid, template: T, status: en('untested', 'partial', 'tested'),
   experiment: nullable(R), outputs: arr(ref('artifact-ref'), 24), receipts: arr(R, 24) });
 record('template-decision', { decisionId: uuid, template: T, action: en('adopt', 'promote', 'reject', 'supersede'),
-  purpose: str(500), appliesTo: arr(id, 24, 1), expectedRevision: rev, experiment: nullable(R),
+  purpose: str(500), appliesTo: arr(id, 24, 1), expectedRevision: num(0, 2_147_483_647, true), experiment: nullable(R),
   outputs: arr(ref('artifact-ref'), 24), evidenceReceipt: nullable(R),
   humanActionReceipt: R, decidedAt: time, supersedesDecision: nullable(R), reason: text });
 record('template-assessments', { template: T, contract: ref('contract-assessment'),
@@ -189,6 +189,29 @@ const commandDefinitions = {
   'workspace.adopt': ['domain', ['human'], ref('workspace'), 'workspace'],
   'workspace.export': ['domain', ['human'], obj({ workspaceId: uuid, head: R, includeAttachments: bool }), 'export-manifest']
 };
+// CAS protects this existing entity, never a revision-bearing child/snapshot in the input.
+// create: absent (0); advance: proposed revision = current + 1; existing: current >= 1;
+// append: decision-stream head (0 is its first decision). Receipts replay before these checks.
+const commandRevisions = {
+  'product.create': { entity: 'product', identity: 'productId', mode: 'create' },
+  'product.read': { entity: 'product', identity: 'productId', mode: 'existing' },
+  'product.proposal.submit': { entity: 'product', identity: 'productId', mode: 'existing', expectedField: 'expectedRevision' },
+  'product.proposal.decide': { entity: 'product', identity: 'productId', mode: 'existing', expectedField: 'expectedRevision' },
+  'product.note.add': { entity: 'product', identity: 'productId', mode: 'existing' },
+  'template.ingest': { entity: 'template-lineage', identity: 'templateId', mode: 'advance', proposedField: 'revision' },
+  'template.adopt': { entity: 'template-adoption-pointer', identity: 'template.id', mode: 'append', expectedField: 'expectedRevision' },
+  'operation.request': { entity: 'operation-run', identity: 'runId', mode: 'create' },
+  'operation.commission': { entity: 'operation-run', identity: 'runId', mode: 'existing' },
+  'asset.import.stage': { entity: 'import', identity: 'importId', mode: 'create' },
+  'asset.import.commit': { entity: 'import', identity: 'importId', mode: 'existing' },
+  'attachment.register': { entity: 'attachment', identity: 'attachmentId', mode: 'create' },
+  'calibration.create': { entity: 'experiment', identity: 'experimentId', mode: 'create', proposedField: 'revision' },
+  'calibration.review': { entity: 'experiment', identity: 'experiment.id', mode: 'existing', expectedReference: 'experiment' },
+  'template.promote': { entity: 'template-adoption-pointer', identity: 'template.id', mode: 'append', expectedField: 'expectedRevision' },
+  'candidate.decide': { entity: 'candidate-decision-stream', identity: 'artifact.artifactId', mode: 'append' },
+  'workspace.adopt': { entity: 'workspace-mapping', identity: 'workspaceId', mode: 'advance', proposedField: 'revision' },
+  'workspace.export': { entity: 'domain-head', identity: 'workspaceId', mode: 'existing', expectedReference: 'head' }
+};
 record('export-manifest', { workspaceId: uuid, head: R, revisions: arr(R), attachments: arr(R),
   operationalBackup: nullable(R), evidence: arr(R) });
 const commandVariants = {};
@@ -211,7 +234,7 @@ record('result', { operation: en(...Object.keys(commandDefinitions)), key: id, r
   owner: en('domain', 'operational'), committedRevision: rev, outputType: en(...new Set(Object.values(commandDefinitions).map(x => x[3]))),
   reference: R });
 record('failure', { operation: en(...Object.keys(commandDefinitions)), key: id, error: ref('error') });
-schemas.context = obj({ currentRevision: optional(num(0, 2_147_483_647, true)), currentHead: optional(R),
+schemas.context = obj({ currentRevision: optional(num(0, 2_147_483_647, true)), currentHead: optional(nullable(R)),
   projectId: optional(uuid), skus: optional(arr(obj({ productCode: str(80), productId: uuid }))),
   authenticatedCaller: optional(en('human', 'conductor', 'butler', 'source-reader', 'source-proposer', 'worker', 'service')),
   proposal: optional(obj({ reference: R, record: ref('proposal') })),
@@ -233,7 +256,7 @@ export const SCHEMA_VERSIONS = freeze(Object.fromEntries(Object.keys(schemas)
 export const COMMANDS = freeze(Object.fromEntries(Object.entries(commandDefinitions)
   .map(([name, [owner, callers, input, output]]) => [name, { owner, callers, input, output,
     idempotency: name === 'product.read' ? 'read-only' : 'same-key-same-payload-replays;changed-payload-conflicts',
-    cas: name === 'product.read' ? 'exact-head-read' : 'expected-head-and-entity-revision' }])));
+    cas: { ...commandRevisions[name], head: name === 'product.read' ? 'exact-head-read' : 'expected-head-and-entity-revision' } }])));
 
 const own = (o, k) => Object.hasOwn(o, k);
 const reservedParameter = key => ['shell', 'shellcommand', 'shellscript', 'exec', 'command', 'commandline',
@@ -318,6 +341,8 @@ function walk(s, v, p, add) {
       if (!v || typeof v !== 'object' || Array.isArray(v)) { add('INVALID_TYPE', p); return; }
       for (const k of Object.keys(v)) if (!own(s.fields, k)) add('UNKNOWN_FIELD', `${p}/${k}`);
       for (const [k, f] of Object.entries(s.fields)) walk(f, own(v, k) ? v[k] : undefined, `${p}/${k}`, add);
+      if (s === schemas.price && ['IRR', 'IRT', 'USD', 'EUR', 'GBP', 'AED'].includes(v.currency) &&
+        v.unit !== (v.currency === 'IRR' ? 'rial' : v.currency === 'IRT' ? 'toman' : 'major')) add('INVALID_VALUE', `${p}/unit`, 'Currency/unit mismatch');
       return;
     case 'array':
       if (!Array.isArray(v)) { add('INVALID_TYPE', p); return; }
@@ -347,10 +372,6 @@ function select(template, selection, p, add) {
 }
 function semantic(kind, v, c, add, p = '$') {
   const err = (code, field, message) => add(code, `${p}/${field}`, message);
-  if (c.currentRevision !== undefined) {
-    const expected = v.expectedRevision ?? v.revision;
-    if (expected !== undefined && expected !== c.currentRevision) err('REVISION_CONFLICT', 'expectedRevision');
-  }
   if (c.projectId !== undefined && v.productId !== undefined && c.projectId !== v.productId) err('INVALID_SCOPE', 'productId');
   function sku(code, productId) {
     if (code !== null && c.skus?.some(x => x.productCode === code && x.productId !== productId)) err('SKU_CONFLICT', 'productCode');
@@ -484,14 +505,13 @@ function semantic(kind, v, c, add, p = '$') {
   if (kind === 'handoff') {
     for (const e of validateCommand(v.command, c).errors) add(e.code, `${p}/command${e.path.slice(1)}`, e.message);
   }
-  // Walk typed children to enforce nested price/date/region semantics too.
+  // Geometry checks on nested artifact/region declarations; price checks use its schema above.
   visitNested(v, p, add);
 }
 function visitNested(v, p, add) {
   if (!v || typeof v !== 'object') return;
   if (own(v, 'artifactId') && own(v, 'width') && own(v, 'height')) image(v, p, add);
   if (v.space === 'normalized-original' && (v.x + v.w > 1 || v.y + v.h > 1)) add('OUT_OF_BOUNDS', p, 'Region exceeds original');
-  if (own(v, 'currency') && own(v, 'amount') && (v.currency === 'IRR' ? v.unit !== 'rial' : v.currency === 'IRT' ? v.unit !== 'toman' : v.unit !== 'major')) add('INVALID_VALUE', `${p}/unit`, 'Currency/unit mismatch');
   for (const [k, x] of Object.entries(v)) visitNested(x, `${p}/${k}`, add);
 }
 function image(v, p, add) { if (v.width * v.height > LIMITS.pngPixels) add('UNSUPPORTED_IMAGE', p, 'Current limit is 16MP; IMG20 is unverified'); }
@@ -509,7 +529,13 @@ export function validate(kind, value, context = {}) {
   else {
     portable(value, add); portable(context, add);
     if (!errors.length) { walk(schemas[kind], value, '$', add); walk(schemas.context, context, '$/context', add); }
-    if (!errors.length) semantic(kind, value, context, add);
+    if (!errors.length) {
+      semantic(kind, value, context, add);
+      // Standalone record checks bind only this record's documented revision, not its children.
+      const field = { product: 'revision', template: 'revision', workspace: 'revision', 'domain-head': 'revision',
+        calibration: 'revision', proposal: 'expectedRevision', 'proposal-decision': 'expectedRevision', 'template-decision': 'expectedRevision' }[kind];
+      if (context.currentRevision !== undefined && field && value[field] !== context.currentRevision) add('REVISION_CONFLICT', `$/${field}`);
+    }
   }
   return { ok: errors.length === 0, errors };
 }
@@ -522,14 +548,26 @@ export function validateCommand(packet, context = {}) {
   if (context.currentHead !== undefined && !same(packet.expected.domainHead, context.currentHead)) add('REVISION_CONFLICT', '$/expected/domainHead');
   if (context.currentRevision !== undefined && packet.expected.entityRevision !== context.currentRevision) add('REVISION_CONFLICT', '$/expected/entityRevision');
   const input = packet.input;
+  const current = packet.expected.entityRevision, cas = d.cas;
   if (packet.expected.domainHead === null && !(packet.operation === 'workspace.adopt' && packet.expected.entityRevision === 0)) add('INVALID_SCOPE', '$/expected/domainHead');
   const kind = input.schemaVersion?.replace(/^3djat\./, '').replace(/\.v1$/, '');
   if (kind) semantic(kind, input, context, add, '$/input');
+  else if (context.projectId !== undefined && input.productId !== undefined && context.projectId !== input.productId) add('INVALID_SCOPE', '$/input/productId');
+  if ((cas.mode === 'create' && current !== 0) || (cas.mode === 'existing' && current === 0)) add('REVISION_CONFLICT', '$/expected/entityRevision');
+  if (cas.proposedField && input[cas.proposedField] !== current + 1) add('REVISION_CONFLICT', `$/input/${cas.proposedField}`, 'Proposed revision must be current revision plus one');
+  if (cas.expectedField && input[cas.expectedField] !== current) add('REVISION_CONFLICT', `$/input/${cas.expectedField}`);
+  if (cas.expectedReference && input[cas.expectedReference].revision !== current) add('REVISION_CONFLICT', `$/input/${cas.expectedReference}/revision`);
+  if (packet.operation === 'template.ingest') {
+    if (current === 0 ? input.supersedes !== null : input.supersedes === null || input.supersedes.revision !== current) add('REVISION_CONFLICT', '$/input/supersedes');
+    if (context.template && (context.template.record.templateId !== input.templateId || context.template.record.revision !== current ||
+      !same(context.template.reference, input.supersedes))) add('EVIDENCE_MISMATCH', '$/input/supersedes');
+  }
+  if (packet.operation === 'product.read' && !same(input.atHead, packet.expected.domainHead)) add('REVISION_CONFLICT', '$/input/atHead');
+  if (packet.operation === 'workspace.export' && !same(input.head, packet.expected.domainHead)) add('REVISION_CONFLICT', '$/input/head');
+  if (packet.operation === 'candidate.decide' && (current === 0 ? input.supersedesDecision !== null : input.supersedesDecision === null)) add('REVISION_CONFLICT', '$/input/supersedesDecision');
   if (packet.operation === 'product.create') {
-    if (packet.expected.entityRevision !== 0) add('REVISION_CONFLICT', '$/expected/entityRevision');
     if (context.skus?.some(x => x.productCode === input.productCode && x.productId !== input.productId)) add('SKU_CONFLICT', '$/input/productCode');
   }
-  if (input.expectedRevision !== undefined && input.expectedRevision !== packet.expected.entityRevision) add('REVISION_CONFLICT', '$/input/expectedRevision');
   if (packet.operation === 'template.adopt' && input.action !== 'adopt' || packet.operation === 'template.promote' && input.action !== 'promote') add('INVALID_SCOPE', '$/input/action');
   if (packet.operation === 'calibration.create' && (input.lifecycle !== 'draft' || input.receipt !== null || input.variants.some(v => v.outcome !== 'draft' || v.outputs.length || v.roundId !== null))) add('INVALID_SCOPE', '$/input/lifecycle', 'Authoring cannot supply execution evidence');
   return { ok: errors.length === 0, errors };
