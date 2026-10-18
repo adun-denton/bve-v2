@@ -195,7 +195,12 @@ export class DomainStore {
     while (stack.length) {
       const { ref: r, exit } = stack.pop(); shape('revision-ref', r);
       if (exit) { active.delete(r.path); done.add(r.path); continue; }
-      if (files.has(r.path)) check(hash(files.get(r.path)) === r.sha256, 'REFERENCE_CONFLICT');
+      if (files.has(r.path)) {
+        check(hash(files.get(r.path)) === r.sha256, 'REFERENCE_CONFLICT');
+        // Every occurrence must match the record already resolved at this path.
+        // A byte/hash cache hit does not establish the caller's ID or revision.
+        check(equal(records.get(r.path).reference, r), 'REFERENCE_IDENTITY', { path: r.path });
+      }
       if (done.has(r.path)) continue;
       check(!active.has(r.path), 'REFERENCE_CYCLE'); active.add(r.path);
       const b = supplied.get(r.path) ?? this.readFile(r.path); check(hash(b) === r.sha256, 'HASH_MISMATCH', { path: r.path });

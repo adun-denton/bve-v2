@@ -177,6 +177,130 @@ test('required domain closure is mandatory; template successor CAS binds exact p
   next.supersedes = s.read().head.templates[0]; s.commit(request); assert.equal(s.read().head.templates[0].revision, 2);
 });
 
+// R1: each occurrence must match identity/revision even after its path was verified.
+const referenceMutations = {
+  id: r => ({ ...r, id: 'wrong-identity' }),
+  revision: r => ({ ...r, revision: r.revision + 76 }),
+  both: r => ({ ...r, id: 'wrong-identity', revision: r.revision + 76 })
+};
+const authoredNote = receipt => ({ id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  text: 'Authored reference-sharing regression', createdAt: '2026-01-01T00:00:00.000Z', receipt });
+function fileHashes(root) {
+  return fs.readdirSync(root, { recursive: true }).filter(n => fs.statSync(path.join(root, n)).isFile())
+    .sort().map(n => [n, digest(fs.readFileSync(path.join(root, n)))]);
+}
+function noPublication(s, input, code = 'REFERENCE_IDENTITY') {
+  const before = s.read().reference, files = fileHashes(s.root), stages = []; s.hook = at => stages.push(at);
+  try { rejects(() => s.commit(input), code); } finally { s.hook = () => {}; }
+  assert.deepEqual(s.read().reference, before); assert.deepEqual(fileHashes(s.root), files);
+  assert.equal(stages.some(at => ['file-flush', 'after-stage', 'after-immutable', 'before-replace', 'replace', 'after-replace'].includes(at)), false);
+}
+for (const [mutation, alter] of Object.entries(referenceMutations)) for (const order of ['good-first', 'bad-first']) {
+  test(`R1 ${mutation}, ${order}: every shared evidence occurrence rejects before publication`, t => {
+    const { s, head } = setup(t), input = plan(head), p = input.changes[0].record, good = p.sourceReceipt;
+    // Canonical product traversal visits sourceReceipt before notes.
+    p.sourceReceipt = order === 'good-first' ? good : alter(good);
+    p.notes = [authoredNote(order === 'good-first' ? alter(good) : good)];
+    noPublication(s, input);
+  });
+}
+for (const [mutation, alter] of Object.entries(referenceMutations)) for (const order of ['good-first', 'bad-first']) {
+  test(`R1 two product records ${mutation}, ${order}: shared provenance is occurrence-checked`, t => {
+    const { s, head } = setup(t), input = plan(head), p = product('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee');
+    p.productCode = null; p.sourceReceipt = alter(p.sourceReceipt);
+    const other = { kind: 'product', id: p.productId, expectedRevision: 0, record: p };
+    if (order === 'good-first') input.changes.push(other); else input.changes.unshift(other);
+    noPublication(s, input);
+  });
+}
+for (const reverse of [false, true]) {
+  test(`R1 two product records identical sharing works in ${reverse ? 'reverse' : 'forward'} order`, t => {
+    const { s, head } = setup(t), input = plan(head), p = product('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee'); p.productCode = null;
+    const other = { kind: 'product', id: p.productId, expectedRevision: 0, record: p };
+    if (reverse) input.changes.unshift(other); else input.changes.push(other);
+    s.commit(input); const view = new DomainStore(s.root).read(); assert.equal(view.head.products.length, 2);
+    for (const ref of view.head.products.map(x => x.dossier)) assert.deepEqual(view.records.get(ref.path).value.sourceReceipt, prepareRecord('evidence', source).reference);
+  });
+}
+test('R1 legitimate identical sharing works within/across records, heads and receipts', t => {
+  const { s, head } = setup(t), input = plan(head), good = input.changes[0].record.sourceReceipt;
+  input.changes[0].record.notes = [authoredNote(good)];
+  // Repeated submitted record references and product references reach the same exact bytes.
+  input.records.push({ kind: 'evidence', record: source }); const first = s.commit(input);
+  for (const [i, target] of [good, first.head, first.receipt, s.read().head.products[0].dossier].entries()) {
+    const current = s.read(), p = structuredClone(current.records.get(current.head.products[0].dossier.path).value);
+    p.revision++; p.notes = [authoredNote(target)]; const next = noop(current.reference, 'R1-sharing-' + i);
+    next.changes = [{ kind: 'product', id: PRODUCT, expectedRevision: p.revision - 1, record: p }];
+    const result = s.commit(next); assert.deepEqual(new DomainStore(s.root).read().reference, result.head);
+  }
+});
+for (const kind of ['product', 'head', 'receipt']) for (const [mutation, alter] of Object.entries(referenceMutations)) {
+  test(`R1 cached ${kind} ${mutation}: predecessor traversal cannot hide bad references`, t => {
+    const { s, head } = setup(t), first = s.commit(plan(head)), current = s.read();
+    const target = kind === 'product' ? current.head.products[0].dossier : kind === 'head' ? first.head : first.receipt;
+    const p = product(); p.revision = 2; p.notes = [authoredNote(alter(target))];
+    const next = noop(current.reference, 'R1-history-conflict'); next.changes = [{ kind: 'product', id: PRODUCT, expectedRevision: 1, record: p }];
+    noPublication(s, next);
+  });
+}
+test('R1 cached hash disagreement still returns REFERENCE_CONFLICT', t => {
+  const { s, head } = setup(t), input = plan(head), good = input.changes[0].record.sourceReceipt;
+  input.changes[0].record.notes = [authoredNote({ ...good, sha256: '0'.repeat(64) })];
+  noPublication(s, input, 'REFERENCE_CONFLICT');
+});
+
+// Test-only tampering: update every referring hash and manifest size/hash so readers
+// reach the identity check, rather than failing on unrelated stale byte hashes.
+function rewriteReferenceSnapshot(root, mutate) {
+  const manifestPath = path.join(root, 'domain-snapshot.json'), m = JSON.parse(fs.readFileSync(manifestPath));
+  const h = JSON.parse(fs.readFileSync(path.join(root, 'domain-head.json'))), pr = h.products[0].dossier, rr = h.receipts[0];
+  const p = JSON.parse(fs.readFileSync(path.join(root, pr.path))), r = JSON.parse(fs.readFileSync(path.join(root, rr.path)));
+  mutate({ product: p, receipt: r, head: h });
+  const pb = Buffer.from(JSON.stringify(p, null, 2) + '\n'); fs.writeFileSync(path.join(root, pr.path), pb); pr.sha256 = digest(pb);
+  for (const ref of r.records) if (ref.path === pr.path) ref.sha256 = digest(pb);
+  const rb = Buffer.from(JSON.stringify(r, null, 2) + '\n'); fs.writeFileSync(path.join(root, rr.path), rb); rr.sha256 = digest(rb);
+  const hb = Buffer.from(JSON.stringify(h, null, 2) + '\n');
+  fs.writeFileSync(path.join(root, m.head.path), hb); fs.writeFileSync(path.join(root, 'domain-head.json'), hb); m.head.sha256 = digest(hb);
+  for (const f of m.files) { const b = fs.readFileSync(path.join(root, f.path)); f.sha256 = digest(b); f.bytes = b.length; }
+  fs.writeFileSync(manifestPath, JSON.stringify(m, null, 2) + '\n');
+  for (const f of m.files) { const b = fs.readFileSync(path.join(root, f.path)); assert.equal(digest(b), f.sha256); assert.equal(b.length, f.bytes); }
+  return m;
+}
+for (const [mutation, alter] of Object.entries(referenceMutations)) for (const order of ['good-first', 'bad-first']) {
+  test(`R1 independent read/export/verify/restore reject coherent ${mutation} ${order} closure`, t => {
+    const { s, head, dir } = setup(t); s.commit(plan(head)); const snapshot = path.join(dir, 'malformed-snapshot'); s.exportTo(snapshot);
+    rewriteReferenceSnapshot(snapshot, ({ product: p }) => {
+      const good = p.sourceReceipt; p.sourceReceipt = order === 'good-first' ? good : alter(good);
+      p.notes = [authoredNote(order === 'good-first' ? alter(good) : good)];
+    });
+    const reopened = new DomainStore(snapshot), exported = path.join(dir, 'refused-export'), restored = path.join(dir, 'refused-restore');
+    rejects(() => reopened.read(), 'REFERENCE_IDENTITY'); rejects(() => reopened.exportTo(exported), 'REFERENCE_IDENTITY');
+    rejects(() => verifySnapshot(snapshot), 'REFERENCE_IDENTITY'); rejects(() => restoreSnapshot(snapshot, restored), 'REFERENCE_IDENTITY');
+    assert.equal(fs.existsSync(exported), false); assert.equal(fs.existsSync(restored), false);
+    const inspected = spawnSync(process.execPath, [fileURLToPath(new URL('../scripts/domain-inspect.mjs', import.meta.url)), snapshot], { encoding: 'utf8' });
+    assert.equal(inspected.status, 1); assert.equal(JSON.parse(inspected.stderr).error, 'REFERENCE_IDENTITY');
+  });
+}
+for (const link of ['receipt-record', 'receipt-predecessor']) {
+  test(`R1 independent snapshot rejects cached ${link} identity/revision mismatch`, t => {
+    const { s, head, dir } = setup(t); s.commit(plan(head)); const snapshot = path.join(dir, 'malformed-snapshot'); s.exportTo(snapshot);
+    rewriteReferenceSnapshot(snapshot, ({ receipt: r }) => {
+      if (link === 'receipt-record') { const i = r.records.findIndex(x => x.id === source.id); r.records[i] = referenceMutations.both(r.records[i]); }
+      else r.previousHead = referenceMutations.both(r.previousHead);
+    });
+    rejects(() => new DomainStore(snapshot).read(), 'REFERENCE_IDENTITY'); rejects(() => verifySnapshot(snapshot), 'REFERENCE_IDENTITY');
+    const restored = path.join(dir, 'refused-restore'); rejects(() => restoreSnapshot(snapshot, restored), 'REFERENCE_IDENTITY');
+    assert.equal(fs.existsSync(restored), false);
+  });
+}
+test('R1 coherently rewritten identical sharing snapshot remains readable/exportable/restorable', t => {
+  const { s, head, dir } = setup(t); s.commit(plan(head)); const snapshot = path.join(dir, 'valid-shared-snapshot'); s.exportTo(snapshot);
+  const m = rewriteReferenceSnapshot(snapshot, ({ product: p }) => { p.notes = [authoredNote({ ...p.sourceReceipt })]; });
+  assert.deepEqual(new DomainStore(snapshot).read().reference, m.head); assert.deepEqual(verifySnapshot(snapshot).head, m.head);
+  const exported = path.join(dir, 'valid-reexport'); new DomainStore(snapshot).exportTo(exported);
+  assert.deepEqual(restoreSnapshot(exported, path.join(dir, 'valid-restore')).reference, m.head);
+});
+
 test('finite 256 product index rejects excess without publishing or evicting', t => {
   const { s, head } = setup(t); s.commit(plan(head)); let made = 1;
   while (made < 256) {
