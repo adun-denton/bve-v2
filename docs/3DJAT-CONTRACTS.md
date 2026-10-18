@@ -1,5 +1,7 @@
 # 3DJAT contracts v1 — J01 review baseline
 
+The separate [J03A standalone domain-store proposal](3DJAT-DOMAIN-STORE.md) implements bounded file persistence against these unchanged types; runtime adoption and authenticated workflows remain later gates.
+
 These are additive, proposed interfaces for the 3DJAT adaptation. This change supplies pure validation and authored examples only. None of the commands below is installed in `Kernel.call`, the server, a domain writer or a session adapter. Existing [operating contracts](CONTRACTS.md), APIs, record interpretation and limits remain intact. Independent J01 acceptance is required before downstream implementation uses this baseline.
 
 All top-level persisted records use `schemaVersion: "3djat.<record-name>.v1"`; commands use `3djat.command.v1`. The common contract family is `3djat.v1`. Structural reference/value types have no redundant version field. Unknown versions and unknown fields at every nested level reject. Version changes require a reviewed migration; this module implements none.
