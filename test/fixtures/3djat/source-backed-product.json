@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "3djat.product.v1",
+  "productId": "bbbbbbbb-bbbb-4bbb-9bbb-bbbbbbbbbbbb",
+  "revision": 2,
+  "productCode": "0007",
+  "workingName": "Authored fixture: sample display object",
+  "facts": {
+    "material": {
+      "state": "accepted", "value": "Fictional test material",
+      "sourceRefs": [{
+        "kind": "file", "sourceId": "fictional-specification", "revision": "fixture-r1",
+        "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "location": "Sources/fictional-specification.txt",
+        "locator": {"kind": "section", "section": "Authored test specification"},
+        "observedAt": "2026-01-01T00:00:00.000Z"
+      }],
+      "decision": {"id": "fictional-decision", "revision": 1,
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "path": "Decisions/fictional-decision/1.json"}
+    },
+    "dimensions": {"state": "not-applicable", "value": null, "sourceRefs": [],
+      "decision": {"id": "fictional-na", "revision": 1,
+        "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "path": "Decisions/fictional-na/1.json"}},
+    "sellingPrice": {"state": "unknown", "value": null, "sourceRefs": [], "decision": null}
+  },
+  "designRevisions": [], "productionRecords": [], "finishingRecords": [],
+  "attachments": [], "notes": [],
+  "sourceReceipt": {"id": "fixture-update", "revision": 1,
+    "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "path": "Receipts/fixture-update/1.json"}
+}
