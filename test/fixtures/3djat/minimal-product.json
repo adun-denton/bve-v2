@@ -1,0 +1,22 @@
+{
+  "schemaVersion": "3djat.product.v1",
+  "productId": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+  "revision": 1,
+  "productCode": null,
+  "workingName": "Authored fixture: unnamed planter",
+  "facts": {
+    "material": {"state": "unknown", "value": null, "sourceRefs": [], "decision": null},
+    "dimensions": {"state": "unknown", "value": null, "sourceRefs": [], "decision": null},
+    "sellingPrice": {"state": "unknown", "value": null, "sourceRefs": [], "decision": null}
+  },
+  "designRevisions": [],
+  "productionRecords": [],
+  "finishingRecords": [],
+  "attachments": [],
+  "notes": [],
+  "sourceReceipt": {
+    "id": "fixture-create", "revision": 1,
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "path": "Receipts/fixture-create/1.json"
+  }
+}

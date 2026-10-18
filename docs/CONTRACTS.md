@@ -1,5 +1,7 @@
 # Current operating contracts
 
+The additive [3DJAT v1 contracts](3DJAT-CONTRACTS.md) define proposed domain-file and operational interfaces with pure validators only. Their commands, persistence and runtime workflows are not implemented; existing APIs, legacy acceptance semantics and the current 16MP/24MiB PNG policy remain unchanged.
+
 Read the fixed [Examples A–C](EXAMPLES.md). Use the implemented method when a capability has an example. For unsupported capabilities, propose a bounded solution using actual tools; do not invent a platform requirement.
 
 ## Project and staffing
