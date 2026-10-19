@@ -102,8 +102,8 @@ OS VmHWM/RSS/swap, available physical memory and PSI. OS high-water also comes
 from process.resourceUsage and the parent's exact-child wait4 resource usage.
 The external sampler verifies Node process identity before accepting /proc
 values; a mismatched mounted PID namespace yields NOT MEASURED, not launcher RSS.
-Mounted physical/cgroup views are then retained only as host-view observations. Recovery children have separate external samples;
-SIGKILL can prevent the final high-water read. A non-Linux host needs its existing
+Mounted physical/cgroup views are then retained only as host-view observations. Recovery children retain their boundary memory/resource samples; external child
+sampling is NOT MEASURED here. SIGKILL prevents a final post-exit child sample. A non-Linux host needs its existing
 OS peak-working-set collector; this /proc harness does not certify Windows.
 
 Six-image transport is only the server portion of review. No browser memory or
