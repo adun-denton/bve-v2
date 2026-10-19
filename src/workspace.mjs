@@ -68,7 +68,7 @@ export function verifyCredentials(bytes) {
 export function inspectRuntime(root) {
   if(!fs.existsSync(root))return {version:0,integration:null,hasRecords:false};const g=new RootGuard(root);check(!fs.existsSync(g.locate('restore-in-progress.json')),'RESTORE_INCOMPLETE');const marker=path.join(root,'bve-v2-root.json');
   if(!fs.existsSync(marker))return {version:0,integration:null,hasRecords:false};
-  const m=JSON.parse(g.read('bve-v2-root.json'));check(m.format==='bve-v2'&&m.version===1,'UNSUPPORTED_SCHEMA');
+  const m=JSON.parse(g.read('bve-v2-root.json'));check(m.format==='bve-v2'&&(m.version===1||m.version===2&&JSON.stringify(m.features)==='["historical-import.v1"]'),'UNSUPPORTED_SCHEMA');
   check(fs.existsSync(g.locate('workspace.sqlite')),'MISSING_OPERATIONAL_DATABASE');
   const db=new DatabaseSync(g.locate('workspace.sqlite'),{readOnly:true});try {
     const version=db.prepare('PRAGMA user_version').get().user_version;check(version===0||version===1,'UNSUPPORTED_SCHEMA');

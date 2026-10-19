@@ -10,8 +10,13 @@ import { Kernel, Fault } from './kernel.mjs';
 import { capabilities, seedDemo } from './adapters.mjs';
 const here=dirname(fileURLToPath(import.meta.url)),publicRoot=resolve(here,'../public');
 export const defaultRoot=()=>join(homedir(),'.bve-v2','workspace-v1');
+async function boundedJSON(req,limit){
+  const chunks=[];let length=0;for await(const b of req){length+=b.length;if(length>limit)throw new Fault('Request too large',413);chunks.push(b);}
+  let body;try{body=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(Buffer.concat(chunks,length));}catch{throw new Fault('Invalid UTF-8 request body',400);}
+  return JSON.parse(body);
+}
 export async function serve(options={}){
-  const {root=process.env.BVE_ROOT||defaultRoot(),port=Number(process.env.PORT||4317),demo=false,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,products=null}=options;
+  const {root=process.env.BVE_ROOT||defaultRoot(),port=Number(process.env.PORT||4317),demo=false,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,products=null,imports=null}=options;
   if(workspace){check(Object.hasOwn(options,'root')&&isAbsolute(root),'EXPLICIT_ROOT_REQUIRED');const prior=inspectRuntime(root).integration;
     if(prior)check(isDeepStrictEqual(prior.config,workspace),'ROOT_CONFLICT');
     const connection=new WorkspaceConnection(root,workspace,{existing:!!prior});if(!prior)check(sameRef(connection.store.read().reference,expectedHead),'REVISION_CONFLICT');}
@@ -25,7 +30,7 @@ export async function serve(options={}){
     if(alive)throw Error('This private root already has a running owner. Open its browser URL instead.');
     unlinkSync(lockPath);
   }
-  const kernel=new Kernel(root,{workspace,expectedHead,migrate,migrationBackup,confirmedQuiescent,products}),credentials=JSON.parse(readFileSync(join(root,'credentials.json')));
+  const kernel=new Kernel(root,{workspace,expectedHead,migrate,migrationBackup,confirmedQuiescent,products,imports}),credentials=JSON.parse(readFileSync(join(root,'credentials.json')));
   const fd=openSync(lockPath,'wx',0o600);writeFileSync(fd,JSON.stringify({pid:process.pid,startedAt:new Date().toISOString()}));closeSync(fd);
   if(demo)await seedDemo(kernel,credentials);
   let origin,timer;
@@ -56,16 +61,14 @@ export async function serve(options={}){
       if(req.method==='GET'&&url.pathname==='/api/portable'){
         res.setHeader('Content-Disposition',`attachment; filename="bve-review-${url.searchParams.get('id')}.json"`);json(200,kernel.portable(credential,url.searchParams.get('id'),{jobId:url.searchParams.get('jobId')}));return;
       }
-      if(req.method==='POST'&&['/api/product','/api/product-review'].includes(url.pathname)){
-        const chunks=[];let length=0;for await(const b of req){length+=b.length;if(length>128*1024)throw new Fault('Request too large',413);chunks.push(b);}
-        let body;try{body=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(Buffer.concat(chunks,length));}catch{throw new Fault('Invalid UTF-8 request body',400);}
-        const packet=JSON.parse(body),value=url.pathname==='/api/product'?kernel.productCommand(credential,packet):kernel.productReview(credential,packet);
+      if(req.method==='GET'&&url.pathname==='/api/import'){json(200,kernel.importReview(credential,url.searchParams.get('id')));return;}
+      if(req.method==='GET'&&url.pathname==='/api/import-portable'){json(200,kernel.importPortable(credential,url.searchParams.get('id')));return;}
+      if(req.method==='POST'&&['/api/product','/api/product-review','/api/asset-import'].includes(url.pathname)){
+        const packet=await boundedJSON(req,128*1024),value=url.pathname==='/api/product'?kernel.productCommand(credential,packet):url.pathname==='/api/asset-import'?kernel.assetCommand(credential,packet):kernel.productReview(credential,packet);
         json(value.schemaVersion==='3djat.failure.v1'?409:200,value);return;
       }
       if(req.method==='POST'&&url.pathname==='/api/op'){
-        let body='',length=0;
-        for await (const b of req){length+=b.length;if(length>34*1024*1024)throw new Fault('Request too large',413);body+=b;}
-        const x=JSON.parse(body);
+        const x=await boundedJSON(req,34*1024*1024);
         const value=kernel.call(credential,x.op,x.key,x.input);json(value.conflict?409:200,value);return;
       }
       throw new Fault('Not found',404);

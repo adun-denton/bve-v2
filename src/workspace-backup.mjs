@@ -7,6 +7,7 @@ import { DomainStore, verifySnapshot, restoreSnapshot, STORE_LIMITS } from './do
 import { RootGuard, WorkspaceConnection, canonicalRoot, contains, inspectRuntime, integrationRow, acquireOperational,
   check, fail, sha, jsonBytes, sameRef, putProjection, verifySelection, verifyCredentials } from './workspace.mjs';
 import { verifyPNG } from './png.mjs';
+import {verifyImports,checkImportFormat} from './asset-import.mjs';
 export const BACKUP_LIMITS=Object.freeze({files:4096,sqliteBytes:1024**3,attachmentBytes:1024**3,totalBytes:2*1024**3});
 const MANIFEST='combined-backup.json';
 function fresh(root) {canonicalRoot(root,{missing:true});check(!fs.existsSync(root),'DESTINATION_EXISTS');fs.mkdirSync(root,{mode:0o700});return new RootGuard(root);}
@@ -39,6 +40,7 @@ export function verifyOperational(db,workspaceId) {
   }
   n=0;for(const row of db.prepare('SELECT scope,key,fingerprint,doc FROM receipts').iterate()){check(++n<=100000&&row.scope.length<=1000&&row.key.length<=200&&/^[0-9a-f]{64}$/.test(row.fingerprint)&&Buffer.byteLength(row.doc)<=48*1024**2,'CAPACITY');JSON.parse(row.doc);}
   n=0;for(const row of db.prepare('SELECT hash,length(data) AS size FROM bytes').iterate()){check(++n<=100000&&row.size<=24*1024**2,'CAPACITY');check(sha(db.prepare('SELECT data FROM bytes WHERE hash=?').get(row.hash).data)===row.hash,'HASH_MISMATCH');}
+  verifyImports(db);
   return meta;
 }
 const evidenceKinds=new Set(['round','statement','statementEvent','checkpoint','event','submission','acceptance','workspaceAcknowledgement']);
@@ -70,7 +72,7 @@ export async function backupCombined(source,destination,{hook=()=>{}}={}) {
     connection.store.exportTo(path.join(destPath,'domain'));hook('domain-copied',{head:view.reference});
     const db=new DatabaseSync(runtime.locate('workspace.sqlite'),{readOnly:true});let evidence=[];
     try {
-      verifyOperational(db,meta.config.workspaceId);check(digestFile(runtime,'workspace.sqlite',BACKUP_LIMITS.sqliteBytes).bytes<=BACKUP_LIMITS.sqliteBytes,'CAPACITY');
+      checkImportFormat(db,source);verifyOperational(db,meta.config.workspaceId);check(digestFile(runtime,'workspace.sqlite',BACKUP_LIMITS.sqliteBytes).bytes<=BACKUP_LIMITS.sqliteBytes,'CAPACITY');
       await backup(db,path.join(destPath,'runtime','workspace.sqlite'));
       // The immutable backup must not create mutable WAL/SHM files on read-back.
       const snapshotDb=new DatabaseSync(path.join(destPath,'runtime','workspace.sqlite'));try{snapshotDb.exec('PRAGMA wal_checkpoint(TRUNCATE); PRAGMA journal_mode=DELETE;');}finally{snapshotDb.close();}
@@ -107,9 +109,9 @@ export function verifyCombined(root) {
   const view=new DomainStore(path.join(root,'domain')).read(),attachments=attachmentClosure(view).map(x=>({reference:x.reference,location:x.record.location,sha256:x.record.sha256,bytes:x.record.bytes}));
   check(JSON.stringify(attachments)===JSON.stringify(m.attachments)&&JSON.stringify(view.external.filter(x=>x.kind==='source'))===JSON.stringify(m.externalSources),'INCOMPLETE_BACKUP');
   let total=0;for(const a of attachments){total+=a.bytes;check(total<=BACKUP_LIMITS.attachmentBytes,'CAPACITY');const f=digestFile(guard,'attachments/'+a.location,a.bytes);check(f.bytes===a.bytes&&f.sha256===a.sha256,'HASH_MISMATCH');}
-  verifyCredentials(guard.read('runtime/credentials.json'));const rootMarker=JSON.parse(guard.read('runtime/bve-v2-root.json'));check(rootMarker.format==='bve-v2'&&rootMarker.version===1,'UNSUPPORTED_SCHEMA');
+  verifyCredentials(guard.read('runtime/credentials.json'));const rootMarker=JSON.parse(guard.read('runtime/bve-v2-root.json'));check(rootMarker.format==='bve-v2'&&(rootMarker.version===1||rootMarker.version===2&&JSON.stringify(rootMarker.features)==='["historical-import.v1"]'),'UNSUPPORTED_SCHEMA');
   const db=new DatabaseSync(guard.locate('runtime/workspace.sqlite'),{readOnly:true});try{
-    const meta=verifyOperational(db,m.workspaceId);check(meta.config.workspaceId===m.workspaceId,'WORKSPACE_MISMATCH');
+    checkImportFormat(db,path.join(root,'runtime'));const meta=verifyOperational(db,m.workspaceId);check(meta.config.workspaceId===m.workspaceId,'WORKSPACE_MISMATCH');
     for(const x of view.external)if(x.kind==='operational-artifact')verifyArtifactReference(db,x.artifact);
     const refs=[...new Map(view.external.filter(x=>x.kind==='operational-evidence').map(x=>[JSON.stringify(x.reference),x])).values()];check(refs.length===m.evidence.length,'INCOMPLETE_BACKUP');
     for(const x of refs){const record=m.evidence.find(e=>sameRef(e.reference,x.reference));check(record&&record.path==='evidence/'+x.reference.path,'INCOMPLETE_BACKUP');check(guard.read(record.path).equals(operationalEvidence(db,x.reference)),'HASH_MISMATCH');}

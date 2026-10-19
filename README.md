@@ -14,6 +14,8 @@ The optional [prepared 3DJAT workspace integration candidate](docs/3DJAT-WORKSPA
 
 The [governed product dossier candidate](docs/3DJAT-PRODUCTS.md) adds independent file-owned creation, notes and human-reviewed source proposals through explicit local capabilities and narrow BVE delegation. The broader product UI remains a separate task.
 
+The [historical PNG import candidate](docs/3DJAT-IMPORTS.md) captures explicitly configured local originals into a durable SQLite inbox, verifies them without conversion, and retains import provenance independently of generation. It remains limited to 16MP/24MiB; 20MP verification, attachments/previews and operating setup are separate gates.
+
 ```sh
 npm ci --omit=dev --ignore-scripts
 npm test
