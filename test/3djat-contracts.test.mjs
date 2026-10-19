@@ -117,11 +117,11 @@ test('proposal ingress rejects approval, arbitrary dossier updates and wrong typ
   fails(validate('proposal', p), 'INVALID_VALUE');
 });
 test('field correction retains original proposal; stored decisions do not confer permission', () => {
-  const original = proposal(), corrected = proposal(); corrected.proposalId = U; corrected.corrects = R('fixture-original');
+  const original = proposal(), corrected = proposal(); corrected.proposalId = U; corrected.corrects = R(V);
   corrected.changes[0].fact.value = 'Corrected authored claim'; ok(validate('proposal', corrected));
-  const d = { schemaVersion: '3djat.proposal-decision.v1', decisionId: U, productId: U, proposal: R('fixture-original'), expectedRevision: 1,
-    outcome: 'superseded', reason: 'Replaced with corrected proposal', decidedAt: NOW, humanActionReceipt: R(), supersedesDecision: null, correctedProposal: R('fixture-corrected') };
-  const c = { proposal: { reference: R('fixture-original'), record: original }, correctedProposal: { reference: R('fixture-corrected'), record: corrected } };
+  const d = { schemaVersion: '3djat.proposal-decision.v1', decisionId: U, productId: U, proposal: R(V), expectedRevision: 1,
+    outcome: 'superseded', reason: 'Replaced with corrected proposal', decidedAt: NOW, humanActionReceipt: R(), supersedesDecision: null, correctedProposal: R(U) };
+  const c = { proposal: { reference: R(V), record: original }, correctedProposal: { reference: R(U), record: corrected } };
   ok(validate('proposal-decision', d, c));
   const before = clone(original); c.correctedProposal.record.corrects = R('unrelated'); fails(validate('proposal-decision', d, c), 'EVIDENCE_MISMATCH');
   assert.deepEqual(original, before);
@@ -447,4 +447,99 @@ test('R2: direct and nested product prices still require type-specific currency/
     fails(validate('product', p), 'INVALID_VALUE', '/facts/sellingPrice/value/unit');
     fails(validateCommand(command('product.proposal.submit', change), { authenticatedCaller: 'source-proposer', currentHead: R(V), currentRevision: 1 }), 'INVALID_VALUE', '/unit');
   }
+});
+
+// C1: immutable authoring revisions differ from the dossier revision protected by
+// a current human decision. Authored contexts below establish no real approval.
+const C1_CORRECTION = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+const C1_OTHER = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+function proposalDecision({originalRevision=1,currentRevision=2,outcome='superseded',correction=true}={}) {
+  const original=proposal();original.expectedRevision=originalRevision;
+  const corrected={...clone(original),proposalId:C1_CORRECTION,expectedRevision:currentRevision,corrects:R(V)};
+  const d={schemaVersion:'3djat.proposal-decision.v1',decisionId:C1_OTHER,productId:U,proposal:R(V),expectedRevision:currentRevision,
+    outcome,reason:'Authored contextual decision only',decidedAt:NOW,humanActionReceipt:R('authored-action'),supersedesDecision:null,correctedProposal:correction?R(C1_CORRECTION):null};
+  return {packet:command('product.proposal.decide',d,currentRevision),context:{authenticatedCaller:'human',currentHead:R(V),currentRevision,projectId:U,
+    proposal:{reference:R(V),record:original},...(correction?{correctedProposal:{reference:R(C1_CORRECTION),record:corrected}}:{})}};
+}
+for(const originalRevision of [1,2,3])for(const [label,outcome,correction] of [
+  ['accept','accepted',false],['reject','rejected',false],['correct','superseded',true],['supersede without correction','superseded',false]
+])test(`C1 outcome matrix: ${label}, original ${originalRevision}, current 2`,()=>{
+  const {packet,context}=proposalDecision({originalRevision,outcome,correction});
+  const before=clone({packet,context}),result=validateCommand(packet,context);
+  if(originalRevision===2||originalRevision===1&&['reject','correct'].includes(label))ok(result);
+  else fails(result,'REVISION_CONFLICT','/context/proposal/record/expectedRevision');
+  assert.deepEqual({packet,context},before);
+});
+test('C1 same-revision correction and separate corrected acceptance retain the originals',()=>{
+  const {packet,context}=proposalDecision({currentRevision:1});ok(validateCommand(packet,context));
+  const next=proposalDecision();next.packet.input.outcome='accepted';next.packet.input.proposal=next.context.correctedProposal.reference;
+  next.packet.input.correctedProposal=null;next.context.proposal=next.context.correctedProposal;delete next.context.correctedProposal;
+  ok(validateCommand(next.packet,next.context));
+});
+const correctionNegatives=[
+  ['stale correction',({context})=>{context.correctedProposal.record.expectedRevision=1;},'REVISION_CONFLICT','/context/correctedProposal/record/expectedRevision'],
+  ['future correction',({context})=>{context.correctedProposal.record.expectedRevision=3;},'REVISION_CONFLICT','/context/correctedProposal/record/expectedRevision'],
+  ['missing correction context',x=>{delete x.context.correctedProposal;},'MISSING_CONTEXT','/context/correctedProposal'],
+  ['foreign correction product',({context})=>{context.correctedProposal.record.productId=V;},'EVIDENCE_MISMATCH','/context/correctedProposal/record/productId'],
+  ['foreign original product',({context})=>{context.proposal.record.productId=V;},'EVIDENCE_MISMATCH','/context/proposal/record/productId'],
+  ['wrong original ref hash',({packet})=>{packet.input.proposal.sha256='b'.repeat(64);},'EVIDENCE_MISMATCH','/input/proposal'],
+  ['wrong original ref path',({packet})=>{packet.input.proposal.path='Revisions/other/1.json';},'EVIDENCE_MISMATCH','/input/proposal'],
+  ['wrong original ref revision',({packet})=>{packet.input.proposal.revision=2;},'EVIDENCE_MISMATCH','/input/proposal'],
+  ['original ref and record disagree',({context})=>{context.proposal.record.proposalId=C1_OTHER;},'EVIDENCE_MISMATCH','/context/proposal/reference/id'],
+  ['original matching refs hide wrong record ID',({packet,context})=>{packet.input.proposal.id=C1_OTHER;context.proposal.reference.id=C1_OTHER;context.correctedProposal.record.corrects.id=C1_OTHER;},'EVIDENCE_MISMATCH','/context/proposal/reference/id'],
+  ['wrong correction ref hash',({packet})=>{packet.input.correctedProposal.sha256='b'.repeat(64);},'EVIDENCE_MISMATCH','/input/correctedProposal'],
+  ['wrong correction ref revision',({packet})=>{packet.input.correctedProposal.revision=2;},'EVIDENCE_MISMATCH','/input/correctedProposal'],
+  ['correction ref and record disagree',({context})=>{context.correctedProposal.record.proposalId=C1_OTHER;},'EVIDENCE_MISMATCH','/context/correctedProposal/reference/id'],
+  ['correction matching refs hide wrong record ID',({packet,context})=>{packet.input.correctedProposal.id=C1_OTHER;context.correctedProposal.reference.id=C1_OTHER;},'EVIDENCE_MISMATCH','/context/correctedProposal/reference/id'],
+  ['wrong corrects hash',({context})=>{context.correctedProposal.record.corrects.sha256='b'.repeat(64);},'EVIDENCE_MISMATCH','/context/correctedProposal/record/corrects'],
+  ['wrong corrects ID',({context})=>{context.correctedProposal.record.corrects.id=C1_OTHER;},'EVIDENCE_MISMATCH','/context/correctedProposal/record/corrects'],
+  ['missing corrects link',({context})=>{context.correctedProposal.record.corrects=null;},'EVIDENCE_MISMATCH','/context/correctedProposal/record/corrects'],
+  ['same proposal identity with different hash',({packet,context})=>{
+    packet.input.correctedProposal.id=V;packet.input.correctedProposal.sha256='b'.repeat(64);
+    context.correctedProposal.reference=clone(packet.input.correctedProposal);context.correctedProposal.record.proposalId=V;
+  },'INVALID_REFERENCE','/input/correctedProposal/id'],
+  ['same exact proposal reference',({packet,context})=>{packet.input.correctedProposal=clone(packet.input.proposal);context.correctedProposal.reference=clone(packet.input.proposal);context.correctedProposal.record.proposalId=V;},'INVALID_REFERENCE','/input/correctedProposal']
+];
+for(const [name,change,code,path]of correctionNegatives)test(`C1 resolved context refuses ${name}`,()=>{
+  const value=proposalDecision({originalRevision:2});change(value);const before=clone(value);fails(validateCommand(value.packet,value.context),code,path);assert.deepEqual(value,before);
+});
+for(const outcome of ['rejected','superseded'])for(const cas of ['head','entity','input'])test(`C1 ${outcome} preserves ${cas} CAS`,()=>{
+  const {packet,context}=proposalDecision({outcome,correction:outcome==='superseded'});
+  if(cas==='head')packet.expected.domainHead.sha256='b'.repeat(64);
+  if(cas==='entity')packet.expected.entityRevision=1;
+  if(cas==='input')packet.input.expectedRevision=1;
+  fails(validateCommand(packet,context),'REVISION_CONFLICT',cas==='head'?'/expected/domainHead':cas==='entity'?'/expected/entityRevision':'/input/expectedRevision');
+});
+for(const outcome of ['rejected','superseded'])test(`C1 ${outcome} cannot inherit human or project authority`,()=>{
+  const {packet,context}=proposalDecision({outcome,correction:outcome==='superseded'});
+  fails(validateCommand(packet,{...context,authenticatedCaller:'source-proposer'}),'INVALID_SCOPE','/operation');
+  fails(validateCommand(packet,{...context,projectId:V}),'INVALID_SCOPE','/input/productId');
+});
+for(const outcome of ['accepted','rejected'])test(`C1 ${outcome} cannot carry a correction reference`,()=>{
+  const {packet,context}=proposalDecision({originalRevision:2,outcome});fails(validateCommand(packet,context),'INVALID_REFERENCE','/input/correctedProposal');
+});
+test('C1 supplied correction context is checked even when original context is omitted for authoring',()=>{
+  const {packet,context}=proposalDecision();delete context.proposal;ok(validateCommand(packet,context));
+  context.correctedProposal.record.productId=V;fails(validateCommand(packet,context),'EVIDENCE_MISMATCH','/context/correctedProposal/record/productId');
+});
+test('C1 context-free historical/authoring validation is distinct from resolved mutation checks',()=>{
+  const {packet,context}=proposalDecision({outcome:'accepted',correction:false});
+  ok(validate('proposal-decision',packet.input));ok(validateCommand(packet));
+  fails(validateCommand(packet,context),'REVISION_CONFLICT','/context/proposal/record/expectedRevision');
+  // This source layer authenticates nobody and cannot determine active decisions.
+  assert.equal(packet.input.humanActionReceipt.id,'authored-action');
+});
+test('C1 changed refs and revisions cannot inherit previous validation success',()=>{
+  const {packet,context}=proposalDecision();ok(validateCommand(packet,context));
+  context.correctedProposal.record.expectedRevision=1;fails(validateCommand(packet,context),'REVISION_CONFLICT');
+  context.correctedProposal.record.expectedRevision=2;ok(validateCommand(packet,context));
+  context.correctedProposal.reference.sha256='b'.repeat(64);fails(validateCommand(packet,context),'EVIDENCE_MISMATCH');
+});
+test('C1 validation preserves frozen inputs and emits safe bounded structured diagnostics',()=>{
+  const {packet,context}=proposalDecision();context.correctedProposal.record.productId=V;context.correctedProposal.record.expectedRevision=3;
+  packet.input.reason='Authored sensitive sentinel that must not enter error messages';const before=clone({packet,context});
+  const freeze=x=>{if(x&&typeof x==='object'){Object.values(x).forEach(freeze);Object.freeze(x);}};freeze(packet);freeze(context);
+  const result=validateCommand(packet,context);assert.equal(result.ok,false);assert(result.errors.length>0&&result.errors.length<=64);
+  for(const error of result.errors){ok(validate('error',error));assert(error.path.startsWith('$'));assert(error.path.length<=512);assert(error.message.length<=200);}
+  assert.equal(JSON.stringify(result).includes(packet.input.reason),false);assert.deepEqual({packet,context},before);
 });
