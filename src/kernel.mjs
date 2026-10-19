@@ -1,8 +1,10 @@
+import { isDeepStrictEqual } from 'node:util';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdirSync, existsSync, readFileSync, writeFileSync, chmodSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { hash, verifyPNG } from './png.mjs';
+import { WorkspaceConnection, RootGuard, inspectRuntime, acquireOperational, verifyLegacyMigration, projection, putProjection, validateAdoption, makeSelection, verifySelection, sameRef, check as domainCheck, fail as domainFail } from './workspace.mjs';
 const id = () => randomUUID();
 const now = () => new Date().toISOString();
 const clone = x => JSON.parse(JSON.stringify(x));
@@ -21,31 +23,53 @@ const permissions={
   butler:['event.delivery'],
 };
 export class Kernel {
-  #db; #credentials; #closed=false;
-  constructor(root,{recover=true}={}) {
-    this.root=resolve(root);
-    if(existsSync(this.root)&&!existsSync(join(this.root,'bve-v2-root.json')))requireThat(readdirSync(this.root).length===0,'Refusing to initialize a nonempty unrecognized root; choose a new BVE V2 root');
-    mkdirSync(this.root,{recursive:true,mode:0o700});
-    const marker=join(this.root,'bve-v2-root.json');
-    const dbPath=join(this.root,'workspace.sqlite');
-    // Never adopt an unknown existing DB as a V2 root.
-    requireThat(!existsSync(dbPath)||existsSync(marker),'Existing database is not a BVE V2 root');
-    if(!existsSync(marker)) writeFileSync(marker,JSON.stringify({format:'bve-v2',version:1,createdAt:now()}),{mode:0o600,flag:'wx'});
-    requireThat(JSON.parse(readFileSync(marker)).format==='bve-v2','Root marker mismatch');
-    const authPath=join(this.root,'credentials.json');
-    if(!existsSync(authPath)) writeFileSync(authPath,JSON.stringify(Object.fromEntries(Object.keys(permissions).map(r=>[r,secret()]))),{mode:0o600,flag:'wx'});
-    this.#credentials=JSON.parse(readFileSync(authPath));
-    this.#db=new DatabaseSync(dbPath);
-    this.#db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000;
-      CREATE TABLE IF NOT EXISTS records(kind TEXT NOT NULL,id TEXT NOT NULL,doc TEXT NOT NULL,PRIMARY KEY(kind,id));
-      CREATE TABLE IF NOT EXISTS bytes(hash TEXT PRIMARY KEY, data BLOB NOT NULL);
-      CREATE TABLE IF NOT EXISTS receipts(scope TEXT NOT NULL,key TEXT NOT NULL,fingerprint TEXT NOT NULL,doc TEXT NOT NULL,PRIMARY KEY(scope,key));`);
-    chmodSync(dbPath,0o600);
-    if(recover) this.#tx(()=> { for(const j of this.#list('job')) if(j.state==='running') {j.state='uncertain';j.uncertainAt=now();j.reason='Owner stopped after durable invocation start; reconcile original assignment; no retry';this.#put('job',j);}});
-    this.reconcile(this.#credentials.butler);
+  #db; #credentials; #closed=false; #workspace=null; #workspaceHook=()=>{}; #inTransaction=false; #operationalHeld=false;
+  constructor(root,{recover=true,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,workspaceHook=()=>{}}={}) {
+    this.root=resolve(root);this.#workspaceHook=workspaceHook;
+    const info=inspectRuntime(this.root), prior=info.integration;
+    if(prior&&workspace)domainCheck(isDeepStrictEqual(prior.config,workspace),'ROOT_CONFLICT');
+    const config=workspace??prior?.config;
+    if(config){
+      this.#workspace=new WorkspaceConnection(root,config,{existing:!!prior});
+      if(!prior){domainCheck(expectedHead&&sameRef(this.#workspace.store.read().reference,expectedHead),'REVISION_CONFLICT');
+        if(info.hasRecords){domainCheck(migrate===true,'MIGRATION_REQUIRES_BACKUP');verifyLegacyMigration(this.root,migrationBackup,confirmedQuiescent);}}
+    }
+    this.#workspaceHook('connection-validated',{});
+    let releaseDomain=null,releaseOperations=null,connectionCommitted=false;
+    try {
+      if(config&&!prior){releaseDomain=this.#workspace.lockDomain();domainCheck(sameRef(this.#workspace.store.read().reference,expectedHead),'REVISION_CONFLICT');}
+      if(existsSync(this.root)&&!existsSync(join(this.root,'bve-v2-root.json')))requireThat(readdirSync(this.root).length===0,'Refusing to initialize a nonempty unrecognized root; choose a new BVE V2 root');
+      mkdirSync(this.root,{recursive:true,mode:0o700});
+      if(config){releaseOperations=acquireOperational(this.root);this.#operationalHeld=true;}
+      const marker=join(this.root,'bve-v2-root.json'),dbPath=join(this.root,'workspace.sqlite');
+      requireThat(!existsSync(dbPath)||existsSync(marker),'Existing database is not a BVE V2 root');
+      if(!existsSync(marker))writeFileSync(marker,JSON.stringify({format:'bve-v2',version:1,createdAt:now()}),{mode:0o600,flag:'wx'});
+      const authPath=join(this.root,'credentials.json');
+      if(!existsSync(authPath))writeFileSync(authPath,JSON.stringify(Object.fromEntries(Object.keys(permissions).map(r=>[r,secret()]))),{mode:0o600,flag:'wx'});
+      this.#credentials=JSON.parse(readFileSync(authPath));this.#workspaceHook('before-schema',{});
+      this.#db=new DatabaseSync(dbPath);
+      this.#db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000;
+        CREATE TABLE IF NOT EXISTS records(kind TEXT NOT NULL,id TEXT NOT NULL,doc TEXT NOT NULL,PRIMARY KEY(kind,id));
+        CREATE TABLE IF NOT EXISTS bytes(hash TEXT PRIMARY KEY, data BLOB NOT NULL);
+        CREATE TABLE IF NOT EXISTS receipts(scope TEXT NOT NULL,key TEXT NOT NULL,fingerprint TEXT NOT NULL,doc TEXT NOT NULL,PRIMARY KEY(scope,key));`);
+      chmodSync(dbPath,0o600);
+      if(config&&!prior)this.#tx(()=>{this.#workspaceHook('before-connection-commit',{});this.#put('domainIntegration',{id:'active',schemaVersion:'3djat.integration.v1',config:clone(config),adoptionRevision:0});this.#db.exec('PRAGMA user_version=1');});
+      if(config&&!prior)connectionCommitted=true;
+      this.#workspaceHook('schema-committed',{});
+    }catch(e){this.#db?.close();this.#closed=true;if(connectionCommitted)domainFail('CONNECTION_UNCERTAIN',{cause:e.code??'IO_FAILURE'});throw e;}
+    finally{this.#operationalHeld=false;try{releaseOperations?.();}finally{releaseDomain?.();}}
+    try {
+      if(recover)this.#tx(()=>{for(const j of this.#list('job'))if(j.state==='running'){j.state='uncertain';j.uncertainAt=now();j.reason='Owner stopped after durable invocation start; reconcile original assignment; no retry';this.#put('job',j);}});
+      this.reconcile(this.#credentials.butler);
+    }catch(e){this.close();throw e;}
   }
   close(){if(!this.#closed){this.#db.close();this.#closed=true;}}
-  #tx(fn){this.#db.exec('BEGIN IMMEDIATE');try{const v=fn();this.#db.exec('COMMIT');return v;}catch(e){this.#db.exec('ROLLBACK');throw e;}}
+  #tx(fn){
+    if(this.#inTransaction)return fn();
+    this.#workspace?.assertRuntime();const release=this.#workspace&&!this.#operationalHeld?acquireOperational(this.root):null;
+    try{this.#db.exec('BEGIN IMMEDIATE');this.#inTransaction=true;try{const v=fn();this.#db.exec('COMMIT');return v;}catch(e){try{this.#db.exec('ROLLBACK');}catch{}throw e;}finally{this.#inTransaction=false;}}
+    finally{release?.();}
+  }
   #list(kind){return this.#db.prepare('SELECT doc FROM records WHERE kind=? ORDER BY rowid').all(kind).map(x=>JSON.parse(x.doc));}
   #get(kind,key){const row=this.#db.prepare('SELECT doc FROM records WHERE kind=? AND id=?').get(kind,key);requireThat(row,`Missing ${kind}: ${key}`,404);return JSON.parse(row.doc);}
   #put(kind,v){this.#db.prepare('INSERT INTO records VALUES(?,?,?) ON CONFLICT(kind,id) DO UPDATE SET doc=excluded.doc').run(kind,v.id,JSON.stringify(v));return v;}
@@ -55,6 +79,51 @@ export class Kernel {
   // Installation is a trusted local-owner API, deliberately absent from HTTP.
   // Session bearers expose only the three existing functional roles in one project.
   #owner(owner){requireThat(['conductor','generator','butler'].every(r=>equal(owner?.[r],this.#credentials[r])),'Local installation credentials required',403);}
+  #folder(project,create=false,unavailable=false){
+    if(this.#workspace)return this.#workspace.folder(project,{create,unavailable});
+    const folder=join(this.root,'Projects',project.id);if(create)mkdirSync(folder,{recursive:true,mode:0o700});return folder;
+  }
+  projectFolder(projectId){return this.#folder(this.#get('project',projectId));}
+  #currentDomain(){
+    if(!this.#workspace)return null;let cacheCommitPossible=false,verifiedHead=null;const cachedRow=this.#db.prepare("SELECT doc FROM records WHERE kind='domainProjection' AND id=?").get(this.#workspace.config.workspaceId);let cached=null;try{cached=cachedRow?JSON.parse(cachedRow.doc):null;}catch{}if(cached?.id!==this.#workspace.config.workspaceId||cached?.schemaVersion!=='3djat.projection.v1')cached=null;
+    try{const view=this.#workspace.read(),p=projection(view);verifiedHead=view.reference;
+      if(JSON.stringify(cached)!==JSON.stringify(p))this.#tx(()=>{this.#workspaceHook('before-cache-commit',{head:view.reference});putProjection(this.#db,view);cacheCommitPossible=true;});
+      this.#workspaceHook('after-cache-commit',{head:view.reference});return {status:'current',projection:p};
+    }catch(e){return {status:'stale',cause:e.code??'IO_FAILURE',verifiedHead,cacheCommitPossible,projection:cached};}
+  }
+  #projectView(p){
+    if(!p.domainWorkspaceId)return {...p,folder:this.#folder(p)};
+    const current=this.#currentDomain(),entry=Array.isArray(current?.projection?.products)?current.projection.products.find(x=>x.record?.productId===p.id):null,record=entry?.record;
+    return {...p,name:record?.workingName??p.id,productCode:record?.productCode??null,folder:this.#folder(p,false,current?.status!=='current'),
+      domain:{status:current?.status??'stale',cause:current?.cause??null,head:current?.projection?.head??null,reference:entry?.reference??null,record:record??null}};
+  }
+  #requireDomain(projectId){const p=this.#get('project',projectId);if(p.domainWorkspaceId){const current=this.#currentDomain();domainCheck(current?.status==='current','DOMAIN_UNAVAILABLE',{cause:current?.cause});}}
+  refreshDomain(owner){this.#owner(owner);requireThat(this.#workspace,'No explicit workspace connection',409);return clone(this.#currentDomain());}
+  adoptWorkspace(owner,packet){
+    this.#owner(owner);requireThat(this.#workspace,'No explicit workspace connection',409);const release=this.#workspace.lockDomain();let attempted=false;
+    try{const view=this.#workspace.read();const result=this.#tx(()=>this.#once('workspace:'+this.#workspace.config.workspaceId+':adopt:owner',packet.key,packet,()=>{
+      const meta=this.#get('domainIntegration','active');validateAdoption(packet,view,meta.adoptionRevision);
+      domainCheck(Object.entries(this.#workspace.store.workspace.paths).every(([k,v])=>packet.input.paths[k]===v),'ROOT_CONFLICT');
+      const projectIds=[];for(const x of view.head.products){const row=this.#db.prepare("SELECT doc FROM records WHERE kind='project' AND id=?").get(x.productId);let p=row?JSON.parse(row.doc):null;
+        domainCheck(!p?.domainWorkspaceId||p.domainWorkspaceId===meta.config.workspaceId,'WORKSPACE_MISMATCH');
+        if(!p)p={id:x.productId,code:'P'+String(this.#db.prepare("SELECT count(*) AS n FROM records WHERE kind='project'").get().n+1).padStart(3,'0'),brief:'',page:'board',createdAt:now(),defaults:{count:1,direction:'Fresh',brand:null},standingRemaining:0};
+        p.domainWorkspaceId=meta.config.workspaceId;delete p.folder;this.#put('project',p);projectIds.push(p.id);
+      }
+      putProjection(this.#db,view);meta.adoptionRevision=packet.input.revision;this.#put('domainIntegration',meta);
+      const ack=this.#put('workspaceAcknowledgement',{schemaVersion:'3djat.adoption-ack.v1',id:id(),revision:meta.adoptionRevision,workspaceId:meta.config.workspaceId,head:view.reference,projectIds});
+      this.#workspaceHook('before-adoption-commit',{});attempted=true;return ack;
+    }));attempted=true;this.#workspaceHook('after-adoption-commit',{});return clone(result);
+    }catch(e){if(attempted)domainFail('ADOPTION_UNCERTAIN',{cause:e.code??'IO_FAILURE'});throw e;}finally{try{release();}catch(e){if(attempted)domainFail('ADOPTION_UNCERTAIN',{cause:e.code??'LOCK_RELEASE_FAILURE'});throw e;}}
+  }
+  freezeDomainSelection(owner,{key,projectId,expectedHead,product,templates=[],business=null}){
+    this.#owner(owner);requireThat(this.#workspace,'No explicit workspace connection',409);text(key,'selection key',80);this.#get('project',projectId);
+    domainCheck(this.#get('project',projectId).domainWorkspaceId===this.#workspace.config.workspaceId,'WORKSPACE_MISMATCH');const release=this.#workspace.lockDomain();
+    try{return this.#tx(()=>this.#once('selection:'+projectId,key,{projectId,expectedHead,product,templates,business},()=>{
+      const view=this.#workspace.read();domainCheck(sameRef(view.reference,expectedHead),'REVISION_CONFLICT');domainCheck(this.#db.prepare("SELECT count(*) AS n FROM records WHERE kind='domainSelection'").get().n<128,'CAPACITY');
+      const value={...makeSelection(view,{projectId,product,templates,business}),id:id()};verifySelection(value);this.#db.prepare("INSERT INTO records VALUES('domainSelection',?,?)").run(value.id,JSON.stringify(value));return {id:value.id,head:value.head,product:value.product,templates:value.templates,business:value.business};
+    }));}finally{release();}
+  }
+  frozenDomainSelection(owner,selectionId){this.#owner(owner);return clone(verifySelection(this.#get('domainSelection',selectionId)));}
   hostState(owner,state){
     this.#owner(owner);
     if(state!==undefined)return this.#tx(()=>clone(this.#put('hostInstallation',{...clone(state),id:'active'})));
@@ -122,8 +191,8 @@ export class Kernel {
   #butlerReady(round){return this.#list('statementEvent').some(e=>e.statementId===round.statementId&&e.kind==='ready'&&e.actor.bindingId===round.butler.bindingId);}
   #statementView(st){
     const events=this.#list('statementEvent').filter(e=>e.statementId===st.id),job=st.jobId?this.#get('job',st.jobId):null;
-    const project=this.#get('project',st.projectId),round=this.#get('round',st.roundId);
-    return {...st,project:{id:project.id,name:project.name,folder:join(this.root,'Projects',project.id)},round:{id:round.id,code:round.code,parent:round.parentRoundId,expectedResults:round.expectedResults,operation:round.operation},inputs:job?.specification.sources??round.references,events,assignment:job?{jobId:job.id,assignmentId:job.assignmentId??null,status:job.state}:null,verifiedArtifactId:job?.state==='succeeded'?job.artifactId:null,status:job?.state??events.at(-1)?.kind??'assigned'};
+    const project=this.#get('project',st.projectId),round=this.#get('round',st.roundId),projectView=this.#projectView(project);
+    return {...st,project:{id:project.id,name:projectView.name,folder:projectView.folder,...(projectView.domain?{domain:{status:projectView.domain.status,head:projectView.domain.head}}:{})},round:{id:round.id,code:round.code,parent:round.parentRoundId,expectedResults:round.expectedResults,operation:round.operation},inputs:job?.specification.sources??round.references,events,assignment:job?{jobId:job.id,assignmentId:job.assignmentId??null,status:job.state}:null,verifiedArtifactId:job?.state==='succeeded'?job.artifactId:null,status:job?.state??events.at(-1)?.kind??'assigned'};
   }
   #roundView(r){const c=this.#list('checkpoint').find(c=>c.roundId===r.id);return {...r,state:c?.state??(this.#butlerReady(r)?'ready':'assigned'),checkpointId:c?.id??null};}
   #newStatement(round,{jobId=null,worker=null,instructions,prompt=null}){
@@ -146,7 +215,7 @@ export class Kernel {
   #projectOperate(s,op,x){
     if(op==='project.activate'){
       requireThat(s.projectId===null,'Conductor already belongs to a project',409);
-      const p=this.#operate('human','project.create',x);p.code='P'+String(this.#list('project').length).padStart(3,'0');p.folder=join(this.root,'Projects',p.id);this.#put('project',p);
+      const p=this.#operate('human','project.create',x);p.code='P'+String(this.#list('project').length).padStart(3,'0');p.folder=this.#folder(p);this.#put('project',p);
       s.projectId=p.id;this.#put('sessionBinding',s);
       const instructions=x.instructions??p.brief;text(instructions,'current project instructions',8000);this.#put('projectInstruction',{id:id(),projectId:p.id,version:1,text:instructions,actor:this.#actor(s),createdAt:now()});
       const request=this.#request({projectId:p.id,intent:x.intent,count:x.count,direction:x.direction,brand:x.brand});return {project:p,request};
@@ -216,7 +285,7 @@ export class Kernel {
       else requireThat(st.id===r.statementId&&r.butler.bindingId===s.id&&['ready','completed','incomplete','blocked'].includes(x.status),'Butler statement assignment mismatch',403);
       if(s.role==='butler')requireThat(!this.#list('checkpoint').some(c=>c.roundId===r.id),'Round already checkpointed',409);
       if(x.status==='ready'){
-        const p=this.#get('project',r.projectId);mkdirSync(join(this.root,'Projects',p.id),{recursive:true,mode:0o700});
+        const p=this.#get('project',r.projectId);this.#folder(p,true);
       }
       if(['completed','incomplete'].includes(x.status)&&s.role==='butler'){
         requireThat(this.#list('presentation').some(p=>p.roundId===r.id),'Butler must record the actual presentation first',409);
@@ -274,7 +343,7 @@ export class Kernel {
       case 'project.create': {
         const p={id:id(),name:text(x.name,'project name',200),brief:text(x.brief,'brief'),page:'board',createdAt:now(),fixture:x.fixture===true,
           defaults:{count:integer(x.count??1,1,6,'candidate count'),direction:x.direction??'Fresh',brand:x.brand??null},standingRemaining:integer(x.standingIterations??0,0,20,'standing iterations')};
-        p.code='P'+String(this.#list('project').length+1).padStart(3,'0');p.folder=join(this.root,'Projects',p.id);
+        p.code='P'+String(this.#list('project').length+1).padStart(3,'0');p.folder=this.#folder(p);
         requireThat(['Fresh','Follow'].includes(p.defaults.direction),'Invalid direction'); if(p.defaults.brand!==null)text(p.defaults.brand,'brand context');this.#put('project',p);
         return p;
       }
@@ -331,6 +400,7 @@ export class Kernel {
     throw new Fault('Unknown operation',404);
   }
   #request(x){
+    this.#requireDomain(x.projectId);
     const p=this.#get('project',x.projectId),count=integer(x.count??p.defaults.count,1,6,'candidate count'),direction=x.direction??p.defaults.direction,brand=x.brand===undefined?p.defaults.brand:x.brand;
     requireThat(['Fresh','Follow'].includes(direction),'Invalid direction');if(brand!==null)text(brand,'brand context');
     if(x.parentReviewId)requireThat(this.#get('submission',x.parentReviewId).projectId===p.id,'Review belongs to another project');
@@ -396,6 +466,7 @@ export class Kernel {
     return issues;
   }
   #commission(x){
+    this.#requireDomain(this.#get('request',x.requestId).projectId);
     const r=this.#get('request',x.requestId);requireThat(r.state==='waiting-for-conductor','Request already commissioned',409);
     requireThat(Array.isArray(x.specifications)&&x.specifications.length===r.count,'One distinct specification per requested candidate');
     let parent=null;
@@ -543,7 +614,10 @@ export class Kernel {
         if(s.requestId)this.#event(i,'continuation:'+s.id,{submissionId:s.id,requestId:s.requestId});
       }
       for(const r of this.#list('round')){
-        if(this.#butlerReady(r))mkdirSync(join(this.root,'Projects',r.projectId),{recursive:true,mode:0o700});
+        if(this.#butlerReady(r)){
+          const project=this.#get('project',r.projectId),unavailable=!!project.domainWorkspaceId&&this.#currentDomain()?.status!=='current';
+          this.#folder(project,true,unavailable);
+        }
         if(this.#list('checkpoint').some(c=>c.roundId===r.id))continue;
         const completion=this.#list('statementEvent').filter(e=>e.statementId===r.statementId&&['completed','incomplete'].includes(e.kind)).at(-1);
         if(!completion)continue;
@@ -556,6 +630,7 @@ export class Kernel {
     });
   }
   read(token,kind){
+    this.#workspace?.assertRuntime();
     const role=this.#role(token);
     const common=['round','statement','statementEvent','checkpoint','presentation','projectInstruction','sessionBinding'];
     const allowed={human:['project','request','iteration','job','artifact','draft','submission','continuation','acceptance','creativeContext','event','delivery','conflict','observation'],conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['project','iteration','artifact','submission','continuation','creativeContext','job','assignment','delivery','event','conflict','observation'],worker:['project','job','assignment']};
@@ -570,7 +645,7 @@ export class Kernel {
       if(kind==='round')return v.id===this.#get('job',binding.jobId).roundId;
       return kind==='project';
     });
-    return clone(values.map(v=>kind==='statement'?this.#statementView(v):kind==='round'?this.#roundView(v):kind==='project'?{...v,folder:join(this.root,'Projects',v.id)}:kind==='sessionBinding'?{...this.#safeBinding(v),active:!v.revokedAt&&['conductor','butler','worker'].includes(v.role)&&v.tier===(v.role==='conductor'?'SOL':'LUNA')}:this.#safeBinding(v)));
+    return clone(values.map(v=>kind==='statement'?this.#statementView(v):kind==='round'?this.#roundView(v):kind==='project'?this.#projectView(v):kind==='sessionBinding'?{...this.#safeBinding(v),active:!v.revokedAt&&['conductor','butler','worker'].includes(v.role)&&v.tier===(v.role==='conductor'?'SOL':'LUNA')}:this.#safeBinding(v)));
   }
   round(token,roundId){
     const round=this.read(token,'round').find(r=>r.id===roundId);requireThat(round,'Round outside caller scope',403);

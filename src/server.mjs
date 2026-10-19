@@ -1,23 +1,31 @@
 import { createServer } from 'node:http';
 import { readFileSync, writeFileSync, existsSync, unlinkSync, openSync, closeSync } from 'node:fs';
-import { resolve, join, dirname } from 'node:path';
+import { resolve, join, dirname, isAbsolute, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import { WorkspaceConnection, inspectRuntime, RootGuard, sameRef, check } from './workspace.mjs';
+import { isDeepStrictEqual } from 'node:util';
 import { Kernel, Fault } from './kernel.mjs';
 import { capabilities, seedDemo } from './adapters.mjs';
 const here=dirname(fileURLToPath(import.meta.url)),publicRoot=resolve(here,'../public');
 export const defaultRoot=()=>join(homedir(),'.bve-v2','workspace-v1');
-export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Number(process.env.PORT||4317),demo=false}={}){
+export async function serve(options={}){
+  const {root=process.env.BVE_ROOT||defaultRoot(),port=Number(process.env.PORT||4317),demo=false,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false}=options;
+  if(workspace){check(Object.hasOwn(options,'root')&&isAbsolute(root),'EXPLICIT_ROOT_REQUIRED');const prior=inspectRuntime(root).integration;
+    if(prior)check(isDeepStrictEqual(prior.config,workspace),'ROOT_CONFLICT');
+    const connection=new WorkspaceConnection(root,workspace,{existing:!!prior});if(!prior)check(sameRef(connection.store.read().reference,expectedHead),'REVISION_CONFLICT');}
+
   // A single owner is important: a second server must not mark active attempts uncertain.
   const lockPath=join(root,'owner.json');
   if(existsSync(lockPath)){
+    if(!existsSync(join(root,'bve-v2-root.json')))throw new Fault('Refusing an owner file in an unrecognized root',409);
     const owner=JSON.parse(readFileSync(lockPath));
     let alive=false;try{process.kill(owner.pid,0);alive=true;}catch(e){if(e.code!=='ESRCH')throw e;}
     if(alive)throw Error('This private root already has a running owner. Open its browser URL instead.');
     unlinkSync(lockPath);
   }
-  const kernel=new Kernel(root),credentials=JSON.parse(readFileSync(join(root,'credentials.json')));
+  const kernel=new Kernel(root,{workspace,expectedHead,migrate,migrationBackup,confirmedQuiescent}),credentials=JSON.parse(readFileSync(join(root,'credentials.json')));
   const fd=openSync(lockPath,'wx',0o600);writeFileSync(fd,JSON.stringify({pid:process.pid,startedAt:new Date().toISOString()}));closeSync(fd);
   if(demo)await seedDemo(kernel,credentials);
   let origin,timer;
@@ -64,7 +72,10 @@ export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Numbe
   return {server,kernel,credentials,origin,stop};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  const app=await serve({demo:process.argv.includes('--demo')});
+  const argument=flag=>{const i=process.argv.indexOf(flag);return i<0?null:process.argv[i+1];};
+  const root=argument('--root')??process.env.BVE_ROOT,configPath=argument('--workspace-config');let setup={};
+  if(configPath){check(root&&isAbsolute(root)&&isAbsolute(configPath),'EXPLICIT_ROOT_REQUIRED');const g=new RootGuard(dirname(configPath));setup=JSON.parse(g.read(basename(configPath)));check(Object.keys(setup).every(k=>['workspace','expectedHead'].includes(k)),'INVALID_METADATA');}
+  const app=await serve({...setup,...(root?{root}:{}),demo:process.argv.includes('--demo')});
   console.log(`BVE V2 development candidate: ${app.origin}\nPrivate root: ${app.kernel.root}\n${process.argv.includes('--demo')?'SIMULATION: authored fixtures. No native workers.':'Project records are available. Native project staffing/return requires the installed host driver; see installation status.'}\nStop with Ctrl+C; resume with the same BVE_ROOT.`);
   for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>app.stop().then(()=>process.exit(0)));
 }
