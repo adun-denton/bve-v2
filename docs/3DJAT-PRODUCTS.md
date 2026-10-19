@@ -4,7 +4,7 @@
 
 | Boundary | Decision |
 |---|---|
-| Commands/CAS | Only frozen product.create/read, product.proposal.submit/decide, product.note.add. Current exact head and dossier CAS; create protects absence 0. Semantic resolution is rechecked under the accepted DomainStore lock |
+| Commands/CAS | Frozen product.create/read, product.proposal.submit/decide, product.note.add and attachment.register. Current exact head/dossier CAS; product and attachment creation protect their own absence0. Attachment registration atomically links its reference to the next dossier revision. Semantic resolution is rechecked under the accepted DomainStore lock |
 | Authentication | Explicit private local access file, outside business/runtime roots, holds random bearer hashes and a writer MAC key. Human and proposal-only principals are provisioned by the trusted filesystem owner. BVE reuses its existing human/session authentication; author labels confer no scope |
 | Durable identity/replay | UUID is explicit in the frozen create packet. Deterministic action/note IDs and a bounded private first-submission timestamp reservation preserve replay through prepublication faults. Committed scoped store receipts replay before stale checks; changed packet conflicts |
 | Receipts | File-owned signed evidence records bind authenticated principal/role, operation/key/product and exact command fingerprint. A decision's public action reference binds those intended bytes, not authority. No credential or MAC key enters the domain |
@@ -19,7 +19,7 @@ This is application code for authored review. No production setup, actual human 
 
 ## Explicit access and entry points
 
-`src/domain-products.mjs` imports filesystem/crypto, the accepted DomainStore and frozen contracts only. It imports no SQLite, Kernel or server. Direct file owners can use `readProductDossier(domainRoot,{productId,atHead=null})` for a verified `{head,product:{reference,record}}` snapshot without any capability file, runtime or database. This is local file access, not an authenticated remote reader. Direct edits are corruption, not supported mutation.
+`src/domain-products.mjs` uses filesystem/crypto, the accepted DomainStore, frozen contracts and the narrow opaque attachment helper. It imports no SQLite, Kernel or server. Direct file owners can use `readProductDossier(domainRoot,{productId,atHead=null})` for a verified `{head,product:{reference,record}}` snapshot without any capability file, runtime or database. This is local file access, not an authenticated remote reader. Direct edits are corruption, not supported mutation.
 
 For independently authorized local setup, the trusted owner provisions a new private access file outside the domain and runtime roots:
 
@@ -114,3 +114,7 @@ npm test
 ```
 
 Authored tests cover two principals, name-only creation, SKU/unknown/typed values, source resolution and forgery refusal, C1 rejection/correction journeys, active-decision links, real child-writer contention, BVE-down child read/write, publication/reply/cache/adoption faults, exact replay, combined recovery and unavailable-domain/unsafe-root controls. A Windows-only product create/propose/decide/reopen/replay gate must execute on the submitted source in overseer verification; Linux skips it. All fixtures are disposable and do not establish real human/source approval or native readiness. No installation, real imports, generation, merge or next job is authorized by these tests.
+
+## Opaque attachments
+
+[Attachment registration and availability](3DJAT-ATTACHMENTS.md) reuse the existing product command/review delegation and file-owned dossier. The optional trusted `products.attachmentSources` map explicitly selects local roots and permitted product UUIDs. Attachment entity CAS is separate from dossier revision; current availability is derived without rewriting historical records. No attachment execution, image generation, arbitrary file endpoint or human approval is supplied. The internal review result includes exact attachment reference/record/current status; legacy product operations and fact authority remain unchanged.

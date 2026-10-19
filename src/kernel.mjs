@@ -125,13 +125,17 @@ export class Kernel {
   });}
   #productWriter(){
     requireThat(this.#workspace&&this.#productOptions,'Product workflow is not explicitly configured',409);this.#workspace.assertRuntime();
-    if(!this.#products){this.#workspace.read();domainCheck(Object.keys(this.#productOptions).length===1&&typeof this.#productOptions.accessFile==='string','INVALID_VALUE');
+    for(const entry of Object.values(this.#productOptions.attachmentSources??{})){
+      domainCheck(typeof entry?.root==='string','INVALID_VALUE');const source=resolve(entry.root),runtime=resolve(this.root);
+      domainCheck(source!==runtime&&!source.startsWith(runtime+'/')&&!source.startsWith(runtime+'\\')&&!runtime.startsWith(source+'/')&&!runtime.startsWith(source+'\\'),'UNSAFE_PATH');
+    }
+    if(!this.#products){this.#workspace.read();domainCheck(Object.keys(this.#productOptions).every(k=>['accessFile','attachmentSources'].includes(k))&&typeof this.#productOptions.accessFile==='string','INVALID_VALUE');
       const rel=resolve(this.#productOptions.accessFile);domainCheck(rel!==this.root&&!rel.startsWith(this.root+'/')&&!rel.startsWith(this.root+'\\'),'UNSAFE_PATH');
       const writer=new DomainProducts(this.#workspace.config.domainRoot,{accessFile:rel,authenticate:token=>{
         let role;try{role=this.#role(token);}catch{return null;}const session=this.#session(token);
         if(!['human','conductor','butler'].includes(role))return null;
         return {id:session?'bve-session-'+session.id:'bve-'+role,role,products:session?[session.projectId]:'*',sourceIds:[]};
-      },beforePublish:event=>this.#copyProductAction(event),hook:(stage,detail)=>this.#workspaceHook('products:'+stage,detail)});this.#workspace.read();this.#products=writer;
+      },attachmentSources:this.#productOptions.attachmentSources??{},beforePublish:event=>this.#copyProductAction(event),hook:(stage,detail)=>this.#workspaceHook('products:'+stage,detail)});this.#workspace.read();this.#products=writer;
     }return this.#products;
   }
   productReview(token,query){try{return clone(this.#productWriter().readReview(token,query));}catch(e){throw new Fault(e.code??'Product review unavailable',e.code==='INVALID_SCOPE'?403:409);}}
