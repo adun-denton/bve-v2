@@ -8,16 +8,19 @@ export function crc32(bytes) {
   return (c ^ 0xffffffff) >>> 0;
 }
 const signature = Buffer.from([137,80,78,71,13,10,26,10]);
-export function verifyPNG(input,{maxPixels=PNG_PIXELS}={}) {
+function checkedPNG(input,{maxPixels=PNG_PIXELS,maxChunks=Infinity,onInflate=()=>{}}={},collect=false) {
   if(!Number.isInteger(maxPixels)||maxPixels<1||maxPixels>IMG20_PIXELS)throw Error('Invalid PNG pixel limit');
   const b = Buffer.from(input);
   if (b.length > 24 * 1024 * 1024 || !b.subarray(0,8).equals(signature)) throw Error('Unsupported or oversized image: PNG required');
-  let p = 8, header, ended = false, idatEnded = false, idats = [];
+  let p = 8, header, ended = false, idatEnded = false, idats = [], count=0;
+  const chunks=collect?[]:null;
   while (p < b.length) {
+    if(++count>maxChunks)throw Object.assign(Error('PNG chunk limit'),{code:'PREVIEW_LIMIT'});
     if (p + 12 > b.length) throw Error('Truncated PNG');
     const n = b.readUInt32BE(p), type = b.toString('ascii', p+4, p+8), end = p+12+n;
     if (end > b.length || !/^[A-Za-z]{4}$/.test(type)) throw Error('Invalid PNG chunk');
     const d = b.subarray(p+8, p+8+n);
+    if(collect)chunks.push({type,data:d,index:count-1});
     if (crc32(b.subarray(p+4,p+8+n)) !== b.readUInt32BE(p+8+n)) throw Error('PNG CRC mismatch');
     if (!header && type !== 'IHDR') throw Error('PNG header must be first');
     if (type === 'IHDR') {
@@ -41,11 +44,16 @@ export function verifyPNG(input,{maxPixels=PNG_PIXELS}={}) {
   // This includes one filter byte for every narrow/tall row; no side cap is needed.
   const decodedBytes=stride*header.height;
   if(!Number.isSafeInteger(decodedBytes)||decodedBytes>5*maxPixels)throw Error('Unsafe PNG allocation');
-  const raw = inflateSync(Buffer.concat(idats), {maxOutputLength: decodedBytes});
+  onInflate();const raw = inflateSync(Buffer.concat(idats), {maxOutputLength: decodedBytes});
   if (raw.length !== decodedBytes) throw Error('Invalid PNG pixel length');
   for (let y = 0; y < header.height; y++) if (raw[y*stride] > 4) throw Error('Invalid PNG filter');
-  return {sha256:hash(b),width:header.width,height:header.height,mediaType:'image/png',size:b.length};
+  const result={sha256:hash(b),width:header.width,height:header.height,mediaType:'image/png',size:b.length};
+  return collect?{result,header,chunks,raw}:result;
 }
+// Legacy verification keeps its exact acceptance and result. Preview-only
+// bounds/inspection are isolated from default original/import validation.
+export function verifyPNG(input,{maxPixels=PNG_PIXELS}={}){return checkedPNG(input,{maxPixels});}
+export function verifiedPNGData(input,options={}){return checkedPNG(input,{...options,maxChunks:options.maxChunks??4096},true);}
 function chunk(type, bytes) {
   const t = Buffer.from(type), b = Buffer.alloc(bytes.length+12);
   b.writeUInt32BE(bytes.length,0); t.copy(b,4); bytes.copy(b,8); b.writeUInt32BE(crc32(Buffer.concat([t,bytes])),bytes.length+8); return b;
