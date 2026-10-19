@@ -12,6 +12,8 @@ Node 24.x is required (tested 24.19.0). Runtime dependencies are zero. Use a pin
 
 The optional [prepared 3DJAT workspace integration candidate](docs/3DJAT-WORKSPACE.md) connects reviewed file identities, a disposable domain projection and combined private recovery. It does not authorize production setup or establish native readiness.
 
+The [governed product dossier candidate](docs/3DJAT-PRODUCTS.md) adds independent file-owned creation, notes and human-reviewed source proposals through explicit local capabilities and narrow BVE delegation. The broader product UI remains a separate task.
+
 ```sh
 npm ci --omit=dev --ignore-scripts
 npm test

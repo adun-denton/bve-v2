@@ -4,6 +4,7 @@ import { randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdirSync, existsSync, readFileSync, writeFileSync, chmodSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { hash, verifyPNG } from './png.mjs';
+import { DomainProducts } from './domain-products.mjs';
 import { WorkspaceConnection, RootGuard, inspectRuntime, acquireOperational, verifyLegacyMigration, projection, putProjection, validateAdoption, makeSelection, verifySelection, sameRef, check as domainCheck, fail as domainFail } from './workspace.mjs';
 const id = () => randomUUID();
 const now = () => new Date().toISOString();
@@ -23,9 +24,10 @@ const permissions={
   butler:['event.delivery'],
 };
 export class Kernel {
-  #db; #credentials; #closed=false; #workspace=null; #workspaceHook=()=>{}; #inTransaction=false; #operationalHeld=false;
-  constructor(root,{recover=true,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,workspaceHook=()=>{}}={}) {
+  #db; #credentials; #closed=false; #workspace=null; #workspaceHook=()=>{}; #inTransaction=false; #operationalHeld=false; #products=null; #productOptions=null;
+  constructor(root,{recover=true,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,workspaceHook=()=>{},products=null}={}) {
     this.root=resolve(root);this.#workspaceHook=workspaceHook;
+    this.#productOptions=products;
     const info=inspectRuntime(this.root), prior=info.integration;
     if(prior&&workspace)domainCheck(isDeepStrictEqual(prior.config,workspace),'ROOT_CONFLICT');
     const config=workspace??prior?.config;
@@ -99,6 +101,34 @@ export class Kernel {
   }
   #requireDomain(projectId){const p=this.#get('project',projectId);if(p.domainWorkspaceId){const current=this.#currentDomain();domainCheck(current?.status==='current','DOMAIN_UNAVAILABLE',{cause:current?.cause});}}
   refreshDomain(owner){this.#owner(owner);requireThat(this.#workspace,'No explicit workspace connection',409);return clone(this.#currentDomain());}
+  #copyProductAction(event){return this.#tx(()=>{
+    const doc=JSON.stringify(event,Object.keys(event).sort()),prior=this.#db.prepare("SELECT doc FROM records WHERE kind='event' AND id=?").get(event.id);
+    domainCheck(!prior||prior.doc===doc,'EVIDENCE_MISMATCH');if(!prior)this.#db.prepare("INSERT INTO records VALUES('event',?,?)").run(event.id,doc);
+  });}
+  #productWriter(){
+    requireThat(this.#workspace&&this.#productOptions,'Product workflow is not explicitly configured',409);this.#workspace.assertRuntime();
+    if(!this.#products){this.#workspace.read();domainCheck(Object.keys(this.#productOptions).length===1&&typeof this.#productOptions.accessFile==='string','INVALID_VALUE');
+      const rel=resolve(this.#productOptions.accessFile);domainCheck(rel!==this.root&&!rel.startsWith(this.root+'/')&&!rel.startsWith(this.root+'\\'),'UNSAFE_PATH');
+      const writer=new DomainProducts(this.#workspace.config.domainRoot,{accessFile:rel,authenticate:token=>{
+        let role;try{role=this.#role(token);}catch{return null;}const session=this.#session(token);
+        if(!['human','conductor','butler'].includes(role))return null;
+        return {id:session?'bve-session-'+session.id:'bve-'+role,role,products:session?[session.projectId]:'*',sourceIds:[]};
+      },beforePublish:event=>this.#copyProductAction(event),hook:(stage,detail)=>this.#workspaceHook('products:'+stage,detail)});this.#workspace.read();this.#products=writer;
+    }return this.#products;
+  }
+  productReview(token,query){try{return clone(this.#productWriter().readReview(token,query));}catch(e){throw new Fault(e.code??'Product review unavailable',e.code==='INVALID_SCOPE'?403:409);}}
+  productCommand(token,packet){
+    let writer;try{writer=this.#productWriter();}catch(e){return DomainProducts.failure(packet,e);}
+    const result=writer.command(token,packet);if(result.schemaVersion==='3djat.failure.v1')return clone(result);
+    try{
+      for(const event of writer.operationalEvidence())this.#copyProductAction(event);
+      this.#workspaceHook('before-product-adoption',{});
+      const view=this.#workspace.read(),project=this.#list('project').find(p=>p.id===packet.input.productId);
+      if(!project?.domainWorkspaceId){const meta=this.#get('domainIntegration','active');this.adoptWorkspace(this.#credentials,{schemaVersion:'3djat.command.v1',operation:'workspace.adopt',key:'product-link-'+view.reference.sha256,expected:{domainHead:view.reference,entityRevision:meta.adoptionRevision},input:{...this.#workspace.store.workspace,revision:meta.adoptionRevision+1,domainHead:view.reference}});}
+      this.#workspaceHook('before-product-projection',{});const projection=this.#currentDomain();domainCheck(projection.status==='current','ACK_PENDING');
+      this.#workspaceHook('before-product-response',{result});return clone(result);
+    }catch(e){return writer.failure(packet,e,result.receipt);}
+  }
   adoptWorkspace(owner,packet){
     this.#owner(owner);requireThat(this.#workspace,'No explicit workspace connection',409);const release=this.#workspace.lockDomain();let attempted=false;
     try{const view=this.#workspace.read();const result=this.#tx(()=>this.#once('workspace:'+this.#workspace.config.workspaceId+':adopt:owner',packet.key,packet,()=>{
@@ -339,6 +369,7 @@ export class Kernel {
     const value=fn();this.#db.prepare('INSERT INTO receipts VALUES(?,?,?,?)').run(scope,key,fp,JSON.stringify(value));return value;
   }
   #operate(role,op,x){
+    if(['event.delivery','event.ack','event.consume'].includes(op))requireThat(this.#get('event',x.eventId).type!=='product-action','Product action evidence is immutable',409);
     switch(op){
       case 'project.create': {
         const p={id:id(),name:text(x.name,'project name',200),brief:text(x.brief,'brief'),page:'board',createdAt:now(),fixture:x.fixture===true,
@@ -636,7 +667,7 @@ export class Kernel {
     const allowed={human:['project','request','iteration','job','artifact','draft','submission','continuation','acceptance','creativeContext','event','delivery','conflict','observation'],conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['project','iteration','artifact','submission','continuation','creativeContext','job','assignment','delivery','event','conflict','observation'],worker:['project','job','assignment']};
     requireThat([...allowed[role],...common].includes(kind),'Read boundary rejected',403);
     const binding=this.#session(token);
-    const values=this.#list(kind).filter(v=>!binding||this.#belongs(v,kind,binding.projectId)).filter(v=>{
+    const values=this.#list(kind).filter(v=>kind!=='event'||v.type!=='product-action').filter(v=>!binding||this.#belongs(v,kind,binding.projectId)).filter(v=>{
       if(binding?.role!=='worker')return true;
       if(kind==='job')return v.id===binding.jobId;
       if(kind==='assignment'||kind==='statement')return v.jobId===binding.jobId;
