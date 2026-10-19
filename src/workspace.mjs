@@ -107,10 +107,17 @@ export class WorkspaceConnection {
   assertRuntime() {this.runtimeGuard??=new RootGuard(this.root);this.runtimeGuard.assert();}
   read() {this.assertRuntime();if(this.failure)fail('DOMAIN_UNAVAILABLE',{cause:this.failure});return this.store.read();}
   lockDomain() {if(this.failure)fail('DOMAIN_UNAVAILABLE',{cause:this.failure});const b=this.store.lock(this.config.workspaceId);return ()=>this.store.unlock(b);}
-  folder(project,{create=false}={}) {
+  folder(project,{create=false,unavailable=false}={}) {
     this.assertRuntime();if(project.domainWorkspaceId) {
-      check(project.domainWorkspaceId===this.config.workspaceId,'WORKSPACE_MISMATCH');if(this.failure)fail('DOMAIN_UNAVAILABLE',{cause:this.failure});
-      return this.domainGuard.locate(`${this.store.workspace.paths.products}/${project.id}`,{directory:true,create});
+      check(project.domainWorkspaceId===this.config.workspaceId,'WORKSPACE_MISMATCH');if(this.failure){if(unavailable)return null;fail('DOMAIN_UNAVAILABLE',{cause:this.failure});}
+      try{this.domainGuard.assert();}catch(e){
+        if(e.code!=='ENOENT'||!unavailable)throw e;
+        // Only an absent leaf root is availability loss. Dangling links and unsafe
+        // ancestors still refuse; never create a replacement for the bound root.
+        canonicalRoot(this.domainGuard.root,{missing:true});check(!fs.existsSync(this.domainGuard.root),'ROOT_CHANGED');return null;
+      }
+      const folder=this.domainGuard.locate(`${this.store.workspace.paths.products}/${project.id}`,{directory:true,create:create&&!unavailable});
+      return unavailable?null:folder;
     }
     return this.runtimeGuard.locate(`Projects/${project.id}`,{directory:true,create});
   }

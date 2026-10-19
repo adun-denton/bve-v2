@@ -11,6 +11,7 @@ import { databaseFingerprint } from '../src/workspace.mjs';
 import { serve } from '../src/server.mjs';
 import { prepared,adoption,readyRound,PRODUCT,WORKSPACE,noop,product } from './fixtures/3djat/workspace-fixture.mjs';
 const rejects=(fn,code)=>assert.throws(fn,e=>e.code===code,code);
+const operationalFingerprint=w=>{const db=new DatabaseSync(path.join(w.runtimeRoot,'workspace.sqlite'),{readOnly:true});try{return databaseFingerprint(db);}finally{db.close();}};
 
 test('prepared domain explicitly connects and adopts exact UUID without requests/staff/rounds; receipt replay',t=>{
   const w=prepared(t),packet=adoption(w),first=w.k.adoptWorkspace(w.c,packet);
@@ -149,6 +150,69 @@ test('missing domain permits stale history/frozen selection after reopen; new co
   assert.equal(w.k.read(w.c.human,'project')[0].domain.status,'stale');assert.equal(w.k.round(w.c.human,round.id).statements[0].project.folder,null);
   assert.equal(w.k.frozenDomainSelection(w.c,saved.id).product.sha256,saved.product.sha256);
   rejects(()=>w.call('human','request.create',{projectId:PRODUCT,intent:'Unavailable domain'}),'DOMAIN_UNAVAILABLE');
+});
+
+for(const withReadyRound of [false,true])test(`live domain disappearance preserves history and recovers the same root; ready round=${withReadyRound}`,t=>{
+  const w=prepared(t),packet=adoption(w),ack=w.k.adoptWorkspace(w.c,packet),view=w.store.read();
+  const saved=w.k.freezeDomainSelection(w.c,{key:'live-availability',projectId:PRODUCT,expectedHead:view.reference,product:view.head.products[0].dossier,templates:view.head.templates});
+  const frozen=w.k.frozenDomainSelection(w.c,saved.id),ready=withReadyRound?readyRound(w):null;
+  const request=w.call('human','request.create',{projectId:PRODUCT,intent:'Authored request before domain loss'});
+  const before=w.k.read(w.c.human,'project')[0],statements=w.k.read(w.c.human,'statement');
+  const fingerprint=operationalFingerprint(w);
+  const preserved=w.domainRoot+'-preserved';fs.renameSync(w.domainRoot,preserved);
+  // Read directly first: no refresh, reopen or reconstruction may be needed.
+  const stale=w.k.read(w.c.human,'project')[0];
+  assert.deepEqual(stale,{...before,folder:null,domain:{...before.domain,status:'stale',cause:'MISSING_REFERENCE'}});
+  assert.equal(w.k.refreshDomain(w.c).status,'stale');
+  const projected=w.k.read(w.c.human,'statement');assert.equal(projected.length,statements.length);
+  for(const [i,st] of projected.entries())assert.deepEqual(st,{...statements[i],project:{...statements[i].project,folder:null,domain:{...statements[i].project.domain,status:'stale'}}});
+  if(ready)assert.deepEqual(w.k.round(w.c.human,ready.round.id).statements,projected);
+  assert.deepEqual(w.k.frozenDomainSelection(w.c,saved.id),frozen);
+  for(let n=0;n<2;n++)assert.deepEqual(w.k.reconcile(w.c.butler),{ok:true});
+  rejects(()=>w.call('human','request.create',{projectId:PRODUCT,intent:'Blocked while unavailable'}),'DOMAIN_UNAVAILABLE');
+  rejects(()=>w.call('conductor','iteration.commission',{requestId:request.id,specifications:[]}),'DOMAIN_UNAVAILABLE');
+  assert.equal(fs.existsSync(w.domainRoot),false);assert.equal(fs.existsSync(path.join(w.runtimeRoot,'Projects',PRODUCT)),false);
+  assert.equal(fs.existsSync(path.join(preserved,'Products',PRODUCT)),withReadyRound);
+  assert.equal(operationalFingerprint(w),fingerprint);
+  fs.renameSync(preserved,w.domainRoot);
+  assert.deepEqual(w.k.read(w.c.human,'project')[0],before);assert.equal(w.k.refreshDomain(w.c).status,'current');
+  assert.deepEqual(w.k.read(w.c.human,'statement'),statements);assert.deepEqual(w.k.reconcile(w.c.butler),{ok:true});
+  assert.deepEqual(w.k.frozenDomainSelection(w.c,saved.id),frozen);assert.deepEqual(w.k.adoptWorkspace(w.c,packet),ack);
+  assert.equal(operationalFingerprint(w),fingerprint);
+});
+
+test('live missing domain head keeps history readable and prevents adopted-folder repair until verified recovery',t=>{
+  const w=prepared(t);w.k.adoptWorkspace(w.c,adoption(w));const {round}=readyRound(w),before=w.k.read(w.c.human,'project')[0];
+  const head=path.join(w.domainRoot,'domain-head.json'),bytes=fs.readFileSync(head),folder=w.k.projectFolder(PRODUCT);
+  fs.unlinkSync(head);fs.rmdirSync(folder);
+  const stale=w.k.read(w.c.human,'project')[0];assert.deepEqual(stale.domain.record,before.domain.record);assert.equal(stale.domain.status,'stale');assert.equal(stale.folder,null);
+  assert.equal(w.k.round(w.c.human,round.id).statements[0].project.folder,null);assert.deepEqual(w.k.reconcile(w.c.butler),{ok:true});assert.equal(fs.existsSync(folder),false);
+  rejects(()=>w.call('human','request.create',{projectId:PRODUCT,intent:'Blocked with missing head'}),'DOMAIN_UNAVAILABLE');assert.equal(fs.existsSync(folder),false);
+  fs.writeFileSync(head,bytes);assert.equal(w.k.refreshDomain(w.c).status,'current');w.k.reconcile(w.c.butler);assert.equal(fs.statSync(folder).isDirectory(),true);
+  assert.deepEqual(w.k.read(w.c.human,'project')[0],before);
+});
+
+for(const unsafe of ['copied-root','dangling-root','stale-product-link'])test(`live unavailable history still refuses ${unsafe} with a ready round`,t=>{
+  const w=prepared(t);w.k.adoptWorkspace(w.c,adoption(w));const {round}=readyRound(w),view=w.store.read();
+  const selected=w.k.freezeDomainSelection(w.c,{key:'unsafe-history',projectId:PRODUCT,expectedHead:view.reference,product:view.head.products[0].dossier});
+  const frozen=w.k.frozenDomainSelection(w.c,selected.id),fingerprint=operationalFingerprint(w);
+  const preserved=w.domainRoot+'-preserved',outside=path.join(w.dir,'absent-target');let code;
+  if(unsafe==='stale-product-link'){
+    fs.unlinkSync(path.join(w.domainRoot,'domain-head.json'));fs.rmdirSync(w.k.projectFolder(PRODUCT));
+    fs.mkdirSync(outside);fs.symlinkSync(outside,path.join(w.config.paths.products,PRODUCT),process.platform==='win32'?'junction':'dir');code='UNSAFE_PATH';
+  }else{
+    fs.renameSync(w.domainRoot,preserved);
+    if(unsafe==='copied-root'){fs.cpSync(preserved,w.domainRoot,{recursive:true});code='ROOT_CHANGED';}
+    else{fs.symlinkSync(outside,w.domainRoot,process.platform==='win32'?'junction':'dir');code='UNSAFE_PATH';}
+  }
+  assert.equal(w.k.refreshDomain(w.c).status,'stale');
+  rejects(()=>w.k.read(w.c.human,'project'),code);rejects(()=>w.k.read(w.c.human,'statement'),code);
+  rejects(()=>w.k.round(w.c.human,round.id),code);rejects(()=>w.k.reconcile(w.c.butler),code);
+  rejects(()=>w.call('human','request.create',{projectId:PRODUCT,intent:'Must refuse unsafe replacement'}),code);
+  assert.deepEqual(w.k.frozenDomainSelection(w.c,selected.id),frozen);assert.equal(operationalFingerprint(w),fingerprint);
+  assert.equal(fs.existsSync(path.join(w.runtimeRoot,'Projects',PRODUCT)),false);
+  if(unsafe==='dangling-root')assert.equal(fs.existsSync(outside),false);
+  if(unsafe==='stale-product-link')assert.deepEqual(fs.readdirSync(outside),[]);
 });
 
 test('junction/symlink product escape refuses both reads and folder creation',t=>{

@@ -79,8 +79,8 @@ export class Kernel {
   // Installation is a trusted local-owner API, deliberately absent from HTTP.
   // Session bearers expose only the three existing functional roles in one project.
   #owner(owner){requireThat(['conductor','generator','butler'].every(r=>equal(owner?.[r],this.#credentials[r])),'Local installation credentials required',403);}
-  #folder(project,create=false){
-    if(this.#workspace)return this.#workspace.folder(project,{create});
+  #folder(project,create=false,unavailable=false){
+    if(this.#workspace)return this.#workspace.folder(project,{create,unavailable});
     const folder=join(this.root,'Projects',project.id);if(create)mkdirSync(folder,{recursive:true,mode:0o700});return folder;
   }
   projectFolder(projectId){return this.#folder(this.#get('project',projectId));}
@@ -94,7 +94,7 @@ export class Kernel {
   #projectView(p){
     if(!p.domainWorkspaceId)return {...p,folder:this.#folder(p)};
     const current=this.#currentDomain(),entry=Array.isArray(current?.projection?.products)?current.projection.products.find(x=>x.record?.productId===p.id):null,record=entry?.record;
-    return {...p,name:record?.workingName??p.id,productCode:record?.productCode??null,folder:this.#workspace?.failure?null:this.#folder(p),
+    return {...p,name:record?.workingName??p.id,productCode:record?.productCode??null,folder:this.#folder(p,false,current?.status!=='current'),
       domain:{status:current?.status??'stale',cause:current?.cause??null,head:current?.projection?.head??null,reference:entry?.reference??null,record:record??null}};
   }
   #requireDomain(projectId){const p=this.#get('project',projectId);if(p.domainWorkspaceId){const current=this.#currentDomain();domainCheck(current?.status==='current','DOMAIN_UNAVAILABLE',{cause:current?.cause});}}
@@ -614,7 +614,10 @@ export class Kernel {
         if(s.requestId)this.#event(i,'continuation:'+s.id,{submissionId:s.id,requestId:s.requestId});
       }
       for(const r of this.#list('round')){
-        if(this.#butlerReady(r)&&!(this.#get('project',r.projectId).domainWorkspaceId&&this.#workspace?.failure))this.#folder(this.#get('project',r.projectId),true);
+        if(this.#butlerReady(r)){
+          const project=this.#get('project',r.projectId),unavailable=!!project.domainWorkspaceId&&this.#currentDomain()?.status!=='current';
+          this.#folder(project,true,unavailable);
+        }
         if(this.#list('checkpoint').some(c=>c.roundId===r.id))continue;
         const completion=this.#list('statementEvent').filter(e=>e.statementId===r.statementId&&['completed','incomplete'].includes(e.kind)).at(-1);
         if(!completion)continue;
