@@ -5,6 +5,7 @@ import { randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdirSync, existsSync, readFileSync, writeFileSync, chmodSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { hash, verifyPNG } from './png.mjs';
+import {PREVIEW_LIMITS,checkMediaQuery,checkMediaView,buildMedia,mediaKey,canonical,unavailableMedia} from './png-preview.mjs';
 import { DomainProducts } from './domain-products.mjs';
 import {AssetImports,checkImportFormat,installImportFormat,verifyImportedArtifact,importFailure} from './asset-import.mjs';
 import { WorkspaceConnection, RootGuard, inspectRuntime, acquireOperational, verifyLegacyMigration, projection, putProjection, validateAdoption, makeSelection, verifySelection, sameRef, check as domainCheck, fail as domainFail } from './workspace.mjs';
@@ -26,7 +27,7 @@ const permissions={
   butler:['event.delivery'],
 };
 export class Kernel {
-  #db; #credentials; #closed=false; #workspace=null; #workspaceHook=()=>{}; #inTransaction=false; #operationalHeld=false; #products=null; #productOptions=null; #imports=null; #importOptions=null;
+  #db; #credentials; #closed=false; #workspace=null; #workspaceHook=()=>{}; #inTransaction=false; #operationalHeld=false; #products=null; #productOptions=null; #imports=null; #importOptions=null; #mediaCache=new Map(); #mediaBytes=0;
   constructor(root,{recover=true,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,workspaceHook=()=>{},products=null,imports=null}={}) {
     this.root=resolve(root);this.#workspaceHook=workspaceHook;
     this.#productOptions=products;
@@ -73,7 +74,7 @@ export class Kernel {
       this.reconcile(this.#credentials.butler);
     }catch(e){this.close();throw e;}
   }
-  close(){if(!this.#closed){this.#db.close();this.#closed=true;}}
+  close(){if(!this.#closed){this.#db.close();this.#mediaCache.clear();this.#mediaBytes=0;this.#closed=true;}}
   #importer(){
     requireThat(this.#workspace,'Imports require a connected workspace',409);this.#workspace.assertRuntime();
     if(!this.#imports)this.#imports=new AssetImports(this.#db,this.root,{sources:this.#importOptions?.sources??{},tx:fn=>this.#tx(fn),hook:(stage,detail)=>this.#workspaceHook(stage,detail),authenticate:token=>{
@@ -708,6 +709,48 @@ export class Kernel {
     return {round,statements:this.read(token,'statement').filter(s=>s.roundId===roundId),checkpoint:this.read(token,'checkpoint').find(c=>c.roundId===roundId)??null,presentation:this.read(token,'presentation').filter(p=>p.roundId===roundId).at(-1)??null};
   }
   assignment(token){const a=this.#assignment(token),j=this.#get('job',a.jobId);const {token:t,tokenHash,...safe}=a;return {...safe,specification:j.specification,state:j.state};}
+  // Read-only source resolution is distinct from raster decoding: experimental
+  // refs decline before inflate/cache, and a cache hit still verifies the BLOB.
+  #mediaSource(token,q){
+    checkMediaQuery(q);const role=this.#role(token),session=this.#session(token);
+    requireThat(['human','conductor'].includes(role)&&(!session||session.projectId===q.productId),'Media scope rejected',403);
+    this.#workspace?.assertRuntime();const a=this.#get('artifact',q.artifactId);
+    requireThat(a.origin===undefined||['import','produced'].includes(a.origin),'Unsupported artifact origin',409);
+    requireThat(a.projectId===q.productId&&a.id===q.artifactId&&a.version===q.version&&a.sha256===q.sha256&&a.width===q.width&&a.height===q.height,'Media reference mismatch',409);
+    if(a.origin==='import')try{verifyImportedArtifact(this.#db,a);}catch{throw new Fault('Media provenance mismatch',409);}
+    const sourceBinding={artifact:clone(q),origin:a.origin==='import'?{kind:'import',importId:a.importId,importRecord:clone(a.importRecord)}:{kind:'produced',jobId:a.jobId??null,iterationId:a.iterationId??null,deliveryId:a.deliveryId??null}};
+    const row=this.#db.prepare('SELECT data FROM bytes WHERE hash=? AND length(data)<=?').get(a.sha256,PREVIEW_LIMITS.encoded);
+    if(!row)return {sourceBinding,errorCode:this.#db.prepare('SELECT 1 FROM bytes WHERE hash=?').get(a.sha256)?'ORIGINAL_CORRUPT':'ORIGINAL_MISSING'};
+    const bytes=Buffer.from(row.data);return {sourceBinding,bytes,errorCode:hash(bytes)===a.sha256?null:'ORIGINAL_CORRUPT'};
+  }
+  artifactMedia(token,q){
+    let source;try{source=this.#mediaSource(token,q);}catch(e){if(e instanceof Fault)throw e;throw new Fault(e.code==='INVALID_VALUE'?'Invalid media query':'Media unavailable',e.code==='INVALID_VALUE'?400:409);}
+    const {sourceBinding,bytes,errorCode}=source;if(errorCode)return unavailableMedia(sourceBinding,errorCode);
+    if(q.width*q.height>PREVIEW_LIMITS.pixels)return unavailableMedia(sourceBinding,'PIXEL_POLICY');
+    const key=mediaKey(sourceBinding);this.#workspaceHook('media-before-cache',{});const entry=this.#mediaCache.get(key);let result,rebuild=false;
+    if(entry){this.#workspaceHook('media-cache-read',{entry});try{
+      domainCheck(typeof entry.json==='string'&&entry.json.length<=PREVIEW_LIMITS.response&&entry.sha256===hash(Buffer.from(entry.json)),'EVIDENCE_MISMATCH');
+      result=JSON.parse(entry.json);checkMediaView(result,sourceBinding);domainCheck(result.state==='ready'&&result.warnings.length===0,'EVIDENCE_MISMATCH');
+    }catch{rebuild=true;result=null;}}
+    if(!result){
+      this.#workspaceHook('media-before-compute',{});
+      try{result=buildMedia(sourceBinding,bytes,{onInflate:()=>this.#workspaceHook('media-source-inflate',{})});checkMediaView(result,sourceBinding);}
+      catch(e){result=unavailableMedia(sourceBinding,['ORIGINAL_CORRUPT','PREVIEW_LIMIT','PREVIEW_UNSUPPORTED'].includes(e.code)?e.code:'PREVIEW_FAILED');}
+      this.#workspaceHook('media-after-compute',{});
+      if(result.state==='ready'){
+        const json=JSON.stringify(result),sha256=hash(Buffer.from(json)),cost=Buffer.byteLength(json)+Buffer.byteLength(key)+Buffer.byteLength(sha256),priorCost=entry?.cost??0;
+        this.#workspaceHook('media-before-cache-publish',{});
+        if(this.#mediaBytes-priorCost+cost<=PREVIEW_LIMITS.cacheBytes&&(entry||this.#mediaCache.size<PREVIEW_LIMITS.cacheEntries)){
+          this.#mediaCache.set(key,{json,sha256,cost});this.#mediaBytes+=cost-priorCost;
+        }
+        this.#workspaceHook('media-after-cache-publish',{entries:this.#mediaCache.size,bytes:this.#mediaBytes});
+      }
+    }
+    this.#workspaceHook('media-before-response',{});
+    const current=this.#mediaSource(token,q);requireThat(canonical(current.sourceBinding)===canonical(sourceBinding),'Media provenance changed',409);
+    if(current.errorCode)return unavailableMedia(sourceBinding,current.errorCode);
+    if(rebuild&&result.state==='ready')result.warnings=['CACHE_REBUILT'];return clone(result);
+  }
   original(token,artifactId){
     try{this.#role(token);}catch{const assigned=this.#assignment(token),job=this.#get('job',assigned.jobId);requireThat(job.specification.sources.some(ref=>ref.artifactId===artifactId),'Executor can only read assigned source originals',403);}
     const a=this.#get('artifact',artifactId),binding=this.#session(token);if(binding)requireThat(['conductor','butler'].includes(binding.role)&&a.projectId===binding.projectId,'Session original boundary rejected',403);this.#verifyArtifact(a);return Buffer.from(this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256).data);}

@@ -62,4 +62,4 @@ Existing combined backup verifies/copies committed attachment closure and domain
 
 ## Remaining boundaries
 
-This interface supplies opaque registration/current availability. Previews, structured PNG metadata, dossier entry-authoring extensions, product UI and later template/executor/calibration work are separate. Ordinary 16MP/24MiB and experimental-only 20MP remain unchanged. Authored tests establish no actual Windows/target/browser/memory, authentic recovery/IMG20, native/setup or human/user acceptance. No installation, merge or release follows.
+This interface supplies opaque registration/current availability. The separate [PNG preview/metadata reader](3DJAT-PREVIEWS.md) accepts only recorded original image artifact refs and never executes or decodes opaque attachments. Dossier entry-authoring extensions, product UI and later template/executor/calibration work remain separate. Ordinary 16MP/24MiB and experimental-only 20MP remain unchanged. Authored tests establish no actual Windows/target/browser/memory, authentic recovery/IMG20, native/setup or human/user acceptance. No installation, merge or release follows.
