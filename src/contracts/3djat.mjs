@@ -398,12 +398,33 @@ function semantic(kind, v, c, add, p = '$') {
       if (x.field === 'workingName' && x.fact.state !== 'accepted') err('INVALID_VALUE', 'changes', 'Working name cannot be cleared');
     }
   }
-  if (kind === 'proposal-decision' && v.correctedProposal && (same(v.correctedProposal, v.proposal) || v.outcome !== 'superseded')) err('INVALID_REFERENCE', 'correctedProposal');
-  if (kind === 'proposal-decision' && c.proposal) {
-    if (!same(v.proposal, c.proposal.reference)) err('EVIDENCE_MISMATCH', 'proposal');
-    if (c.proposal.record.productId !== v.productId || c.proposal.record.expectedRevision !== v.expectedRevision) err('EVIDENCE_MISMATCH', 'productId');
-    if (v.correctedProposal && (!c.correctedProposal || !same(c.correctedProposal.record.corrects, v.proposal) ||
-      !same(c.correctedProposal.reference, v.correctedProposal))) err('EVIDENCE_MISMATCH', 'correctedProposal');
+  if (kind === 'proposal-decision') {
+    if (v.correctedProposal) {
+      if (same(v.correctedProposal, v.proposal) || v.outcome !== 'superseded') err('INVALID_REFERENCE', 'correctedProposal');
+      if (v.correctedProposal.id === v.proposal.id) err('INVALID_REFERENCE', 'correctedProposal/id');
+    }
+    if (c.proposal) {
+      const original = c.proposal.record;
+      if (!same(v.proposal, c.proposal.reference)) err('EVIDENCE_MISMATCH', 'proposal');
+      if (c.proposal.reference.id !== original.proposalId) add('EVIDENCE_MISMATCH', '$/context/proposal/reference/id');
+      if (original.productId !== v.productId) add('EVIDENCE_MISMATCH', '$/context/proposal/record/productId');
+      // Only rejection or an explicit linked correction can dispose of an older
+      // claim. Acceptance and uncorrected supersession retain exact revision CAS.
+      const olderAllowed = v.outcome === 'rejected' || v.outcome === 'superseded' && v.correctedProposal !== null;
+      if (olderAllowed ? original.expectedRevision > v.expectedRevision : original.expectedRevision !== v.expectedRevision)
+        add('REVISION_CONFLICT', '$/context/proposal/record/expectedRevision');
+    }
+    if (v.correctedProposal && (c.proposal || c.correctedProposal)) {
+      if (!c.correctedProposal) add('MISSING_CONTEXT', '$/context/correctedProposal');
+      else {
+        const corrected = c.correctedProposal.record;
+        if (!same(v.correctedProposal, c.correctedProposal.reference)) err('EVIDENCE_MISMATCH', 'correctedProposal');
+        if (c.correctedProposal.reference.id !== corrected.proposalId) add('EVIDENCE_MISMATCH', '$/context/correctedProposal/reference/id');
+        if (corrected.productId !== v.productId) add('EVIDENCE_MISMATCH', '$/context/correctedProposal/record/productId');
+        if (corrected.expectedRevision !== v.expectedRevision) add('REVISION_CONFLICT', '$/context/correctedProposal/record/expectedRevision');
+        if (!same(corrected.corrects, v.proposal)) add('EVIDENCE_MISMATCH', '$/context/correctedProposal/record/corrects');
+      }
+    }
   }
   if (kind === 'template') {
     unique(v.appliesTo, x => x, `${p}/appliesTo`, add); unique(v.inputs, x => x.role, `${p}/inputs`, add);
