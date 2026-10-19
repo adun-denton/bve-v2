@@ -1,5 +1,5 @@
 // Additive J01 contracts only. No runtime dispatch, I/O, authentication or hashing.
-export const LIMITS = Object.freeze({ pngPixels: 16_000_000, pngBytes: 24 * 1024 ** 2,
+export const LIMITS = Object.freeze({ pngPixels: 20_000_000, pngBytes: 24 * 1024 ** 2,
   proposedPngPixels: 20_000_000, attachmentBytes: 256 * 1024 ** 2,
   candidates: 6, text: 20_000, list: 256, depth: 48, nodes: 30_000 });
 
@@ -93,7 +93,7 @@ schemas['region'] = obj({ space: en('normalized-original'), x: num(0, 1), y: num
   w: num(Number.MIN_VALUE, 1), h: num(Number.MIN_VALUE, 1), meaning: str(2000),
   reviewRegion: optional(obj({ reviewId: uuid, index: num(0, 23, true) })) });
 schemas['artifact-ref'] = obj({ productId: uuid, artifactId: uuid, version: rev, sha256: hash,
-  width: num(1, 16_000_000, true), height: num(1, 16_000_000, true) });
+  width: num(1, 20_000_000, true), height: num(1, 20_000_000, true) });
 schemas['source-artifact'] = obj({ artifact: ref('artifact-ref'), role: id, regions: arr(ref('region'), 24) });
 schemas['allowance'] = obj({ primaryAttempts: num(1, 6, true), maxRetries: en(0) });
 schemas['canonical'] = obj({ direction: en('Fresh', 'Follow'), brand: nullable(text), count: num(1, 6, true) });
@@ -125,7 +125,7 @@ schemas['historical-approval'] = obj({ origin: en('historical'), claimedApprover
 record('historical-import', { importId: uuid, productId: uuid, origin: en('import'),
   kind: en('historical-base', 'historical-creative'), filename: str(255, 1, 'filename'),
   source: S, sha256: hash, encodedBytes: num(1, LIMITS.pngBytes, true), format: en('image/png'),
-  width: num(1, 16_000_000, true), height: num(1, 16_000_000, true), bitDepth: en(8), interlaced: en(false),
+  width: num(1, 20_000_000, true), height: num(1, 20_000_000, true), bitDepth: en(8), interlaced: en(false),
   historicalParent: nullable(ref('artifact-ref')), historicalApproval: nullable(ref('historical-approval')),
   importedAt: time });
 record('attachment', { attachmentId: uuid, productId: uuid, sha256: hash,
@@ -535,7 +535,7 @@ function visitNested(v, p, add) {
   if (v.space === 'normalized-original' && (v.x + v.w > 1 || v.y + v.h > 1)) add('OUT_OF_BOUNDS', p, 'Region exceeds original');
   for (const [k, x] of Object.entries(v)) visitNested(x, `${p}/${k}`, add);
 }
-function image(v, p, add) { if (v.width * v.height > LIMITS.pngPixels) add('UNSUPPORTED_IMAGE', p, 'Current limit is 16MP; IMG20 is unverified'); }
+function image(v, p, add) { if (v.width * v.height > LIMITS.pngPixels) add('UNSUPPORTED_IMAGE', p, 'Candidate ceiling is 20MP; runtime opt-in and IMG20 evidence are required'); }
 function checkExperiment(template, experimentRef, outputs, c, add, p, completed) {
   const e = c.experiment;
   const v = e.record.variants.find(x => same(x.template, template));

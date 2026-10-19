@@ -2,7 +2,7 @@
 
 The separate [J03A standalone domain-store proposal](3DJAT-DOMAIN-STORE.md) implements bounded file persistence against these unchanged types; runtime adoption and authenticated workflows remain later gates.
 
-These are additive interfaces for the 3DJAT adaptation. This contract module supplies pure validation and authored examples only. The separate [product workflow implementation](3DJAT-PRODUCTS.md) delegates its five governed product commands to a semantic domain writer and explicit server endpoint; the remaining commands are not installed by that slice. Existing [operating contracts](CONTRACTS.md), APIs, record interpretation and limits remain intact. Downstream implementations use the independently accepted exact contract baseline.
+These are additive interfaces for the 3DJAT adaptation. This contract module supplies pure validation and authored examples only. The separate [product workflow implementation](3DJAT-PRODUCTS.md) delegates its five governed product commands to a semantic domain writer and explicit server endpoint; the remaining commands are not installed by that slice. Existing [operating contracts](CONTRACTS.md), APIs, record interpretation and runtime defaults remain intact. The [IMG20 candidate](IMG20.md) changes only the pure PNG pixel ceiling/dimension bounds to 20MP; runtime opt-in and measured acceptance remain separate. Downstream implementations use the independently accepted exact contract baseline.
 
 All top-level persisted records use `schemaVersion: "3djat.<record-name>.v1"`; commands use `3djat.command.v1`. The common contract family is `3djat.v1`. Structural reference/value types have no redundant version field. Unknown versions and unknown fields at every nested level reject. Version changes require a reviewed migration; this module implements none.
 
@@ -399,7 +399,7 @@ region = { space: "normalized-original"; x: number[0..1]; y: number[0..1]; w: nu
 ### artifact-ref
 
 ```text
-artifact-ref = { productId: string[36..36] /uuid; artifactId: string[36..36] /uuid; version: integer[1..2147483647]; sha256: string[64..64] /sha256; width: integer[1..16000000]; height: integer[1..16000000] }
+artifact-ref = { productId: string[36..36] /uuid; artifactId: string[36..36] /uuid; version: integer[1..2147483647]; sha256: string[64..64] /sha256; width: integer[1..20000000]; height: integer[1..20000000] }
 ```
 
 ### source-artifact
@@ -465,7 +465,7 @@ historical-approval = { origin: "historical"; claimedApprover: string[1..200] | 
 ### historical-import
 
 ```text
-historical-import = { schemaVersion: "3djat.historical-import.v1"; importId: string[36..36] /uuid; productId: string[36..36] /uuid; origin: "import"; kind: "historical-base" | "historical-creative"; filename: string[1..255] /filename; source: source-ref; sha256: string[64..64] /sha256; encodedBytes: integer[1..25165824]; format: "image/png"; width: integer[1..16000000]; height: integer[1..16000000]; bitDepth: 8; interlaced: false; historicalParent: artifact-ref | null; historicalApproval: historical-approval | null; importedAt: string[24..24] /timestamp }
+historical-import = { schemaVersion: "3djat.historical-import.v1"; importId: string[36..36] /uuid; productId: string[36..36] /uuid; origin: "import"; kind: "historical-base" | "historical-creative"; filename: string[1..255] /filename; source: source-ref; sha256: string[64..64] /sha256; encodedBytes: integer[1..25165824]; format: "image/png"; width: integer[1..20000000]; height: integer[1..20000000]; bitDepth: 8; interlaced: false; historicalParent: artifact-ref | null; historicalApproval: historical-approval | null; importedAt: string[24..24] /timestamp }
 ```
 
 ### attachment
@@ -632,7 +632,7 @@ Templates and source prose remain Conductor instructions **as data**. Effective 
 | Maps/arrays bounded; head indexes capped at 256 entries in v1 | A bounded local pilot; receipts may link previous heads for older history. Larger indexes require a reviewed contract revision, never silent truncation |
 | No template sequence interpreter or universal exploration controls | Freeze bounded operation metadata only; future composite steps need a separately reviewed extension |
 | Source refs capped at six, regions use existing meaning/reviewRegion | Preserve the executable upstream source contract, not the illustrative absence of bounds |
-| 16MP remains effective; 20MP marked proposed; attachment 256MiB separate | No limit increase or unrun IMG20 claim |
+| Contract candidate ceiling 20MP; ordinary runtime 16MP; attachment 256MiB separate | Explicit experiment opt-in, no IMG20 acceptance from shape validity |
 | Result points to typed immutable output; credentials never part of portable command | Narrow return contract without arbitrary update payloads or capability transport |
 | Command-specific CAS subjects and proposed revision advancement; explicit absent-head context | Initial creation/adoption and next template revision work with authenticated current-state context; nested snapshot versions are not current-state CAS values |
 | Product-price unit checks bind only the price type; cost remains `{amount,currency}` | Known cost telemetry accepts zero/positive values without weakening the closed price or cost schema |
