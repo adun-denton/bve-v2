@@ -19,7 +19,7 @@ const w=importSetup({after(fn){cleanup.push(fn);}},{experimentalPng20:true});
 for(const [i,f] of config.files.entries())fs.copyFileSync(f.path,path.join(w.sourceRoot,`image-${i+1}.png`));
 const sourcePin=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const stream=fs.createWriteStream(path.join(output,'internal-memory.ndjson'),{flags:'wx',mode:0o600});
-let phase='startup',last=performance.now(),maxGap=0;
+let phase='startup',last=performance.now(),maxGap=0,pausedOwner=null;
 const sample=()=>{const n=performance.now();maxGap=Math.max(maxGap,n-last);last=n;stream.write(JSON.stringify({time:Date.now(),phase,...process.memoryUsage(),maxRssKiB:process.resourceUsage().maxRSS,gapMs:maxGap})+'\n');};
 const timer=setInterval(sample,20);sample();w.k.close();
 let app=await serve({root:w.runtime,port:0,imports:w.importOptions});w.k=app.kernel;
@@ -42,13 +42,19 @@ try{for await(const line of readline.createInterface({input:process.stdin})){
     }}finally{await other.stop();}
     fs.copyFileSync(path.join(backup,'combined-backup.json'),path.join(output,'combined-backup-manifest.json'));
     reply({complete:true,backupMs:backed-start,verifyMs:restored-backed,restoreMs:finished-restored,restored:rows,domainHead:w.store.read().reference});
-  }else if(message.op==='pause'){await app.stop();reply({ok:true});}
+  }else if(message.op==='pause'){pausedOwner=fs.readFileSync(path.join(w.runtime,'owner.json'));await app.stop();if(app.server.listening)throw Error('Server did not stop');reply({ok:true});}
   else if(message.op==='resume'){
     // Parent confirms killed child exit before requesting explicit lock recovery.
     if(message.confirmedChildExited!==true)throw Error('Child exit confirmation required');
     const lock=path.join(w.root,'domain-write.lock');if(fs.existsSync(lock))w.store.recoverLock({expectedLockHash:hash(fs.readFileSync(lock)),confirmedQuiescent:true});
     const op=path.join(w.runtime,'operational-write.lock');if(fs.existsSync(op))recoverOperationalLock(w.runtime,{expectedLockHash:hash(fs.readFileSync(op)),confirmedQuiescent:true});
-    app=await serve({root:w.runtime,port:0,imports:w.importOptions});w.k=app.kernel;reply({origin:app.origin});
+    // Some bridged test filesystems can re-present the stopped owner's file.
+    // Only this exact saved owner, in this allocated root with our server closed
+    // and the child confirmed exited, can be preserved and removed here.
+    const ownerFile=path.join(w.runtime,'owner.json');let ownerRecovery=null;
+    if(fs.existsSync(ownerFile)){const raw=fs.readFileSync(ownerFile);if(app.server.listening||!pausedOwner||!raw.equals(pausedOwner))throw Error('Unexpected owner during disposable recovery');
+      ownerRecovery={expectedSha256:hash(pausedOwner),observedSha256:hash(raw),serverListening:false,childConfirmedExited:true};fs.writeFileSync(path.join(output,'owner-recovery-'+Date.now()+'.json'),raw);fs.unlinkSync(ownerFile);}
+    app=await serve({root:w.runtime,port:0,imports:w.importOptions});w.k=app.kernel;reply({origin:app.origin,ownerRecovery});
   }else if(message.op==='stop'){reply({ok:true});break;}
   else throw Error('Unknown experiment control');
 }}

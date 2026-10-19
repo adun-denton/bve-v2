@@ -97,12 +97,12 @@ def run(root, inputs, output, label, budgets, recovery=False, old_source=None):
                 child=subprocess.Popen(['node','test/fixtures/3djat/img20-process.mjs',initial['runtime'],initial['sourceRoot'],str(command),boundary,artifact or ''],cwd=root,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
                 watch=Observer(child.pid,folder/f'recovery-{boundary}.ndjson');stdout,stderr=child.communicate(timeout=60);watch.close()
                 assert child.returncode!=0 and reached.read_text()==boundary and stdout==b''
-                origin=rpc({'op':'resume','confirmedChildExited':True})['origin']
+                resumed=rpc({'op':'resume','confirmedChildExited':True});origin=resumed['origin']
                 s=json.loads(http(origin,token,'/api/asset-import',stage))
                 if not commit:commit=json.loads(json.dumps(seed['commitPacket']));commit['key']=str(uuid.uuid4());commit['input'].update(importId=stage['input']['importId'],stageReceipt=s['receipt'])
                 result=json.loads(http(origin,token,'/api/asset-import',commit));assert result['schemaVersion']=='3djat.result.v1';assert json.loads(http(origin,token,'/api/asset-import',commit))==result
                 assert sha(http(origin,token,'/api/original?id='+result['reference']['id']))==seed['sha256']
-                crashes.append({'boundary':boundary,'confirmedExit':child.returncode,'reached':True,'artifactId':result['reference']['id'],'commit':result,'outputAbsent':stdout==b'','maxObservedRss':max(((x['process'] or {}).get('VmHWM',0) for x in watch.rows),default=0) or None,'peakLimitation':'SIGKILL can precede last external high-water read'})
+                crashes.append({'boundary':boundary,'ownerRecovery':resumed.get('ownerRecovery'),'confirmedExit':child.returncode,'reached':True,'artifactId':result['reference']['id'],'commit':result,'outputAbsent':stdout==b'','maxObservedRss':max(((x['process'] or {}).get('VmHWM',0) for x in watch.rows),default=0) or None,'peakLimitation':'SIGKILL can precede last external high-water read'})
         status=rpc({'op':'status'});assert status['counts']['artifact']==len(inputs)+len(crashes);assert status['counts']['importReceipt']==2*status['counts']['artifact'];assert all(status['counts'][k]==0 for k in ['job','assignment','iteration','request','round','sessionBinding','acceptance'])
         assert {x['hash'] for x in status['originals']}=={x['sha256'] for x in inputs}
         rpc({'op':'stop'});p.stdin.close()
