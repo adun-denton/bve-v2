@@ -1,3 +1,4 @@
+import {knownImageMarker,databasePixelLimit} from './image-policy.mjs';
 // Private combined recovery only. Never a public domain export or command router.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -36,7 +37,7 @@ export function verifyOperational(db,workspaceId) {
     if(row.kind==='domainSelection')verifySelection(v);
     if(row.kind==='project'&&v.domainWorkspaceId)check(v.domainWorkspaceId===workspaceId,'WORKSPACE_MISMATCH');
     if(row.kind==='artifact') {const raw=db.prepare('SELECT length(data) AS size FROM bytes WHERE hash=?').get(v.sha256);check(raw&&raw.size<=24*1024**2,'MISSING_ORIGINAL');
-      const bytes=db.prepare('SELECT data FROM bytes WHERE hash=?').get(v.sha256).data,measured=verifyPNG(bytes);check(measured.sha256===v.sha256&&measured.width===v.width&&measured.height===v.height,'HASH_MISMATCH');}
+      const bytes=db.prepare('SELECT data FROM bytes WHERE hash=?').get(v.sha256).data,measured=verifyPNG(bytes,{maxPixels:databasePixelLimit(db)});check(measured.sha256===v.sha256&&measured.width===v.width&&measured.height===v.height,'HASH_MISMATCH');}
   }
   n=0;for(const row of db.prepare('SELECT scope,key,fingerprint,doc FROM receipts').iterate()){check(++n<=100000&&row.scope.length<=1000&&row.key.length<=200&&/^[0-9a-f]{64}$/.test(row.fingerprint)&&Buffer.byteLength(row.doc)<=48*1024**2,'CAPACITY');JSON.parse(row.doc);}
   n=0;for(const row of db.prepare('SELECT hash,length(data) AS size FROM bytes').iterate()){check(++n<=100000&&row.size<=24*1024**2,'CAPACITY');check(sha(db.prepare('SELECT data FROM bytes WHERE hash=?').get(row.hash).data)===row.hash,'HASH_MISMATCH');}
@@ -109,7 +110,7 @@ export function verifyCombined(root) {
   const view=new DomainStore(path.join(root,'domain')).read(),attachments=attachmentClosure(view).map(x=>({reference:x.reference,location:x.record.location,sha256:x.record.sha256,bytes:x.record.bytes}));
   check(JSON.stringify(attachments)===JSON.stringify(m.attachments)&&JSON.stringify(view.external.filter(x=>x.kind==='source'))===JSON.stringify(m.externalSources),'INCOMPLETE_BACKUP');
   let total=0;for(const a of attachments){total+=a.bytes;check(total<=BACKUP_LIMITS.attachmentBytes,'CAPACITY');const f=digestFile(guard,'attachments/'+a.location,a.bytes);check(f.bytes===a.bytes&&f.sha256===a.sha256,'HASH_MISMATCH');}
-  verifyCredentials(guard.read('runtime/credentials.json'));const rootMarker=JSON.parse(guard.read('runtime/bve-v2-root.json'));check(rootMarker.format==='bve-v2'&&(rootMarker.version===1||rootMarker.version===2&&JSON.stringify(rootMarker.features)==='["historical-import.v1"]'),'UNSUPPORTED_SCHEMA');
+  verifyCredentials(guard.read('runtime/credentials.json'));const rootMarker=JSON.parse(guard.read('runtime/bve-v2-root.json'));check(knownImageMarker(rootMarker),'UNSUPPORTED_SCHEMA');
   const db=new DatabaseSync(guard.locate('runtime/workspace.sqlite'),{readOnly:true});try{
     checkImportFormat(db,path.join(root,'runtime'));const meta=verifyOperational(db,m.workspaceId);check(meta.config.workspaceId===m.workspaceId,'WORKSPACE_MISMATCH');
     for(const x of view.external)if(x.kind==='operational-artifact')verifyArtifactReference(db,x.artifact);

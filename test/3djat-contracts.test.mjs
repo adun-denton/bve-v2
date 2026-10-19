@@ -210,11 +210,11 @@ test('historical import has no synthetic generation job and no fresh acceptance'
   fails(validateCommand(command('design.accept', imported())), 'INVALID_VALUE');
   ok(validate('artifact-origin', { schemaVersion: '3djat.artifact-origin.v1', artifact: artifact(), provenance: { origin: 'import', importRecord: R() } }));
 });
-test('PNG limits remain 16MP/24MiB/8-bit/non-interlaced; 20MP is only proposed', () => {
-  assert.equal(LIMITS.pngPixels, 16_000_000); assert.equal(LIMITS.proposedPngPixels, 20_000_000);
-  const i = imported(); i.width = 4000; i.height = 4000; i.encodedBytes = 24 * 1024 ** 2; ok(validate('historical-import', i));
+test('candidate contract ceiling is 20MP with unchanged bytes/depth/interlace; runtime opt-in is separate', () => {
+  assert.equal(LIMITS.pngPixels, 20_000_000); assert.equal(LIMITS.proposedPngPixels, 20_000_000);
+  const i = imported(); i.width = 5000; i.height = 4000; i.encodedBytes = 24 * 1024 ** 2; ok(validate('historical-import', i));
   i.height = 4001; fails(validate('historical-import', i), 'UNSUPPORTED_IMAGE');
-  mutate('historical-import', imported(), x => { x.width = 4946; x.height = 3278; }, 'UNSUPPORTED_IMAGE');
+  i.width=4946;i.height=3278;ok(validate('historical-import',i));
   mutate('historical-import', imported(), x => x.encodedBytes = 24 * 1024 ** 2 + 1, 'OUT_OF_BOUNDS');
   mutate('historical-import', imported(), x => x.bitDepth = 16, 'INVALID_VALUE');
   mutate('historical-import', imported(), x => x.interlaced = true, 'INVALID_VALUE');

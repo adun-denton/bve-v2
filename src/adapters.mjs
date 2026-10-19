@@ -51,10 +51,10 @@ const directions=[
   ['Garden columns','Three separated columns with an olive palette','Use three separated upright columns, pale olive ground, measured rhythm.'],
   ['Open ring','An open central ring with a mint palette','Use a single wide mint ring with an empty center, airy and restrained.']
 ];
-export function fixtureSpecifications({brief,count=6,sources=[],sourceSets=null,iteration=1}){
+export function fixtureSpecifications({brief,count=6,sources=[],sourceSets=null,iteration=1,maxPixels=16_000_000}){
   return directions.slice(0,count).map(([label,difference,prompt],n)=>({directionId:`direction-${n+1}`,label:iteration===1?label:`${label} · refinement`,difference:iteration===1?difference:`${difference}; a small quiet accent in the upper left`,brief,
     prompt:iteration===1?prompt:`${prompt} Interpret the submitted preference as a quieter upper-left accent; preserve the named composition as a creative preference, not an exact pixel guarantee.`,
-    sources:(sourceSets?.[n]??sources).map(s=>({...s,role:s.role??'Chosen composition reference'})),output:{format:'image/png'},hardLimits:{maxBytes:24*1024*1024,maxPixels:16_000_000},preferences:['Calm visual exploration; authored test composition only']}));
+    sources:(sourceSets?.[n]??sources).map(s=>({...s,role:s.role??'Chosen composition reference'})),output:{format:'image/png'},hardLimits:{maxBytes:24*1024*1024,maxPixels},preferences:['Calm visual exploration; authored test composition only']}));
 }
 export async function simulateCommission(kernel,credentials,requestId){
   const request=kernel.read(credentials.conductor,'request').find(r=>r.id===requestId);

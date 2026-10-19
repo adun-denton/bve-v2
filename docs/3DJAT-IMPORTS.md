@@ -16,7 +16,7 @@
 | Recovery | Inbox publication, verification, artifact/receipt publication and response are distinct boundaries. Explicit same-key retry, never automatic generation. Failed/pending stage bytes remain in the private SQLite backup; no orphan cleanup/eviction |
 | Export/backup | Original HTTP endpoint and bounded import portable/review queries handle imports independently of jobs. Combined backup verifies imported provenance/bytes, preserves pending states and restores separately |
 
-This is the J05A foundation, at unchanged 16MP/24MiB/8-bit/non-interlaced limits. 20MP/IMG20 (including all thirteen private originals), attachments, previews/remaining metadata, J05/M1/P1122-COLD, real native readiness and production setup remain later gates. No original is resized or re-encoded.
+The ordinary J05A path remains at 16MP/24MiB/8-bit/non-interlaced limits. The [conditional IMG20 experiment](IMG20.md) adds an explicit trusted opt-in and marker 3; it is not a release-path limit increase. 20MP/IMG20 (including all thirteen private originals), attachments, previews/remaining metadata, J05/M1/P1122-COLD, real native readiness and production setup remain later gates. No original is resized or re-encoded.
 
 ## Configuration, APIs and references
 

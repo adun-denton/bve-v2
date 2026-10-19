@@ -1,3 +1,4 @@
+import {databasePixelLimit} from './image-policy.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { DatabaseSync } from 'node:sqlite';
 import { randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
@@ -63,9 +64,9 @@ export class Kernel {
     }catch(e){this.#db?.close();this.#closed=true;if(connectionCommitted)domainFail('CONNECTION_UNCERTAIN',{cause:e.code??'IO_FAILURE'});throw e;}
     finally{this.#operationalHeld=false;try{releaseOperations?.();}finally{releaseDomain?.();}}
     try {
-      checkImportFormat(this.#db,this.root);
+      checkImportFormat(this.#db,this.root,{allowPromotion:imports?.experimentalPng20===true});
       if(imports){requireThat(this.#workspace,'Imports require an explicit connected workspace',409);const releaseDomain=this.#workspace.lockDomain();let releaseOperations;
-        try{releaseOperations=acquireOperational(this.root);this.#operationalHeld=true;installImportFormat(this.#db,this.root,{fresh:!info.hasRecords,backup:imports.migrationBackup,confirmedQuiescent:imports.confirmedQuiescent,tx:fn=>this.#tx(fn),currentHead:this.#workspace.read().reference});}
+        try{releaseOperations=acquireOperational(this.root);this.#operationalHeld=true;installImportFormat(this.#db,this.root,{fresh:!info.hasRecords,backup:imports.migrationBackup,confirmedQuiescent:imports.confirmedQuiescent,tx:fn=>this.#tx(fn),experimentalPng20:imports.experimentalPng20??false,currentHead:this.#workspace.read().reference});}
         finally{this.#operationalHeld=false;try{releaseOperations?.();}finally{releaseDomain();}}
       }
       if(recover)this.#tx(()=>{for(const j of this.#list('job'))if(j.state==='running'){j.state='uncertain';j.uncertainAt=now();j.reason='Owner stopped after durable invocation start; reconcile original assignment; no retry';this.#put('job',j);}});
@@ -535,7 +536,7 @@ export class Kernel {
       s.lineage={parentReviewId:r.parentReviewId,parentIterationId:i.parentIterationId};
       s.allowance={primaryAttempts:1,maxRetries:0};s.destination={projectId:i.projectId,iterationId:i.id};s.completion='Deliver original PNG bytes plus actual outcome evidence; no implicit acceptance';
       s.preferences=s.preferences??[];s.hardLimits={maxBytes:24*1024*1024,maxPixels:16_000_000,...s.hardLimits};
-      integer(s.hardLimits.maxBytes,1,24*1024*1024,'byte limit');integer(s.hardLimits.maxPixels,1,16_000_000,'pixel limit');
+      integer(s.hardLimits.maxBytes,1,24*1024*1024,'byte limit');integer(s.hardLimits.maxPixels,1,databasePixelLimit(this.#db),'pixel limit');
       const dependencyIssues=this.#dependencyIssues(s.sources);
       const j={id:id(),projectId:i.projectId,iterationId:i.id,state:dependencyIssues.length?'blocked':'queued',dependencyIssues,allowanceReserved:0,invocationsStarted:0,specification:s,createdAt:now()};i.jobIds.push(j.id);this.#put('job',j);
     }
@@ -611,7 +612,7 @@ export class Kernel {
     if(a.origin==='import')verifyImportedArtifact(this.#db,a);
     const b=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data;
     requireThat(b,`Missing original: ${a.id}`,409);let v;
-    try{v=verifyPNG(b);}catch(e){throw new Fault(`Corrupt original ${a.id}: ${e.message}`,409);}
+    try{v=verifyPNG(b,{maxPixels:databasePixelLimit(this.#db)});}catch(e){throw new Fault(`Corrupt original ${a.id}: ${e.message}`,409);}
     requireThat(v.sha256===a.sha256&&v.width===a.width&&v.height===a.height,`Original hash or dimensions mismatch: ${a.id}`,409);return v;
   }
   reconcile(token){
@@ -624,7 +625,7 @@ export class Kernel {
           if(d.outcome==='uncertain'){j.state='uncertain';j.reason='Executor reports uncertain outcome; no additional attempt';}
           else if(d.outcome==='failure'){j.state='failed';j.reason='Executor reported failure';}
           else{
-            const bytes=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(d.sha256)?.data,v=verifyPNG(bytes);
+            const bytes=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(d.sha256)?.data,v=verifyPNG(bytes,{maxPixels:databasePixelLimit(this.#db)});
             requireThat(v.sha256===d.sha256,'Intake hash mismatch');const spec=j.specification;
             requireThat(v.size<=spec.hardLimits.maxBytes&&v.width*v.height<=spec.hardLimits.maxPixels,'Output exceeds frozen hard limit');
             if(spec.output.width)requireThat(v.width===spec.output.width,'Output width violates hard expectation');

@@ -49,9 +49,9 @@ test('trusted local source map rejects absent unmapped Drive and symlink paths b
   const outside=path.join(w.dir,'outside.png');fs.writeFileSync(outside,png());const link=path.join(w.sourceRoot,'escape');fs.symlinkSync(w.dir,link,process.platform==='win32'?'junction':'dir');p.input.source.location='escape/outside.png';failure(w.k.assetCommand(w.c.human,p),'UNSAFE_PATH');
 });
 test('16MP and 24MiB effective ceilings stay frozen; actual larger bytes cannot hide behind safe metadata',t=>{
-  const w=importSetup(t);assert.equal(LIMITS.pngPixels,16_000_000);assert.equal(LIMITS.proposedPngPixels,20_000_000);
+  const w=importSetup(t);assert.equal(LIMITS.pngPixels,20_000_000);assert.equal(LIMITS.proposedPngPixels,20_000_000);
   const boundary=png({width:4000,height:4000,color:0,metadata:false});importOne(w,boundary,{width:4000,height:4000});
-  const plus=importPacket(w,png(),{width:16_000_001,height:1});failure(w.k.assetCommand(w.c.human,plus),'OUT_OF_BOUNDS');
+  const plus=importPacket(w,png(),{width:16_000_001,height:1});failure(w.k.assetCommand(w.c.human,plus),'UNSUPPORTED_IMAGE');
   const over=importPacket(w,png(),{width:4946,height:3278});failure(w.k.assetCommand(w.c.human,over),'UNSUPPORTED_IMAGE');
   const raw=png({width:4001,height:4000,color:0,metadata:false}),p=importPacket(w,raw),s=success(w.k.assetCommand(w.c.human,p));failure(w.k.assetCommand(w.c.human,commitPacket(w,s,p)),'UNSUPPORTED_IMAGE');
   const oversized=importPacket(w,png(),{encodedBytes:24*1024**2+1});failure(w.k.assetCommand(w.c.human,oversized),'OUT_OF_BOUNDS');

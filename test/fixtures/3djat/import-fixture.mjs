@@ -8,9 +8,9 @@ export function png({width=8,height=6,color=2,rawExtra=0,metadata=true}={}){
   const ihdr=Buffer.alloc(13);ihdr.writeUInt32BE(width);ihdr.writeUInt32BE(height,4);ihdr[8]=8;ihdr[9]=color;
   return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),...(metadata?[chunk('tEXt',Buffer.from('Description\0Authored unverified source 🪴')),chunk('iCCP',Buffer.concat([Buffer.from('Authored profile\0\0'),deflateSync(Buffer.from('Authored profile bytes; not a genuine color profile'))]))]:[]),chunk('IDAT',deflateSync(raw)),chunk('IEND',Buffer.alloc(0))]);
 }
-export function importSetup(t,{hook=()=>{}}={}){
+export function importSetup(t,{hook=()=>{},experimentalPng20=false}={}){
   const w=setup(t),sourceRoot=path.join(w.dir,'private-import-source');fs.mkdirSync(sourceRoot);
-  w.importOptions={sources:{'authored-png':sourceRoot}};w.sourceRoot=sourceRoot;w.k=new Kernel(w.runtime,{workspace:w.config,expectedHead:w.store.read().reference,products:{accessFile:w.accessFile},imports:w.importOptions,workspaceHook:hook});w.c=JSON.parse(fs.readFileSync(path.join(w.runtime,'credentials.json')));w.k.productCommand(w.c.human,create(w,{productCode:'0007'}));return w;
+  w.importOptions={experimentalPng20,sources:{'authored-png':sourceRoot}};w.sourceRoot=sourceRoot;w.k=new Kernel(w.runtime,{workspace:w.config,expectedHead:w.store.read().reference,products:{accessFile:w.accessFile},imports:w.importOptions,workspaceHook:hook});w.c=JSON.parse(fs.readFileSync(path.join(w.runtime,'credentials.json')));w.k.productCommand(w.c.human,create(w,{productCode:'0007'}));return w;
 }
 export function importPacket(w,bytes=png(),extra={}){
   const filename=extra.filename??'آزمایشی-🪴.png';fs.writeFileSync(path.join(w.sourceRoot,filename),bytes);
