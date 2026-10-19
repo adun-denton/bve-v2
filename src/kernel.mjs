@@ -5,6 +5,7 @@ import { mkdirSync, existsSync, readFileSync, writeFileSync, chmodSync, readdirS
 import { join, resolve } from 'node:path';
 import { hash, verifyPNG } from './png.mjs';
 import { DomainProducts } from './domain-products.mjs';
+import {AssetImports,checkImportFormat,installImportFormat,verifyImportedArtifact,importFailure} from './asset-import.mjs';
 import { WorkspaceConnection, RootGuard, inspectRuntime, acquireOperational, verifyLegacyMigration, projection, putProjection, validateAdoption, makeSelection, verifySelection, sameRef, check as domainCheck, fail as domainFail } from './workspace.mjs';
 const id = () => randomUUID();
 const now = () => new Date().toISOString();
@@ -24,10 +25,11 @@ const permissions={
   butler:['event.delivery'],
 };
 export class Kernel {
-  #db; #credentials; #closed=false; #workspace=null; #workspaceHook=()=>{}; #inTransaction=false; #operationalHeld=false; #products=null; #productOptions=null;
-  constructor(root,{recover=true,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,workspaceHook=()=>{},products=null}={}) {
+  #db; #credentials; #closed=false; #workspace=null; #workspaceHook=()=>{}; #inTransaction=false; #operationalHeld=false; #products=null; #productOptions=null; #imports=null; #importOptions=null;
+  constructor(root,{recover=true,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,workspaceHook=()=>{},products=null,imports=null}={}) {
     this.root=resolve(root);this.#workspaceHook=workspaceHook;
     this.#productOptions=products;
+    this.#importOptions=imports;
     const info=inspectRuntime(this.root), prior=info.integration;
     if(prior&&workspace)domainCheck(isDeepStrictEqual(prior.config,workspace),'ROOT_CONFLICT');
     const config=workspace??prior?.config;
@@ -61,11 +63,26 @@ export class Kernel {
     }catch(e){this.#db?.close();this.#closed=true;if(connectionCommitted)domainFail('CONNECTION_UNCERTAIN',{cause:e.code??'IO_FAILURE'});throw e;}
     finally{this.#operationalHeld=false;try{releaseOperations?.();}finally{releaseDomain?.();}}
     try {
+      checkImportFormat(this.#db,this.root);
+      if(imports){requireThat(this.#workspace,'Imports require an explicit connected workspace',409);const releaseDomain=this.#workspace.lockDomain();let releaseOperations;
+        try{releaseOperations=acquireOperational(this.root);this.#operationalHeld=true;installImportFormat(this.#db,this.root,{fresh:!info.hasRecords,backup:imports.migrationBackup,confirmedQuiescent:imports.confirmedQuiescent,tx:fn=>this.#tx(fn),currentHead:this.#workspace.read().reference});}
+        finally{this.#operationalHeld=false;try{releaseOperations?.();}finally{releaseDomain();}}
+      }
       if(recover)this.#tx(()=>{for(const j of this.#list('job'))if(j.state==='running'){j.state='uncertain';j.uncertainAt=now();j.reason='Owner stopped after durable invocation start; reconcile original assignment; no retry';this.#put('job',j);}});
       this.reconcile(this.#credentials.butler);
     }catch(e){this.close();throw e;}
   }
   close(){if(!this.#closed){this.#db.close();this.#closed=true;}}
+  #importer(){
+    requireThat(this.#workspace,'Imports require a connected workspace',409);this.#workspace.assertRuntime();
+    if(!this.#imports)this.#imports=new AssetImports(this.#db,this.root,{sources:this.#importOptions?.sources??{},tx:fn=>this.#tx(fn),hook:(stage,detail)=>this.#workspaceHook(stage,detail),authenticate:token=>{
+      let role;try{role=this.#role(token);}catch{return null;}const session=this.#session(token);return {id:session?'bve-session-'+session.id:'bve-'+role,role,products:session?[session.projectId]:'*'};
+    },current:(productId,head,fn)=>{const release=this.#workspace.lockDomain();try{const view=this.#workspace.read(),p=this.#get('project',productId);domainCheck(sameRef(view.reference,head),'REVISION_CONFLICT');domainCheck(p.domainWorkspaceId===view.head.workspaceId&&view.head.products.some(x=>x.productId===productId),'INVALID_SCOPE');return fn(view);}finally{release();}}});
+    return this.#imports;
+  }
+  assetCommand(token,packet){try{return this.#importer().command(token,packet);}catch(e){return importFailure(packet,e);}}
+  importReview(token,importId){try{return this.#importer().review(token,importId);}catch(e){throw new Fault(e.code??'CAPABILITY_UNAVAILABLE',e.code==='INVALID_SCOPE'?403:409);}}
+  importPortable(token,artifactId){try{return this.#importer().portable(token,artifactId);}catch(e){throw new Fault(e.code??'CAPABILITY_UNAVAILABLE',e.code==='INVALID_SCOPE'?403:409);}}
   #tx(fn){
     if(this.#inTransaction)return fn();
     this.#workspace?.assertRuntime();const release=this.#workspace&&!this.#operationalHeld?acquireOperational(this.root):null;
@@ -439,6 +456,7 @@ export class Kernel {
     p.defaults={count,direction,brand};this.#put('project',p);this.#put('request',r);return r;
   }
   #sourceSnapshot(a){
+    if(a.origin==='import')return {artifactId:a.id,projectId:a.projectId,version:a.version,sha256:a.sha256,width:a.width,height:a.height,origin:'import',importId:a.importId,importRecord:a.importRecord};
     return {artifactId:a.id,projectId:a.projectId,iterationId:a.iterationId,jobId:a.jobId,version:a.version,sha256:a.sha256,width:a.width,height:a.height};
   }
   #knownSource(artifactId,projectId){
@@ -589,6 +607,8 @@ export class Kernel {
     return result;
   }
   #verifyArtifact(a){
+    requireThat(a.origin===undefined||['import','produced'].includes(a.origin),'Unsupported artifact origin',409);
+    if(a.origin==='import')verifyImportedArtifact(this.#db,a);
     const b=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data;
     requireThat(b,`Missing original: ${a.id}`,409);let v;
     try{v=verifyPNG(b);}catch(e){throw new Fault(`Corrupt original ${a.id}: ${e.message}`,409);}
