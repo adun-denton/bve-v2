@@ -89,11 +89,11 @@ restore and restored HTTP download. Generic authored dossiers remain unknown;
 this is not real business adoption. Historical parent/approval fields remain
 null without separately verified evidence. No generation/acceptance is created.
 Actual child termination/reached markers and explicit hash-checked lock recovery
-exercise four boundaries with the supplied first original. If a bridged test
-filesystem re-presents the paused server's owner file, the harness requires its
-exact pre-stop bytes, a closed server and confirmed child exit, preserves those
-bytes, and records their hash before removing only that known disposable owner.
-This does not change operating-server owner recovery or certify that filesystem.
+exercise four boundaries with the supplied first original. The worker launches
+these children on the same Node host/filesystem as the regression tests. Each
+child records its memory/resource usage at the reached boundary before SIGKILL;
+raw stderr/stdout, marker, original packet and replay evidence are retained.
+No cross-runtime PID guess or operating-owner bypass is used.
 
 Internal process RSS/heap/external/arrayBuffers sampling requests 20ms. Synchronous
 work blocks that sampler: raw gaps are retained, never claimed <=50ms when they

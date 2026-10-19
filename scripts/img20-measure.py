@@ -85,24 +85,9 @@ def run(root, inputs, output, label, budgets, recovery=False, old_source=None):
             records.append({'index':i+1,'sha256':h,'artifactId':artifact,'importId':ident,'encodedBytes':len(raw),'width':f['width'],'height':f['height'],'importMs':import_ms,'originalPlusPortableExportMs':export_ms,'stage':s,'commit':r,'stagePacket':packet,'commitPacket':commit})
         observer.phase='backup-restore';backup=rpc({'op':'backup-restore'});assert backup['complete'];assert sorted(x['sha256'] for x in backup['restored'])==sorted(x['sha256'] for x in records)
         if recovery:
-            for boundary in ['after-import-stage','after-import-verify','after-import-commit','during-import-export']:
-                # New identity, same authentic original; replay must not duplicate that identity.
-                seed=records[0];stage=json.loads(json.dumps(seed['stagePacket']));stage['key']=str(uuid.uuid4());stage['input']['importId']=str(uuid.uuid4());commit=None;artifact=None
-                if boundary!='after-import-stage':
-                    s=json.loads(http(origin,token,'/api/asset-import',stage));commit=json.loads(json.dumps(seed['commitPacket']));commit['key']=str(uuid.uuid4());commit['input'].update(importId=stage['input']['importId'],stageReceipt=s['receipt'])
-                if boundary=='during-import-export':artifact=json.loads(http(origin,token,'/api/asset-import',commit))['reference']['id']
-                command=folder/'crash-packet.json';dump(command,commit or stage);reached=pathlib.Path(str(command)+'.reached')
-                if reached.exists():reached.unlink()
-                rpc({'op':'pause'});observer.phase='recovery-'+boundary
-                child=subprocess.Popen(['node','test/fixtures/3djat/img20-process.mjs',initial['runtime'],initial['sourceRoot'],str(command),boundary,artifact or ''],cwd=root,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                watch=Observer(child.pid,folder/f'recovery-{boundary}.ndjson');stdout,stderr=child.communicate(timeout=60);watch.close()
-                assert child.returncode!=0 and reached.read_text()==boundary and stdout==b''
-                resumed=rpc({'op':'resume','confirmedChildExited':True});origin=resumed['origin']
-                s=json.loads(http(origin,token,'/api/asset-import',stage))
-                if not commit:commit=json.loads(json.dumps(seed['commitPacket']));commit['key']=str(uuid.uuid4());commit['input'].update(importId=stage['input']['importId'],stageReceipt=s['receipt'])
-                result=json.loads(http(origin,token,'/api/asset-import',commit));assert result['schemaVersion']=='3djat.result.v1';assert json.loads(http(origin,token,'/api/asset-import',commit))==result
-                assert sha(http(origin,token,'/api/original?id='+result['reference']['id']))==seed['sha256']
-                crashes.append({'boundary':boundary,'ownerRecovery':resumed.get('ownerRecovery'),'confirmedExit':child.returncode,'reached':True,'artifactId':result['reference']['id'],'commit':result,'outputAbsent':stdout==b'','maxObservedRss':max(((x['process'] or {}).get('VmHWM',0) for x in watch.rows),default=0) or None,'peakLimitation':'SIGKILL can precede last external high-water read'})
+            observer.phase='recovery'
+            recovered=rpc({'op':'recovery','stagePacket':records[0]['stagePacket'],'commitPacket':records[0]['commitPacket']})
+            crashes=recovered['rows'];origin=recovered['origin'];assert len(crashes)==4
         status=rpc({'op':'status'});assert status['counts']['artifact']==len(inputs)+len(crashes);assert status['counts']['importReceipt']==2*status['counts']['artifact'];assert all(status['counts'][k]==0 for k in ['job','assignment','iteration','request','round','sessionBinding','acceptance'])
         assert {x['hash'] for x in status['originals']}=={x['sha256'] for x in inputs}
         rpc({'op':'stop'});p.stdin.close()

@@ -2,7 +2,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as readline from 'node:readline';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawnSync} from 'node:child_process';
+import {randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {importSetup,PRODUCT} from '../test/fixtures/3djat/import-fixture.mjs';
 import {serve} from '../src/server.mjs';
@@ -19,7 +20,7 @@ const w=importSetup({after(fn){cleanup.push(fn);}},{experimentalPng20:true});
 for(const [i,f] of config.files.entries())fs.copyFileSync(f.path,path.join(w.sourceRoot,`image-${i+1}.png`));
 const sourcePin=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 const stream=fs.createWriteStream(path.join(output,'internal-memory.ndjson'),{flags:'wx',mode:0o600});
-let phase='startup',last=performance.now(),maxGap=0,pausedOwner=null;
+let phase='startup',last=performance.now(),maxGap=0;
 const sample=()=>{const n=performance.now();maxGap=Math.max(maxGap,n-last);last=n;stream.write(JSON.stringify({time:Date.now(),phase,...process.memoryUsage(),maxRssKiB:process.resourceUsage().maxRSS,gapMs:maxGap})+'\n');};
 const timer=setInterval(sample,20);sample();w.k.close();
 let app=await serve({root:w.runtime,port:0,imports:w.importOptions});w.k=app.kernel;
@@ -42,19 +43,30 @@ try{for await(const line of readline.createInterface({input:process.stdin})){
     }}finally{await other.stop();}
     fs.copyFileSync(path.join(backup,'combined-backup.json'),path.join(output,'combined-backup-manifest.json'));
     reply({complete:true,backupMs:backed-start,verifyMs:restored-backed,restoreMs:finished-restored,restored:rows,domainHead:w.store.read().reference});
-  }else if(message.op==='pause'){pausedOwner=fs.readFileSync(path.join(w.runtime,'owner.json'));await app.stop();if(app.server.listening)throw Error('Server did not stop');reply({ok:true});}
-  else if(message.op==='resume'){
-    // Parent confirms killed child exit before requesting explicit lock recovery.
-    if(message.confirmedChildExited!==true)throw Error('Child exit confirmation required');
-    const lock=path.join(w.root,'domain-write.lock');if(fs.existsSync(lock))w.store.recoverLock({expectedLockHash:hash(fs.readFileSync(lock)),confirmedQuiescent:true});
-    const op=path.join(w.runtime,'operational-write.lock');if(fs.existsSync(op))recoverOperationalLock(w.runtime,{expectedLockHash:hash(fs.readFileSync(op)),confirmedQuiescent:true});
-    // Some bridged test filesystems can re-present the stopped owner's file.
-    // Only this exact saved owner, in this allocated root with our server closed
-    // and the child confirmed exited, can be preserved and removed here.
-    const ownerFile=path.join(w.runtime,'owner.json');let ownerRecovery=null;
-    if(fs.existsSync(ownerFile)){const raw=fs.readFileSync(ownerFile);if(app.server.listening||!pausedOwner||!raw.equals(pausedOwner))throw Error('Unexpected owner during disposable recovery');
-      ownerRecovery={expectedSha256:hash(pausedOwner),observedSha256:hash(raw),serverListening:false,childConfirmedExited:true};fs.writeFileSync(path.join(output,'owner-recovery-'+Date.now()+'.json'),raw);fs.unlinkSync(ownerFile);}
-    app=await serve({root:w.runtime,port:0,imports:w.importOptions});w.k=app.kernel;reply({origin:app.origin,ownerRecovery});
+  }else if(message.op==='recovery'){
+    const rows=[],ok=r=>{if(r.schemaVersion!=='3djat.result.v1')throw Error(JSON.stringify(r));return r;};
+    for(const boundary of ['after-import-stage','after-import-verify','after-import-commit','during-import-export']){
+      phase='recovery-'+boundary;sample();
+      const stage=structuredClone(message.stagePacket);stage.key=randomUUID();stage.input.importId=randomUUID();let staged,commit,result;
+      if(boundary!=='after-import-stage'){staged=ok(w.k.assetCommand(w.c.human,stage));commit=structuredClone(message.commitPacket);commit.key=randomUUID();commit.input.importId=stage.input.importId;commit.input.stageReceipt=staged.receipt;}
+      if(boundary==='during-import-export')result=ok(w.k.assetCommand(w.c.human,commit));
+      const packetFile=path.join(output,'recovery-'+boundary+'-packet.json');fs.writeFileSync(packetFile,JSON.stringify(commit??stage));await app.stop();
+      // Same Node host/filesystem as the accepted subprocess regression, without
+      // crossing a separate runtime bridge or guessing a host PID namespace.
+      const child=spawnSync(process.execPath,['test/fixtures/3djat/img20-process.mjs',w.runtime,w.sourceRoot,packetFile,boundary,result?.reference.id??''],{encoding:'utf8',timeout:30000,env:{...process.env,IMG20_SOURCE_PIN:sourcePin}});
+      fs.writeFileSync(packetFile+'.stderr',child.stderr??'');fs.writeFileSync(packetFile+'.stdout',child.stdout??'');
+      if(!(child.signal||child.status!==0)||fs.readFileSync(packetFile+'.reached','utf8')!==boundary||child.stdout!=='')throw Error('Unconfirmed child termination');
+      const lock=path.join(w.root,'domain-write.lock');if(fs.existsSync(lock))w.store.recoverLock({expectedLockHash:hash(fs.readFileSync(lock)),confirmedQuiescent:true});
+      const op=path.join(w.runtime,'operational-write.lock');if(fs.existsSync(op))recoverOperationalLock(w.runtime,{expectedLockHash:hash(fs.readFileSync(op)),confirmedQuiescent:true});
+      app=await serve({root:w.runtime,port:0,imports:w.importOptions});w.k=app.kernel;
+      staged=ok(w.k.assetCommand(w.c.human,stage));
+      if(!commit){commit=structuredClone(message.commitPacket);commit.key=randomUUID();commit.input.importId=stage.input.importId;commit.input.stageReceipt=staged.receipt;}
+      result??=ok(w.k.assetCommand(w.c.human,commit));if(JSON.stringify(w.k.assetCommand(w.c.human,commit))!==JSON.stringify(result))throw Error('Recovery replay mismatch');
+      const response=await fetch(app.origin+'/api/original?id='+result.reference.id,{headers:{authorization:'Bearer '+w.c.human}}),raw=Buffer.from(await response.arrayBuffer());if(!response.ok||hash(raw)!==stage.input.sha256)throw Error('Recovered original mismatch');
+      rows.push({boundary,confirmedExit:{status:child.status,signal:child.signal},reached:true,artifactId:result.reference.id,commit:result,outputAbsent:child.stdout==='',sha256:hash(raw),childMemory:JSON.parse(fs.readFileSync(packetFile+'.memory.json')),externalProcessSampling:'NOT MEASURED; mounted process namespace mismatch',peakLimitation:'Child reports OS high-water at boundary before SIGKILL; no post-kill external peak'});
+      fs.writeFileSync(path.join(output,'recovery-results.json'),JSON.stringify(rows,null,2)+'\n');
+    }
+    reply({rows,origin:app.origin});
   }else if(message.op==='stop'){reply({ok:true});break;}
   else throw Error('Unknown experiment control');
 }}
