@@ -369,6 +369,7 @@ export class Kernel {
     const value=fn();this.#db.prepare('INSERT INTO receipts VALUES(?,?,?,?)').run(scope,key,fp,JSON.stringify(value));return value;
   }
   #operate(role,op,x){
+    if(['event.delivery','event.ack','event.consume'].includes(op))requireThat(this.#get('event',x.eventId).type!=='product-action','Product action evidence is immutable',409);
     switch(op){
       case 'project.create': {
         const p={id:id(),name:text(x.name,'project name',200),brief:text(x.brief,'brief'),page:'board',createdAt:now(),fixture:x.fixture===true,
@@ -666,7 +667,7 @@ export class Kernel {
     const allowed={human:['project','request','iteration','job','artifact','draft','submission','continuation','acceptance','creativeContext','event','delivery','conflict','observation'],conductor:['project','request','iteration','job','artifact','submission','continuation','creativeContext','event'],generator:['job','assignment'],butler:['project','iteration','artifact','submission','continuation','creativeContext','job','assignment','delivery','event','conflict','observation'],worker:['project','job','assignment']};
     requireThat([...allowed[role],...common].includes(kind),'Read boundary rejected',403);
     const binding=this.#session(token);
-    const values=this.#list(kind).filter(v=>!binding||this.#belongs(v,kind,binding.projectId)).filter(v=>{
+    const values=this.#list(kind).filter(v=>kind!=='event'||v.type!=='product-action').filter(v=>!binding||this.#belongs(v,kind,binding.projectId)).filter(v=>{
       if(binding?.role!=='worker')return true;
       if(kind==='job')return v.id===binding.jobId;
       if(kind==='assignment'||kind==='statement')return v.jobId===binding.jobId;

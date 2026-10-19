@@ -3,6 +3,13 @@ import {Kernel} from '../src/kernel.mjs';import {DomainProducts,readProductDossi
 import {readyRound} from './fixtures/3djat/workspace-fixture.mjs';
 import {setup,create,proposal,decision,packet,review,PRODUCT} from './fixtures/3djat/products-fixture.mjs';
 const success=r=>{assert.equal(r.schemaVersion,'3djat.result.v1',JSON.stringify(r));return r;};
+test('internal product action copies stay immutable and outside legacy notification reads',t=>{
+  const w=setup(t,{kernel:true});success(w.k.productCommand(w.c.human,create(w)));const event=w.writer.operationalEvidence()[0];
+  assert.equal(event.type,'product-action');for(const role of ['human','conductor','butler'])assert.equal(w.k.read(w.c[role],'event').length,0);
+  for(const [role,op,input] of [['conductor','event.consume',{}],['conductor','event.ack',{receipt:'Authored acknowledgement'}],['butler','event.delivery',{mechanism:'Authored transport',status:'sent'}]])assert.throws(()=>w.k.call(w.c[role],op,randomUUID(),{eventId:event.id,...input}),/Product action evidence is immutable/);
+  // Reconciliation byte-compares the stored copy, so this succeeds only if all attempted mutations left it intact.
+  success(w.k.productCommand(w.c.human,packet(w,'product.read',{productId:PRODUCT,atHead:w.store.read().reference})));assert.deepEqual(w.writer.operationalEvidence()[0],event);
+});
 test('BVE delegates exact file UUID without workflow prerequisites, refreshes disposable projection and replays adoption',t=>{
   const w=setup(t,{kernel:true}),p=create(w,{productCode:'0007'}),r=success(w.k.productCommand(w.c.human,p));assert.deepEqual(w.k.productCommand(w.c.human,p),r);
   const product=w.k.read(w.c.human,'project')[0];assert.equal(product.id,PRODUCT);assert.equal(product.productCode,'0007');assert.equal(product.name,p.input.workingName);
