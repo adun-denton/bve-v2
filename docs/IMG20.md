@@ -95,7 +95,10 @@ Internal process RSS/heap/external/arrayBuffers sampling requests 20ms. Synchron
 work blocks that sampler: raw gaps are retained, never claimed <=50ms when they
 are longer. Independent Linux /proc sampling requests 20ms, records actual gaps,
 OS VmHWM/RSS/swap, available physical memory and PSI. OS high-water also comes
-from process.resourceUsage. Recovery children have separate external samples;
+from process.resourceUsage and the parent's exact-child wait4 resource usage.
+The external sampler verifies Node process identity before accepting /proc
+values; a mismatched mounted PID namespace yields NOT MEASURED, not launcher RSS.
+Mounted physical/cgroup views are then retained only as host-view observations. Recovery children have separate external samples;
 SIGKILL can prevent the final high-water read. A non-Linux host needs its existing
 OS peak-working-set collector; this /proc harness does not certify Windows.
 

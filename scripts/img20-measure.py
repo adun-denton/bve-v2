@@ -8,6 +8,8 @@ def sha(b): return hashlib.sha256(b).hexdigest()
 def dump(p, v): p.write_text(json.dumps(v, indent=2, ensure_ascii=False)+'\n')
 def proc_sample(pid):
     try:
+        comm=pathlib.Path(f'/proc/{pid}/comm').read_text().strip()
+        if comm not in ['node','nodejs']:return None  # Mounted /proc may belong to a different PID namespace.
         values={}
         for line in pathlib.Path(f'/proc/{pid}/status').read_text().splitlines():
             k,_,v=line.partition(':')
@@ -28,7 +30,7 @@ class Observer:
                     for l in pathlib.Path('/proc/meminfo').read_text().splitlines():
                         k,_,v=l.partition(':')
                         if k in ['MemTotal','MemAvailable','SwapFree']:mem[k]=int(v.split()[0])*1024
-                row={'time':time.time(),'phase':self.phase,'intervalMs':(now-last)*1000,'process':proc_sample(self.pid),'physical':mem}
+                row={'time':time.time(),'phase':self.phase,'intervalMs':(now-last)*1000,'process':proc_sample(self.pid),'processIdentity':'verified Node comm or NOT MEASURED (null process); PID namespaces may differ','physical':mem}
                 pressure=pathlib.Path('/proc/pressure/memory');row['pressure']=pressure.read_text() if pressure.exists() else None
                 row['cgroup']={k:(pathlib.Path('/sys/fs/cgroup')/k).read_text() for k in ['memory.current','memory.max','memory.events'] if (pathlib.Path('/sys/fs/cgroup')/k).exists()}
                 row['vmstat']={k:int(v) for k,v in (line.split() for line in pathlib.Path('/proc/vmstat').read_text().splitlines()) if k in ['pswpin','pswpout','oom_kill']}
@@ -100,15 +102,17 @@ def run(root, inputs, output, label, budgets, recovery=False, old_source=None):
                 if not commit:commit=json.loads(json.dumps(seed['commitPacket']));commit['key']=str(uuid.uuid4());commit['input'].update(importId=stage['input']['importId'],stageReceipt=s['receipt'])
                 result=json.loads(http(origin,token,'/api/asset-import',commit));assert result['schemaVersion']=='3djat.result.v1';assert json.loads(http(origin,token,'/api/asset-import',commit))==result
                 assert sha(http(origin,token,'/api/original?id='+result['reference']['id']))==seed['sha256']
-                crashes.append({'boundary':boundary,'confirmedExit':child.returncode,'reached':True,'artifactId':result['reference']['id'],'commit':result,'outputAbsent':stdout==b'','maxObservedRss':max((x['process'] or {}).get('VmHWM',0) for x in watch.rows),'peakLimitation':'SIGKILL can precede last external high-water read'})
+                crashes.append({'boundary':boundary,'confirmedExit':child.returncode,'reached':True,'artifactId':result['reference']['id'],'commit':result,'outputAbsent':stdout==b'','maxObservedRss':max(((x['process'] or {}).get('VmHWM',0) for x in watch.rows),default=0) or None,'peakLimitation':'SIGKILL can precede last external high-water read'})
         status=rpc({'op':'status'});assert status['counts']['artifact']==len(inputs)+len(crashes);assert status['counts']['importReceipt']==2*status['counts']['artifact'];assert all(status['counts'][k]==0 for k in ['job','assignment','iteration','request','round','sessionBinding','acceptance'])
         assert {x['hash'] for x in status['originals']}=={x['sha256'] for x in inputs}
-        rpc({'op':'stop'});p.wait(timeout=30)
+        rpc({'op':'stop'});p.stdin.close()
+        waited,exit_status,usage=os.wait4(p.pid,0);p.returncode=os.waitstatus_to_exitcode(exit_status);assert waited==p.pid and p.returncode==0
+        status['wait4MaxRssKiB']=usage.ru_maxrss;status['wait4MinorFaults']=usage.ru_minflt;status['wait4MajorFaults']=usage.ru_majflt
     finally:
         if p.poll() is None:p.terminate();p.wait(timeout=30)
         observer.close();errors.close()
-    peak=max([x['process'].get('VmHWM',0) for x in observer.rows if x['process']]+[status['maxRssKiB']*1024]);baseline=idle['memory']['rss'];available=min(x['physical']['MemAvailable']/x['physical']['MemTotal'] for x in observer.rows if x['physical'])
-    verdict={'serverPeakRssBytes':peak,'idleRssBytes':baseline,'deltaBytes':peak-baseline,'serverAbsolutePass':peak<=budgets['serverAbsoluteRssBytes'],'serverDeltaPass':peak-baseline<=budgets['serverRssDeltaBytes'],'minimumAvailablePhysicalRatio':available,'availablePhysicalPass':available>=budgets['availablePhysicalRatioMinimum'],'maxExternalSampleGapMs':max(x['intervalMs'] for x in observer.rows),'maxInternalSampleGapMs':status['maxInternalGapMs'],'browserProcessTree':'NOT MEASURED','targetMachineTiming':'NOT MEASURED','uiResponsiveness':'NOT MEASURED','pagingStall':'NOT MEASURED; raw pressure/swap retained','IMG20':'OPEN'}
+    peak=max([x['process'].get('VmHWM',0) for x in observer.rows if x['process']]+[status['maxRssKiB']*1024,status['wait4MaxRssKiB']*1024]);baseline=idle['memory']['rss'];available=min(x['physical']['MemAvailable']/x['physical']['MemTotal'] for x in observer.rows if x['physical'])
+    verdict={'serverPeakRssBytes':peak,'idleRssBytes':baseline,'deltaBytes':peak-baseline,'serverAbsolutePass':peak<=budgets['serverAbsoluteRssBytes'],'serverDeltaPass':peak-baseline<=budgets['serverRssDeltaBytes'],'minimumAvailablePhysicalRatio':available,'availablePhysicalPass':available>=budgets['availablePhysicalRatioMinimum'] if any(x['process'] for x in observer.rows) else None,'externalProcessSampling':'MEASURED' if any(x['process'] for x in observer.rows) else 'NOT MEASURED: mounted proc PID view does not identify the Node server','physicalViewLimitation':'mounted proc/cgroup host view; target machine not observed','maxExternalSampleGapMs':max(x['intervalMs'] for x in observer.rows),'maxInternalSampleGapMs':status['maxInternalGapMs'],'browserProcessTree':'NOT MEASURED','targetMachineTiming':'NOT MEASURED','uiResponsiveness':'NOT MEASURED','pagingStall':'NOT MEASURED; raw pressure/swap retained','IMG20':'OPEN'}
     result={'sourcePin':initial['sourcePin'],'label':label,'records':records,'backup':backup,'status':status,'recovery':crashes,'verdict':verdict};dump(folder/'result.json',result);return result
 
 if __name__=='__main__':
