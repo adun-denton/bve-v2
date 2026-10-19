@@ -118,3 +118,86 @@ No averages-only pass, fallback format, silent resize or post-result budget rais
 
 An overseer independently accepts or rejects IMG20 after all mandatory evidence.
 Source tests cannot close J05, M1, P1122-COLD, native readiness or operating setup.
+
+## Failed experiment retention (R1A)
+
+R1A changes only the private experiment harness. F01, F02, F03 and IMG20 remain
+OPEN. Run the authored harness regressions with
+`node --test test/img20-harness.test.mjs`; these use no authentic media. Do not
+rerun the authentic experiment until this retention repair is independently
+accepted. A negative control that retains evidence is not an IMG20 pass.
+
+The worker allocates its fixture parent under the new private output directory
+before setup. Both worker and Linux controller write private versioned lifecycle
+records (`img20.private-lifecycle.v1` and `img20.private-controller.v1`).
+`checkpoint-NNNN.json` files are complete snapshots; `lifecycle.json` (worker)
+and `result.json` (controller) point to the last checkpoint by absolute path and
+SHA-256. Writes use a mode-0600 temporary file, flush/fsync and atomic rename.
+If publication fails, `failure.json` is an independent final fallback; if that
+also fails, the previous durable checkpoint remains the recovery locator and
+the process still fails. Filesystem/power-loss guarantees beyond these calls
+are not certified. A process killed before its first write cannot report state.
+
+The private shape records source pin, phase, status, known/unknown roots,
+input paths/hashes, process identities as observed, expected boundary, completed
+steps with exact packets/receipts/reference/hash pointers, child results,
+firstError, secondaryErrors, lock observations, cleanup and limitations. Example
+(field selection only; placeholder locators are not actual evidence):
+
+```json
+{
+  "schemaVersion": "img20.private-lifecycle.v1",
+  "status": "BLOCKED",
+  "phase": "final",
+  "roots": {"runtime": "/private/run/private-roots/fixture/runtime"},
+  "expectedBoundary": "after-import-stage",
+  "firstError": {"code": "OPERATIONAL_LOCKED", "message": "Boundary NOT REACHED"},
+  "children": [{"exit": "CONFIRMED", "status": 1, "marker": {"status": "ABSENT"}, "reached": false}],
+  "cleanup": "FAILED ROOTS RETAINED; deliberate owner cleanup only",
+  "IMG20": "OPEN"
+}
+```
+
+The controller checkpoints each successful stage, commit, replay and verified
+transport, then complete backup/restore and recovery. Worker checkpoints also
+separate backup creation, restore creation and restored downloads. Partial
+failure keeps earlier receipts; an unfinished boundary never invents completion.
+Statuses SUCCEEDED/FAILED/BLOCKED/INTERRUPTED/UNKNOWN describe the experiment
+process, independently of the always-OPEN gate. A timeout is not exit evidence.
+Owned child handles are terminated, escalated after a grace interval and awaited;
+unknown exit prevents recovery and retains state. Raw child stdout/stderr,
+status/signal, marker absence/read error and pre/post-shutdown lock bytes/hash
+copies remain private. Nonzero exit alone never proves a reached interruption.
+Only the expected SIGKILL, exact boundary marker and verified replay count.
+
+Failed worker shutdown closes owned servers/SQLite/streams but never invokes the
+fixture's recursive cleanup callbacks or steals an unexpected owner lock. Source
+originals are read-only inputs. The controller requests success retention too,
+so later metrics/result/shutdown failure cannot erase the inspected roots. A
+direct worker's successful `stop` can use the original automatic fixture cleanup;
+its removal and listener closure have a separate authored test. Protocol EOF,
+SIGINT/SIGTERM and parse failures fail closed. SIGKILL cannot flush a final record;
+the last checkpoint and unmodified roots remain. Controller protocol waits are
+bounded. Its Linux-only host guard precedes `/proc`, wait4 or worker launch;
+there is no Windows measurement certification. Windows worker behavior needs
+an affected-host rerun; simulated host refusal only tests the guard.
+
+Full runtime/business/source/backup roots, protocol pipes, HTTP originals and
+portable exports can contain credentials or media/base64. Retain them only in
+the mode-0700 private output tree, outside Git and review ZIPs. Never print the
+ready message's bearer. Checkpoint errors are secondary to the original error.
+Fixed `--authored-missing-marker`, `--authored-timeout` and
+`--authored-secondary` worker controls invoke only a repository-owned authored
+fixture, never a request-supplied executable or shell. The optional Python
+`after_backup` callback is an in-process authored-test seam, not a CLI facility.
+
+To remove a failed run later, its owner must first preserve/review the evidence,
+verify the absolute output/allocation paths and their ownership, confirm every
+recorded server/child has exited (UNKNOWN blocks deletion), and verify no
+unrelated root/source path falls within the deletion set. Then deliberately
+remove only that reviewed experiment tree using the owner's filesystem tools.
+This harness supplies no deletion command, discovery scan or old-run cleanup.
+Retained locators on a different host are not automatically accessible; transfer
+requires a separate private authorization and must exclude secrets from public
+reports. Authored test TAP contains assertions only; an opt-in
+`IMG20_AUTHORED_LOCATORS` file records private test locators for local review.
