@@ -40,10 +40,10 @@ export function checkImportFormat(db,root){
   if(marker.version===1)check(!db.prepare("SELECT 1 FROM records WHERE kind='assetImport' LIMIT 1").get(),'UNSUPPORTED_SCHEMA');
   return m;
 }
-export function installImportFormat(db,root,{fresh,backup=null,confirmedQuiescent=false,tx}){
+export function installImportFormat(db,root,{fresh,backup=null,confirmedQuiescent=false,tx,currentHead}){
   const guard=new RootGuard(root),prior=checkImportFormat(db,root);let backupHash=null;
   if(!prior){
-    if(!fresh){check(confirmedQuiescent===true&&typeof backup==='string','MIGRATION_REQUIRES_BACKUP');verifyCombined(backup);
+    if(!fresh){check(confirmedQuiescent===true&&typeof backup==='string','MIGRATION_REQUIRES_BACKUP');const manifest=verifyCombined(backup);check(same(manifest.head,currentHead),'BACKUP_MISMATCH');
       const copy=new DatabaseSync(path.join(backup,'runtime/workspace.sqlite'),{readOnly:true});try{check(databaseFingerprint(copy)===databaseFingerprint(db),'BACKUP_MISMATCH');}finally{copy.close();}
       backupHash=hash(new RootGuard(backup).read('combined-backup.json'));
     }

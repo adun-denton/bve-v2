@@ -12,7 +12,7 @@
 | Identity | Original bytes stored once by hash; product/import/artifact authority remains distinct. No derivative/thumbnail is generated or substituted |
 | Origin | Imported artifacts carry typed artifact-origin and historical-import refs, with no job/iteration/attempt. Legacy produced artifacts retain their existing associations and implicit produced interpretation; do not fabricate missing 3DJAT run/result refs |
 | Approval | Historical approval is an unverified assertion only; it creates no design.accept or candidate decision. A later explicit human design.accept remains separate |
-| Format/rollback | Opt-in root marker version 2 plus minimal versioned SQLite import metadata; SQL tables/user_version remain unchanged. Old source refuses root version 2. Existing roots require a verified exact separate combined backup and explicit quiescence before promotion. Unknown import versions refuse |
+| Format/rollback | Opt-in root marker version 2 plus minimal versioned SQLite import metadata; SQL tables/user_version remain unchanged. Old source refuses root version 2. Existing roots require a verified exact separate combined backup matching both current domain head and SQLite contents under the existing locks, plus explicit quiescence. Unknown import versions refuse |
 | Recovery | Inbox publication, verification, artifact/receipt publication and response are distinct boundaries. Explicit same-key retry, never automatic generation. Failed/pending stage bytes remain in the private SQLite backup; no orphan cleanup/eviction |
 | Export/backup | Original HTTP endpoint and bounded import portable/review queries handle imports independently of jobs. Combined backup verifies imported provenance/bytes, preserves pending states and restores separately |
 

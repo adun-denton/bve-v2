@@ -64,7 +64,10 @@ export class Kernel {
     finally{this.#operationalHeld=false;try{releaseOperations?.();}finally{releaseDomain?.();}}
     try {
       checkImportFormat(this.#db,this.root);
-      if(imports){requireThat(this.#workspace,'Imports require an explicit connected workspace',409);installImportFormat(this.#db,this.root,{fresh:!info.hasRecords,backup:imports.migrationBackup,confirmedQuiescent:imports.confirmedQuiescent,tx:fn=>this.#tx(fn)});}
+      if(imports){requireThat(this.#workspace,'Imports require an explicit connected workspace',409);const releaseDomain=this.#workspace.lockDomain();let releaseOperations;
+        try{releaseOperations=acquireOperational(this.root);this.#operationalHeld=true;installImportFormat(this.#db,this.root,{fresh:!info.hasRecords,backup:imports.migrationBackup,confirmedQuiescent:imports.confirmedQuiescent,tx:fn=>this.#tx(fn),currentHead:this.#workspace.read().reference});}
+        finally{this.#operationalHeld=false;try{releaseOperations?.();}finally{releaseDomain();}}
+      }
       if(recover)this.#tx(()=>{for(const j of this.#list('job'))if(j.state==='running'){j.state='uncertain';j.uncertainAt=now();j.reason='Owner stopped after durable invocation start; reconcile original assignment; no retry';this.#put('job',j);}});
       this.reconcile(this.#credentials.butler);
     }catch(e){this.close();throw e;}

@@ -40,7 +40,9 @@ test('import export interruption reports no completed portable output and preser
 test('existing root opt-in refuses missing or stale backup, accepts verified exact backup and preserves old records',async t=>{
   const w=setup(t,{kernel:true});success(w.k.productCommand(w.c.human,create(w)));w.k.close();
   assert.throws(()=>new Kernel(w.runtime,{imports:{}}),e=>e.code==='MIGRATION_REQUIRES_BACKUP');assert.equal(JSON.parse(fs.readFileSync(path.join(w.runtime,'bve-v2-root.json'))).version,1);
-  const stale=path.join(w.dir,'stale-backup');await backupRoot(w.runtime,stale);w.k=new Kernel(w.runtime,{products:{accessFile:w.accessFile}});success(w.k.productCommand(w.c.human,packet(w,'product.note.add',{productId:PRODUCT,text:'Authored change after backup'})));w.k.close();
+  const stale=path.join(w.dir,'stale-backup');await backupRoot(w.runtime,stale);
+  success(w.writer.command(w.human.token,packet(w,'product.note.add',{productId:PRODUCT,text:'Authored independent domain change after backup'})));assert.throws(()=>new Kernel(w.runtime,{imports:{migrationBackup:stale,confirmedQuiescent:true}}),e=>e.code==='BACKUP_MISMATCH');
+  w.k=new Kernel(w.runtime,{products:{accessFile:w.accessFile}});success(w.k.productCommand(w.c.human,packet(w,'product.note.add',{productId:PRODUCT,text:'Authored operational acknowledgement after backup'})));w.k.close();
   assert.throws(()=>new Kernel(w.runtime,{imports:{migrationBackup:stale,confirmedQuiescent:true}}),e=>e.code==='BACKUP_MISMATCH');
   const backup=path.join(w.dir,'before-imports');await backupRoot(w.runtime,backup);w.k=new Kernel(w.runtime,{imports:{migrationBackup:backup,confirmedQuiescent:true}});assert.equal(JSON.parse(fs.readFileSync(path.join(w.runtime,'bve-v2-root.json'))).version,2);assert.equal(w.k.read(w.c.human,'project')[0].id,PRODUCT);assert.equal(w.k.read(w.c.human,'artifact').length,0);
 });
