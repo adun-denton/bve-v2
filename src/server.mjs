@@ -57,7 +57,8 @@ export async function serve(options={}){
         res.setHeader('Content-Disposition',`attachment; filename="bve-review-${url.searchParams.get('id')}.json"`);json(200,kernel.portable(credential,url.searchParams.get('id'),{jobId:url.searchParams.get('jobId')}));return;
       }
       if(req.method==='POST'&&['/api/product','/api/product-review'].includes(url.pathname)){
-        let body='',length=0;for await(const b of req){length+=b.length;if(length>128*1024)throw new Fault('Request too large',413);body+=b;}
+        const chunks=[];let length=0;for await(const b of req){length+=b.length;if(length>128*1024)throw new Fault('Request too large',413);chunks.push(b);}
+        let body;try{body=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(Buffer.concat(chunks,length));}catch{throw new Fault('Invalid UTF-8 request body',400);}
         const packet=JSON.parse(body),value=url.pathname==='/api/product'?kernel.productCommand(credential,packet):kernel.productReview(credential,packet);
         json(value.schemaVersion==='3djat.failure.v1'?409:200,value);return;
       }

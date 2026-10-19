@@ -50,6 +50,8 @@ Provisioning is a private library function for the filesystem owner, absent from
 
 All new HTTP routes follow the existing loopback Host, Origin and authentication boundary; malformed requests retain the server's bounded 400/403/413 handling. Legacy `/api/op`, Kernel.call, browser/UI, and existing limits remain unchanged. No generic record reader/writer is exposed. The trusted `authenticate`, `beforePublish` and diagnostic `hook` constructor options serve Kernel integration/test seams; they are never supplied by request JSON. Registry, DomainStore and signing/authentication state are private class members.
 
+Both product routes count incoming bytes against 128KiB, retain bounded raw chunks, and decode the complete body as strict UTF-8 before parsing JSON or dispatching. Fragmentation cannot alter text. Malformed or incomplete UTF-8 returns 400 without command execution; valid Unicode, including a literal replacement character, combining marks and in-string BOM, is preserved without normalization or stripping. A leading body BOM is retained and subject to ordinary JSON syntax validation.
+
 BVE delegates its authenticated human token as principal `bve-human`; session principals use the actual binding ID and its single project scope, and other existing credentials retain only their applicable frozen caller scope. Source principals use the separate provisioned token, never BVE owner credentials. A caller-supplied actor/role/approved property rejects and cannot become trusted context.
 
 ## Frozen commands and receipts

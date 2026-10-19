@@ -3,6 +3,94 @@ import {Kernel} from '../src/kernel.mjs';import {DomainProducts,readProductDossi
 import {readyRound} from './fixtures/3djat/workspace-fixture.mjs';
 import {setup,create,proposal,decision,packet,review,PRODUCT} from './fixtures/3djat/products-fixture.mjs';
 const success=r=>{assert.equal(r.schemaVersion,'3djat.result.v1',JSON.stringify(r));return r;};
+// Delayed raw writes put UTF-8 continuation bytes in later HTTP chunks.
+async function postBytes(app,token,route,bytes,cuts=[],headers={}){
+  return new Promise((ok,no)=>{
+    const req=request(app.origin+route,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json','content-length':bytes.length,...headers}},res=>{
+      const chunks=[];res.on('data',b=>chunks.push(b));res.on('error',no);res.on('end',()=>{
+        try{ok({status:res.statusCode,body:JSON.parse(Buffer.concat(chunks).toString('utf8'))});}catch(e){no(e);}
+      });
+    });
+    req.on('error',no);
+    (async()=>{let start=0;for(const end of cuts){req.write(bytes.subarray(start,end));start=end;await new Promise(resolve=>setTimeout(resolve,25));}req.end(bytes.subarray(start));})().catch(no);
+  });
+}
+async function productServer(w){w.k.close();const app=await serve({root:w.runtime,port:0,products:{accessFile:w.accessFile}});w.k=app.kernel;return app;}
+const encoded=x=>Buffer.from(JSON.stringify(x));
+const inside=(bytes,text,offsets)=>{const start=bytes.indexOf(Buffer.from(text));assert(start>=0);return offsets.map(n=>start+n);};
+test('fragmented UTF-8 product names and notes retain exact text and identical-packet replay',async t=>{
+  const w=setup(t,{kernel:true}),app=await productServer(w),received=[];
+  app.server.prependListener('request',req=>{const sizes=[];received.push(sizes);req.on('data',b=>sizes.push(b.length));});
+  try{
+    const name='گلدان 🪴 � e\u0301 \uFEFF',note='یادداشت 🧪 � بدون تغییر',p=create(w,{workingName:name,note}),raw=encoded(p);
+    const cuts=[...inside(raw,'گلدان',[1]),...inside(raw,'🪴',[1,2,3]),...inside(raw,'یادداشت',[1]),...inside(raw,'�',[1,2])].sort((a,b)=>a-b);
+    const first=await postBytes(app,w.c.human,'/api/product',raw,cuts);assert.equal(first.status,200);success(first.body);
+    const boundaries=new Set();let end=0;for(const size of received[0]){end+=size;boundaries.add(end);}for(const cut of cuts)assert(boundaries.has(cut),'test must actually split incoming bytes at '+cut);
+    const stored=readProductDossier(w.root,{productId:PRODUCT}).product.record;assert.equal(stored.workingName,name);assert.equal(stored.notes[0].text,note);
+    const head=w.store.read().reference;
+    assert.deepEqual(await postBytes(app,w.c.human,'/api/product',raw),first);
+    assert.deepEqual(await postBytes(app,w.c.human,'/api/product',raw,inside(raw,'🪴',[2])),first);assert.deepEqual(w.store.read().reference,head);
+    const appended='افزوده 🪴 � a\u0308',n=packet(w,'product.note.add',{productId:PRODUCT,text:appended}),nraw=encoded(n);
+    const result=await postBytes(app,w.c.human,'/api/product',nraw,[...inside(nraw,'افزوده',[1]),...inside(nraw,'🪴',[1,3])]);assert.equal(result.status,200);
+    assert.deepEqual(await postBytes(app,w.c.human,'/api/product',nraw),result);assert.equal(readProductDossier(w.root,{productId:PRODUCT}).product.record.notes.at(-1).text,appended);
+    const query=encoded({productId:PRODUCT,atHead:w.store.read().reference}),read=await postBytes(app,w.source.token,'/api/product-review',query,[1,query.length-1]);
+    assert.equal(read.status,200);assert.equal(read.body.product.record.workingName,name);assert.equal(read.body.product.record.notes[0].text,note);assert.equal(read.body.product.record.notes.at(-1).text,appended);
+  }finally{await app.stop();}
+});
+test('fragmented Persian source proposal text and locators survive exact file/review reads without approval',async t=>{
+  const w=setup(t,{kernel:true}),app=await productServer(w);
+  try{
+    success(w.k.productCommand(w.c.human,create(w)));
+    const p=proposal(w),value='پیشنهاد آزمایشی 🧪 �';p.input.changes[0].fact.value=value;p.input.reason='دلیل پیشنهادی 🪴';p.input.changes[0].fact.sourceRefs[0].locator.section='بخش منبع 🧪 �';
+    const raw=encoded(p),cuts=[...inside(raw,'پیشنهاد',[1]),...inside(raw,'🧪',[1,2,3]),...inside(raw,'دلیل',[1]),...inside(raw,'بخش',[1])].sort((a,b)=>a-b);
+    const first=await postBytes(app,w.source.token,'/api/product',raw,cuts);assert.equal(first.status,200);success(first.body);
+    const record=w.store.read().records.get(first.body.reference.path).value;assert.deepEqual(record,p.input);
+    assert.deepEqual(await postBytes(app,w.source.token,'/api/product',raw),first);
+    const query=encoded({productId:PRODUCT,atHead:w.store.read().reference}),read=await postBytes(app,w.source.token,'/api/product-review',query,[2,query.length-2]);
+    assert.equal(read.status,200);assert.deepEqual(read.body.proposals[0].record,p.input);assert.equal(read.body.proposals[0].status,'pending');assert.equal(read.body.product.record.facts.material.state,'unknown');
+    const before=w.store.read(),denied=await postBytes(app,w.source.token,'/api/product',encoded(decision(w,read.body.proposals[0],'accepted')));
+    assert.equal(denied.status,409);assert.equal(denied.body.error.code,'INVALID_SCOPE');assert.deepEqual([...w.store.read().files],[...before.files]);
+  }finally{await app.stop();}
+});
+for(const route of ['/api/product','/api/product-review'])test(`${route} rejects malformed and final truncated UTF-8 before dispatch without domain changes`,async t=>{
+  const w=setup(t,{kernel:true}),app=await productServer(w);
+  try{
+    success(w.k.productCommand(w.c.human,create(w)));const before=w.store.read(),calls=[];
+    const method=route==='/api/product'?'productCommand':'productReview',original=app.kernel[method].bind(app.kernel);app.kernel[method]=(...args)=>{calls.push(true);return original(...args);};
+    const prefix=route==='/api/product'?encoded(packet(w,'product.note.add',{productId:PRODUCT,text:'UTF8_SENTINEL'})):encoded({productId:'UTF8_SENTINEL',atHead:before.reference}),offset=prefix.indexOf('UTF8_SENTINEL');
+    const malformed=[Buffer.from([0xff]),Buffer.from([0x80]),Buffer.from([0xc0,0xaf]),Buffer.from([0xed,0xa0,0x80]),Buffer.from([0xf4,0x90,0x80,0x80]),Buffer.from([0xe2,0x82])];
+    const responses=[];
+    for(const bad of malformed){const raw=Buffer.concat([prefix.subarray(0,offset),bad,prefix.subarray(offset+13)]);responses.push(await postBytes(app,w.c.human,route,raw,[offset+1]));}
+    responses.push(await postBytes(app,w.c.human,route,Buffer.concat([prefix.subarray(0,offset),Buffer.from([0xf0,0x9f,0xaa])])));
+    assert.deepEqual(responses,Array.from({length:7},()=>({status:400,body:{error:'Invalid UTF-8 request body'}})));assert.equal(calls.length,0);assert.deepEqual(w.store.read().reference,before.reference);assert.deepEqual([...w.store.read().files],[...before.files]);
+  }finally{await app.stop();}
+});
+test('both product routes keep exact 128KiB byte bounds for Unicode bodies and valid JSON',async t=>{
+  const w=setup(t,{kernel:true}),app=await productServer(w);
+  try{
+    success(w.k.productCommand(w.c.human,create(w)));const head=w.store.read().reference,limit=128*1024;
+    for(const route of ['/api/product','/api/product-review']){
+      const query=route==='/api/product'?packet(w,'product.read',{productId:PRODUCT,atHead:head}):{productId:PRODUCT,atHead:head},raw=encoded(query),exact=Buffer.concat([raw,Buffer.alloc(limit-raw.length,0x20)]);
+      assert.equal((await postBytes(app,w.c.human,route,exact)).status,200);
+      assert.equal((await postBytes(app,w.c.human,route,Buffer.concat([exact,Buffer.from(' ') ]))).status,413);
+      const unicode=encoded({text:'گ'.repeat(limit/2)});assert(unicode.length>limit);assert(unicode.toString('utf8').length<limit);assert.equal((await postBytes(app,w.c.human,route,unicode)).status,413);
+      assert.equal((await postBytes(app,w.c.human,route,Buffer.from('{'))).status,400);
+      assert.equal((await postBytes(app,w.c.human,route,Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),raw]))).status,400); // No silent body BOM stripping.
+    }assert.deepEqual(w.store.read().reference,head);
+  }finally{await app.stop();}
+});
+test('both product route parsers preserve Host Origin and credential refusals',async t=>{
+  const w=setup(t,{kernel:true}),app=await productServer(w);
+  try{
+    success(w.k.productCommand(w.c.human,create(w)));const before=w.store.read();
+    for(const route of ['/api/product','/api/product-review']){
+      const raw=encoded(route==='/api/product'?packet(w,'product.note.add',{productId:PRODUCT,text:'Authored refusal fixture'}):{productId:PRODUCT,atHead:before.reference});
+      assert.equal((await postBytes(app,w.c.human,route,raw,[],{host:'foreign.invalid'})).status,403);
+      assert.equal((await postBytes(app,w.c.human,route,raw,[],{origin:'https://foreign.invalid'})).status,403);
+      const denied=await postBytes(app,'invalid',route,raw);assert.equal(denied.status,route==='/api/product'?409:403);
+    }assert.deepEqual([...w.store.read().files],[...before.files]);
+  }finally{await app.stop();}
+});
 test('internal product action copies stay immutable and outside legacy notification reads',t=>{
   const w=setup(t,{kernel:true});success(w.k.productCommand(w.c.human,create(w)));const event=w.writer.operationalEvidence()[0];
   assert.equal(event.type,'product-action');for(const role of ['human','conductor','butler'])assert.equal(w.k.read(w.c[role],'event').length,0);
