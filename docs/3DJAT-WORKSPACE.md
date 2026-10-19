@@ -134,7 +134,7 @@ Server connection is available through explicit serve({root, workspace, expected
 
 ## Verification and outstanding gates
 
-Public tests use authored unknown/null product facts, fictional codes/templates, dummy session claims, deterministic fixture PNGs and attachment bytes. They do not call image/host providers. Run on existing Node 24.x:
+Public tests use authored unknown/null product facts, fictional codes/templates, dummy session claims, deterministic fixture PNGs and attachment bytes. They do not call image/host providers. The later [governed product writer](3DJAT-PRODUCTS.md) reuses this boundary through separate explicit APIs; its private principal registry/reservations require separate owner preservation and are not added to this combined-backup scope. Run on existing Node 24.x:
 
 ```sh
 node --test test/3djat-workspace.test.mjs test/3djat-workspace-backup.test.mjs

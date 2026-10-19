@@ -1,8 +1,8 @@
 # Current operating contracts
 
-The additive [3DJAT v1 contracts](3DJAT-CONTRACTS.md) define versioned domain-file and operational interfaces with pure validators. Public 3DJAT command routing and the remaining business workflows are not installed; existing APIs, legacy acceptance semantics and the current 16MP/24MiB PNG policy remain unchanged.
+The additive [3DJAT v1 contracts](3DJAT-CONTRACTS.md) define versioned domain-file and operational interfaces with pure validators. The [product dossier writer](3DJAT-PRODUCTS.md) implements the five governed product commands through a separate explicit endpoint; other 3DJAT workflows are not installed. Existing APIs, legacy acceptance semantics and the current 16MP/24MiB PNG policy remain unchanged.
 
-The separate [J03B integration candidate](3DJAT-WORKSPACE.md) supplies trusted owner connection/adoption using the frozen workspace.adopt request, independent file authority, disposable projection, frozen selections and combined private recovery. No 3DJAT commands are installed in Kernel.call/HTTP; other workflows and image limits remain unchanged.
+The separate [J03B integration candidate](3DJAT-WORKSPACE.md) supplies trusted owner connection/adoption using the frozen workspace.adopt request, independent file authority, disposable projection, frozen selections and combined private recovery. Kernel.call retains its existing interface; product delegation uses productCommand/POST /api/product and the bounded productReview query. Other workflows and image limits remain unchanged.
 
 Read the fixed [Examples A–C](EXAMPLES.md). Use the implemented method when a capability has an example. For unsupported capabilities, propose a bounded solution using actual tools; do not invent a platform requirement.
 
