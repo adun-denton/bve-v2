@@ -26,8 +26,20 @@ async function controller(mode,{large=false,twenty=false}={}){
  const p=spawn('python',['test/fixtures/3djat/img20-controller.py',d,mode],{cwd:root,stdio:['ignore','pipe','pipe']});let output='';p.stdout.on('data',b=>output+=b);p.stderr.on('data',b=>output+=b);const done=once(p,'close').then(([code,signal])=>({code,signal,output}));return {d,p,done,source,hash:digest(bytes)};
 }
 function retainedState(d){const v=json(d+'/controller/result.json'),w=json(d+'/controller/worker/lifecycle.json');assert.equal(v.IMG20,'OPEN');assert.equal(v.worker.exit,'CONFIRMED');assert.ok(fs.existsSync(w.roots.runtime));assert.ok(fs.existsSync(w.roots.business));assert.match(w.cleanup,/RETAINED/);assert.ok(v.lastCheckpoint.sha256);assert.ok(w.lastCheckpoint.sha256);return {v,w};}
-test('successful worker removes its allocated roots and closes its listener',async()=>{
- const c=await worker();c.p.stdin.end('{"op":"stop"}\n');assert.equal((await c.done).code,0);const w=json(c.d+'/worker/lifecycle.json');assert.equal(w.status,'SUCCEEDED');assert.equal(w.cleanup,'SUCCESS ROOTS REMOVED');assert.equal(fs.existsSync(w.roots.allocation),false);await closed(c.ready.origin);screen(JSON.stringify(w),c.ready.credential);
+test('successful direct worker retains its diagnostic roots and closes its listener',async()=>{
+ const c=await worker();c.p.stdin.end('{"op":"stop"}\n');assert.equal((await c.done).code,0);const w=json(c.d+'/worker/lifecycle.json');assert.equal(w.status,'SUCCEEDED');assert.equal(w.cleanup,'SUCCESS ROOTS RETAINED; deliberate owner cleanup only');for(const name of ['allocation','runtime','business','source'])assert.ok(fs.existsSync(w.roots[name]));await closed(c.ready.origin);screen(JSON.stringify(w),c.ready.credential);
+});
+test('R02-FINAL: direct stop final checkpoint failure retains diagnostic roots and exact owner lock',async()=>{
+ const c=await worker();const listening=json(c.d+'/worker/lifecycle.json');assert.equal(listening.phase,'listening');assert.match(listening.lastCheckpoint.file,/checkpoint-0004\.json$/);
+ const sentinel=c.d+'/outside-sentinel';fs.writeFileSync(sentinel,'unchanged outside allocation');
+ const credentialFile=path.join(c.ready.runtime,'credentials.json'),credentialHash=digest(fs.readFileSync(credentialFile));
+ const release=acquireOperational(c.ready.runtime),lockFile=path.join(c.ready.runtime,'operational-write.lock'),lock=fs.readFileSync(lockFile);
+ fs.mkdirSync(c.d+'/worker/checkpoint-0007.json.next');c.p.stdin.end('{"op":"stop"}\n');
+ const exit=await c.done;assert.equal(exit.code,1);const w=json(c.d+'/worker/failure.json');assert.equal(w.status,'FAILED');assert.equal(w.firstError.code,'EISDIR');assert.equal(w.phase,'final');assert.equal(w.IMG20,'OPEN');
+ for(const name of ['allocation','runtime','business','source'])assert.ok(fs.existsSync(w.roots[name]),'retained '+name);
+ assert.match(w.cleanup,/ROOTS RETAINED/);assert.equal(digest(fs.readFileSync(credentialFile)),credentialHash);assert.deepEqual(fs.readFileSync(lockFile),lock);assert.equal(fs.readFileSync(sentinel,'utf8'),'unchanged outside allocation');
+ for(const row of w.locks.filter(r=>r.file===lockFile)){assert.equal(row.sha256,digest(lock));assert.deepEqual(fs.readFileSync(row.copy),lock);}
+ assert.equal(digest(fs.readFileSync(w.lastCheckpoint.file)),w.lastCheckpoint.sha256);await closed(c.ready.origin);screen(exit.stderr,c.ready.credential);screen(JSON.stringify(w),c.ready.credential);assert.equal(typeof release,'function');
 });
 test('setup parse failure leaves a retrievable lifecycle and no invented roots',async()=>{
  const d=area();fs.writeFileSync(d+'/input.json','{');const c=child(['scripts/img20-worker.mjs',d+'/input.json',d+'/worker']);c.p.stdout.resume();assert.equal((await c.done).code,1);const w=json(d+'/worker/lifecycle.json');assert.equal(w.status,'FAILED');assert.equal(w.roots.runtime,null);assert.equal(w.firstError.code,'SyntaxError');
@@ -59,7 +71,7 @@ test('controller protocol timeout retains its checkpoint and records confirmed s
  const c=await controller('protocol-timeout');assert.equal((await c.done).code,1);const v=json(c.d+'/controller/result.json');assert.equal(v.status,'FAILED');assert.equal(v.firstError.code,'TimeoutError');assert.equal(v.worker.exit,'CONFIRMED');assert.ok(v.lastCheckpoint.sha256);assert.equal(v.verdict,undefined);
 });
 test('successful 20MP worker verifies all four actual kill/replays without leaving a listener',{skip:process.platform!=='linux'},async()=>{
- const c=await controller('positive',{twenty:true});assert.equal((await c.done).code,0);const v=json(c.d+'/controller/result.json'),w=json(c.d+'/controller/worker/lifecycle.json');assert.equal(v.status,'SUCCEEDED');assert.equal(w.status,'SUCCEEDED');assert.equal(v.recovery.length,4);assert.equal(v.statusResult.counts.artifact,5);assert.equal(v.statusResult.counts.importReceipt,10);assert.equal(v.statusResult.counts.job,0);assert.ok(v.recovery.every(r=>r.reached&&r.sha256===c.hash));assert.equal(w.cleanup,'SUCCESS ROOTS RETAINED BY CONTROLLER');await closed(w.origin);
+ const c=await controller('positive',{twenty:true});assert.equal((await c.done).code,0);const v=json(c.d+'/controller/result.json'),w=json(c.d+'/controller/worker/lifecycle.json');assert.equal(v.status,'SUCCEEDED');assert.equal(w.status,'SUCCEEDED');assert.equal(v.recovery.length,4);assert.equal(v.statusResult.counts.artifact,5);assert.equal(v.statusResult.counts.importReceipt,10);assert.equal(v.statusResult.counts.job,0);assert.ok(v.recovery.every(r=>r.reached&&r.sha256===c.hash));assert.equal(w.cleanup,'SUCCESS ROOTS RETAINED; deliberate owner cleanup only');await closed(w.origin);
 });
 test('unsupported controller host is explicit before collector or worker launch',{skip:process.platform!=='linux'},async()=>{
  const c=await controller('unsupported-host');assert.equal((await c.done).code,1);const v=json(c.d+'/controller/result.json');assert.equal(v.status,'FAILED');assert.match(v.firstError.message,/UNSUPPORTED_HOST/);assert.equal(v.worker.pid,null);assert.equal(v.worker.exit,'UNKNOWN');assert.equal(fs.existsSync(c.d+'/controller/os-memory.ndjson'),false);
@@ -68,7 +80,7 @@ test('checkpoint error immediately after spawn still stops and confirms its owne
  const c=await runChild(['test/fixtures/3djat/img20-negative-child.mjs','--authored-timeout'],{onStart:()=>{throw Object.assign(Error('Authored checkpoint write error'),{code:'EIO'});}});assert.equal(c.error.code,'EIO');assert.equal(c.exit,'CONFIRMED');assert.equal(c.signal,'SIGTERM');
 });
 test('controller result construction failure retains successful imports and backup',{skip:process.platform!=='linux'},async()=>{
- const c=await controller('bad-budgets');assert.equal((await c.done).code,1);const v=json(c.d+'/controller/result.json'),w=json(c.d+'/controller/worker/lifecycle.json');assert.equal(v.status,'FAILED');assert.equal(v.firstError.code,'KeyError');assert.equal(v.worker.exit,'CONFIRMED');assert.equal(v.records.length,1);assert.equal(v.backup.restored.length,1);assert.equal(v.verdict,undefined);assert.ok(fs.existsSync(w.roots.runtime));assert.equal(w.cleanup,'SUCCESS ROOTS RETAINED BY CONTROLLER');await closed(w.origin);
+ const c=await controller('bad-budgets');assert.equal((await c.done).code,1);const v=json(c.d+'/controller/result.json'),w=json(c.d+'/controller/worker/lifecycle.json');assert.equal(v.status,'FAILED');assert.equal(v.firstError.code,'KeyError');assert.equal(v.worker.exit,'CONFIRMED');assert.equal(v.records.length,1);assert.equal(v.backup.restored.length,1);assert.equal(v.verdict,undefined);assert.ok(fs.existsSync(w.roots.runtime));assert.equal(w.cleanup,'SUCCESS ROOTS RETAINED; deliberate owner cleanup only');await closed(w.origin);
 });
 test.after(()=>{
  // The opt-in index contains private locators only; no DB or credentials in TAP.

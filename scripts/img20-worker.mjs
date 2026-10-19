@@ -16,8 +16,8 @@ const [configFile,output,control]=process.argv.slice(2);
 const controls=['--authored-missing-marker','--authored-timeout','--authored-secondary'];
 if(!path.isAbsolute(output??'')||fs.existsSync(output))throw Error('New absolute private output required');
 fs.mkdirSync(output,{mode:0o700});
-const log=journal(output),cleanup=[],abort=new AbortController();
-let w,app,stream,timer,rl,phase='startup',last=performance.now(),maxGap=0,success=false,retainSuccess=false,interrupted=false;
+const log=journal(output),abort=new AbortController();
+let w,app,stream,timer,rl,phase='startup',last=performance.now(),maxGap=0,success=false,interrupted=false;
 const reply=x=>process.stdout.write(JSON.stringify(x)+'\n');
 const sample=()=>{if(!stream||stream.destroyed)return;const n=performance.now();maxGap=Math.max(maxGap,n-last);last=n;stream.write(JSON.stringify({time:Date.now(),phase,...process.memoryUsage(),maxRssKiB:process.resourceUsage().maxRSS,gapMs:maxGap})+'\n');};
 const interrupt=()=>{interrupted=true;abort.abort();rl?.close();process.stdin.destroy();};
@@ -34,7 +34,7 @@ try{
   log.state.roots.allocation=allocation;log.save('setup');
   // Fixture allocation is confined even if setup throws before it returns its roots.
   process.env.TMPDIR=allocation;process.env.TMP=allocation;process.env.TEMP=allocation;
-  w=importSetup({after(fn){cleanup.push(fn);}},{experimentalPng20:true});
+  w=importSetup({after(){/* Diagnostic roots are removed only by a later deliberate owner action. */}},{experimentalPng20:true});
   Object.assign(log.state.roots,{runtime:w.runtime,business:w.root,source:w.sourceRoot});
   log.state.inputs=config.files.map(f=>({path:f.path,sha256:digest(fs.readFileSync(f.path)),declaredHash:f.sha256??null,width:f.width,height:f.height}));
   log.save('initialized');
@@ -104,7 +104,7 @@ for await(const line of rl){
       fs.writeFileSync(path.join(output,'recovery-results.json'),JSON.stringify(rows,null,2)+'\n');log.save(phase+'-verified',rows.at(-1));
     }
     reply({rows,origin:app.origin});
-  }else if(message.op==='stop'){success=true;retainSuccess=message.retainSuccess===true;reply({ok:true});break;}
+  }else if(message.op==='stop'){success=true;reply({ok:true});break;}
   else throw Error('Unknown experiment control');
 }
 if(!success)throw Object.assign(Error('Protocol ended before successful stop'),{code:'INTERRUPTED'});
@@ -119,14 +119,14 @@ finally{
     log.attempt(()=>{const fd=fs.openSync(path.join(output,'authored-close-control'),'w',0o600);fs.closeSync(fd);fs.closeSync(fd);});
   }
   log.attempt(()=>log.observe('after shutdown'));
-  if(success&&!log.state.firstError&&!retainSuccess){
-    try{for(const fn of cleanup)fn();fs.rmdirSync(log.state.roots.allocation);log.state.cleanup='SUCCESS ROOTS REMOVED';}catch(e){log.fail(e);}
-  }else log.state.cleanup=success&&!log.state.firstError?'SUCCESS ROOTS RETAINED BY CONTROLLER':'FAILED ROOTS RETAINED; deliberate owner cleanup only';
+  // No recursive deletion on any worker path: publication or shutdown can still fail.
+  log.state.cleanup=success&&!log.state.firstError?'SUCCESS ROOTS RETAINED; deliberate owner cleanup only':'FAILED ROOTS RETAINED; deliberate owner cleanup only';
   log.state.status=log.state.firstError?(log.state.firstError.code==='OPERATIONAL_LOCKED'?'BLOCKED':log.state.firstError.code==='INTERRUPTED'?'INTERRUPTED':'FAILED'):'SUCCEEDED';
   if(log.state.children.some(c=>c.exit==='UNKNOWN'))log.state.status='UNKNOWN';
   log.attempt(()=>log.save('final'));
   if(log.state.firstError){
     if(log.state.status==='SUCCEEDED')log.state.status='FAILED';
+    log.state.cleanup='FAILED ROOTS RETAINED; deliberate owner cleanup only';
     // Independent final path remains usable if checkpoint publication fails.
     log.attempt(()=>fs.writeFileSync(path.join(output,'failure.json'),JSON.stringify(log.state,null,2)+'\n',{mode:0o600}));
     reply({type:'failure',status:log.state.status,code:log.state.firstError.code,evidence:path.join(output,'lifecycle.json')});process.exitCode=1;

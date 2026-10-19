@@ -170,12 +170,14 @@ status/signal, marker absence/read error and pre/post-shutdown lock bytes/hash
 copies remain private. Nonzero exit alone never proves a reached interruption.
 Only the expected SIGKILL, exact boundary marker and verified replay count.
 
-Failed worker shutdown closes owned servers/SQLite/streams but never invokes the
+Worker shutdown closes owned servers/SQLite/streams but never invokes the
 fixture's recursive cleanup callbacks or steals an unexpected owner lock. Source
-originals are read-only inputs. The controller requests success retention too,
-so later metrics/result/shutdown failure cannot erase the inspected roots. A
-direct worker's successful `stop` can use the original automatic fixture cleanup;
-its removal and listener closure have a separate authored test. Protocol EOF,
+originals are read-only inputs. All runs retain their diagnostic roots, including
+successful direct `stop` and controller runs. Removal is a later deliberate
+owner action using the procedure below. This keeps roots available if final
+checkpoint publication, fallback evidence or shutdown fails. Successful direct
+stop and obstructed final-publication tests both verify retained roots and closed
+listeners; the failure verdict remains nonzero with its first error. Protocol EOF,
 SIGINT/SIGTERM and parse failures fail closed. SIGKILL cannot flush a final record;
 the last checkpoint and unmodified roots remain. Controller protocol waits are
 bounded. Its Linux-only host guard precedes `/proc`, wait4 or worker launch;
@@ -191,7 +193,7 @@ Fixed `--authored-missing-marker`, `--authored-timeout` and
 fixture, never a request-supplied executable or shell. The optional Python
 `after_backup` callback is an in-process authored-test seam, not a CLI facility.
 
-To remove a failed run later, its owner must first preserve/review the evidence,
+To remove a retained run later, its owner must first preserve/review the evidence,
 verify the absolute output/allocation paths and their ownership, confirm every
 recorded server/child has exited (UNKNOWN blocks deletion), and verify no
 unrelated root/source path falls within the deletion set. Then deliberately
