@@ -144,6 +144,7 @@ export class Kernel {
     let writer;try{writer=this.#productWriter();}catch(e){return DomainProducts.failure(packet,e);}
     const result=writer.command(token,packet);if(result.schemaVersion==='3djat.failure.v1')return clone(result);
     try{
+      if(['product.dossier.proposal.submit','product.dossier.proposal.decide'].includes(packet.operation))this.#workspaceHook('before-dossier-evidence',{});
       for(const event of writer.operationalEvidence())this.#copyProductAction(event);
       this.#workspaceHook('before-product-adoption',{});
       const view=this.#workspace.read(),project=this.#list('project').find(p=>p.id===packet.input.productId);

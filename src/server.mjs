@@ -72,6 +72,7 @@ export async function serve(options={}){
       if(req.method==='GET'&&url.pathname==='/api/import-portable'){json(200,kernel.importPortable(credential,url.searchParams.get('id')));return;}
       if(req.method==='POST'&&['/api/product','/api/product-review','/api/asset-import'].includes(url.pathname)){
         const packet=await boundedJSON(req,128*1024),value=url.pathname==='/api/product'?kernel.productCommand(credential,packet):url.pathname==='/api/asset-import'?kernel.assetCommand(credential,packet):kernel.productReview(credential,packet);
+        if(url.pathname==='/api/product-review'&&Buffer.byteLength(JSON.stringify(value),'utf8')>1024**2)throw new Fault('VALIDATION_LIMIT',409);
         json(value.schemaVersion==='3djat.failure.v1'?409:200,value);return;
       }
       if(req.method==='POST'&&url.pathname==='/api/op'){

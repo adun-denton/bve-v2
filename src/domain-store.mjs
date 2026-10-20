@@ -7,7 +7,8 @@ import { validate } from './contracts/3djat.mjs';
 export const STORE_LIMITS = Object.freeze({ fileBytes: 1024 ** 2, totalBytes: 32 * 1024 ** 2,
   files: 4096, heads: 128, writes: 64, external: 512 });
 const MARKER = 'domain-store.json', HEAD = 'domain-head.json', LOCK = 'domain-write.lock';
-const KINDS = new Set(['product', 'template', 'business-context', 'proposal', 'proposal-decision', 'template-decision', 'attachment', 'evidence']);
+const KINDS = new Set(['product', 'template', 'business-context', 'proposal', 'proposal-decision', 'template-decision', 'attachment', 'evidence',
+  'dossier-proposal', 'dossier-decision', 'dossier-record']);
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const equal = (a, b) => a?.id === b?.id && a?.revision === b?.revision && a?.sha256 === b?.sha256 && a?.path === b?.path;
 const stable = value => JSON.stringify(value, (_, x) => x && typeof x === 'object' && !Array.isArray(x)
@@ -31,7 +32,7 @@ const reference = (id, revision, data, location) => ({ id, revision, sha256: has
 const headRef = (v, b) => reference(v.workspaceId, v.revision, b, `Heads/${v.workspaceId}/${v.revision}.json`);
 function identity(kind, v) {
   return kind === 'product' ? v.productId : kind === 'template' ? v.templateId : kind === 'business-context' ? v.workspaceId :
-    kind === 'proposal' ? v.proposalId : kind.endsWith('decision') ? v.decisionId : kind === 'attachment' ? v.attachmentId : v.id;
+    ['proposal', 'dossier-proposal'].includes(kind) ? v.proposalId : kind.endsWith('decision') ? v.decisionId : kind === 'attachment' ? v.attachmentId : v.id;
 }
 function kindOf(v) {
   const kind = v.schemaVersion?.match(/^3djat\.(.+)\.v1$/)?.[1];
@@ -68,7 +69,8 @@ function requiredReferences(kind, v, external) {
     if (!x || typeof x !== 'object') continue;
     if (typeof x.path === 'string' && Object.hasOwn(x, 'sha256') && Object.hasOwn(x, 'id')) {
       shape('revision-ref', x);
-      if (['experiment', 'evidenceReceipt', 'humanActionReceipt'].includes(field) && ['template-decision', 'proposal-decision'].includes(kind)) external.push({ kind: 'operational-evidence', reference: x, availability: 'not-verified' });
+      if (['experiment', 'evidenceReceipt', 'humanActionReceipt'].includes(field) && ['template-decision', 'proposal-decision'].includes(kind) ||
+          kind === 'dossier-decision' && field === 'humanActionReceipt') external.push({ kind: 'operational-evidence', reference: x, availability: 'not-verified' });
       else { check(/^(Domain|Heads|Receipts)\//.test(x.path), 'INVALID_DOMAIN_REFERENCE', { path: x.path }); refs.push(x); }
       continue;
     }

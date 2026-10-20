@@ -118,7 +118,8 @@ test('standalone human/source C1 history is reconciled as exact operational evid
   const current=w.store.read();const read=packet(w,'product.read',{productId:PRODUCT,atHead:current.reference});success(w.k.productCommand(w.c.human,read));
   const before=review(w),snapshot=path.join(w.dir,'combined');await backupRoot(w.runtime,snapshot);const manifest=verifyCombined(snapshot);assert.equal(manifest.complete,true);assert.equal(manifest.evidence.length,2);
   const businessRoot=path.join(w.dir,'restored-business'),runtimeRoot=path.join(w.dir,'restored-runtime'),paths=Object.fromEntries(Object.entries(w.store.workspace.paths).map(([k,v])=>[k,path.join(businessRoot,v)]));restoreCombined(snapshot,{businessRoot,runtimeRoot,paths});
-  assert.deepEqual(readProductDossier(businessRoot,{productId:PRODUCT}),{head:before.head,product:before.product});
+  const fileRead=readProductDossier(businessRoot,{productId:PRODUCT});assert.deepEqual({head:fileRead.head,product:fileRead.product},{head:before.head,product:before.product});
+  assert.equal(fileRead.dossierExtension.evidenceVerification,'hash-only');assert.deepEqual(fileRead.dossierExtension.fields,before.dossierExtension.fields);
   const restored=new DomainProducts(businessRoot,{accessFile:w.accessFile});const after=restored.readReview(w.human.token,{productId:PRODUCT,atHead:before.head});assert.deepEqual(after.product,before.product);assert.deepEqual(after.decisions,before.decisions);assert.deepEqual(after.proposals.map(x=>[x.reference,x.status]),before.proposals.map(x=>[x.reference,x.status]));
   assert.equal(after.product.record.facts.material.value,'Authored corrected');
   // Domain records remain readable with restored operational SQL physically absent.

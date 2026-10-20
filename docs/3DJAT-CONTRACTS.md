@@ -640,3 +640,7 @@ Templates and source prose remain Conductor instructions **as data**. Effective 
 No authority boundary or operational kernel ownership is changed. No migration, installation, runtime workflow, current candidate acceptance, release claim, native session, model/image call or human approval is supplied by J01. Public fixtures are independently written fictional product examples, plus inline authored contract examples; hashes/IDs are placeholders with no byte-integrity claim. The private planning package and source assets are not copied into this repository.
 
 Validation commands: `node --test test/3djat-contracts.test.mjs`, then unchanged `npm test` on Node 24.x. Browser/native/image tests are outside pure J01 scope. Independent review, not a passing test suite or draft PR, freezes this baseline.
+
+## Governed dossier amendment
+
+The additive dossier-proposal/dossier-decision/dossier-record v1 contracts and product.dossier.proposal.submit/decide operations are described in [dossier authoring](3DJAT-DOSSIER-AUTHORING.md). The frozen lowercase UUID/scalar/price rules and existing canonical action hashing are reused. Separate dossierProposal/dossierCorrectedProposal context slots preserve the old C1 interface. Only this slice's operation/output enums expand; existing product/proposal fields and operation-run.acceptedFacts do not. Pure validation never establishes authentication, source availability or a real human decision.
