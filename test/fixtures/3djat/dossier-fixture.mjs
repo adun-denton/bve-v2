@@ -7,7 +7,11 @@ import {Kernel} from '../../../src/kernel.mjs';
 export const PRODUCT='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',WORKSPACE='bbbbbbbb-bbbb-4bbb-9bbb-bbbbbbbbbbbb',TIME='2026-01-01T00:00:00.000Z';
 export const SUBMIT='product.dossier.proposal.submit',DECIDE='product.dossier.proposal.decide';
 export const hash=b=>createHash('sha256').update(b).digest('hex');export const stable=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
-export function usage(root){if(!fs.existsSync(root))return 0;let n=0;for(const d of fs.readdirSync(root,{withFileTypes:true})){const p=path.join(root,d.name);assert(!d.isSymbolicLink());n+=d.isDirectory()?usage(p):fs.statSync(p).size;}return n;}
+export function usage(root){if(!fs.existsSync(root))return 0;let n=0;for(const d of fs.readdirSync(root,{withFileTypes:true})){const p=path.join(root,d.name);assert(!d.isSymbolicLink());try{n+=d.isDirectory()?usage(p):fs.statSync(p).size;}catch(e){
+ // Another test process can finish its normal transaction between readdir/stat.
+ // Only that transient lock may disappear; retained evidence and all other errors stay strict.
+ if(!(e.code==='ENOENT'&&d.name==='domain-write.lock'))throw e;
+ }}return n;}
 export function guard(parent,reserve=0){fs.mkdirSync(parent,{recursive:true});assert(usage(parent)+reserve<=32*1024**2,'New dossier fixture aggregate exceeds fixed32MiB');assert(fs.statfsSync(parent).bavail*fs.statfsSync(parent).bsize>64*1024**2);}
 export function setup(t,{kernel=false,hook=()=>{},workspaceHook=()=>{},reserve=768*1024}={}){
  const parent=process.env.DOSSIER_EVIDENCE_ROOT??path.join(os.tmpdir(),'bve-dossier-authored');guard(parent,reserve);const dir=fs.mkdtempSync(path.join(parent,'dossier-')),root=path.join(dir,'business'),runtime=path.join(dir,'runtime'),accessFile=path.join(dir,'access.json');
