@@ -6,33 +6,7 @@ import {DomainStore,prepareRecord,StoreError,STORE_LIMITS} from './domain-store.
 import {validate,validateCommand,COMMANDS,ERROR_CODES} from './contracts/3djat.mjs';
 import {AttachmentFiles} from './attachment-files.mjs';
 const OPS=new Set(['product.create','product.read','product.proposal.submit','product.proposal.decide','product.note.add','attachment.register','product.dossier.proposal.submit','product.dossier.proposal.decide']);
-const stable=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
-const digest=x=>createHash('sha256').update(x).digest('hex');
-const uuid=x=>{const h=digest(x);return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-8${h.slice(17,20)}-${h.slice(20,32)}`;};
-const bytes=x=>Buffer.from(stable(x)+'\n');
-const equal=(a,b)=>stable(a)===stable(b);
-const same=(a,b)=>a?.id===b?.id&&a?.revision===b?.revision&&a?.sha256===b?.sha256&&a?.path===b?.path;
-const fail=(code,detail={})=>{throw new StoreError(code,detail);};
-const check=(ok,code,detail)=>{if(!ok)fail(code,detail);};
-const shape=(kind,v)=>{const r=validate(kind,v);if(!r.ok)fail(r.errors[0].code,{errors:r.errors});};
-const exact=(v,keys)=>check(v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===keys.length&&keys.every(k=>Object.hasOwn(v,k)),'INVALID_VALUE');
-const within=(a,b)=>{const r=path.relative(a,b);return r===''||r!=='..'&&!r.startsWith('..'+path.sep)&&!path.isAbsolute(r);};
-function safePrivate(file,{missing=false}={}){
-  check(typeof file==='string'&&path.isAbsolute(file)&&!file.startsWith('\\\\')&&!file.startsWith('//'),'UNSAFE_PATH');
-  const full=path.resolve(file),parts=full.slice(path.parse(full).root.length).split(path.sep);let current=path.parse(full).root;
-  for(let i=0;i<parts.length;i++){
-    current=path.join(current,parts[i]);let s;try{s=fs.lstatSync(current);}catch(e){if(e.code==='ENOENT'&&missing&&i===parts.length-1)return full;throw e;}
-    check(!s.isSymbolicLink()&&fs.readdirSync(path.dirname(current)).includes(parts[i]),'UNSAFE_PATH');
-    check(i===parts.length-1?s.isFile()&&s.nlink===1:s.isDirectory(),'UNSAFE_PATH');
-  }return full;
-}
-function syncDir(dir){let fd;try{fd=fs.openSync(dir,'r');fs.fsyncSync(fd);}catch(e){if(!(process.platform==='win32'&&['EPERM','EACCES','EINVAL','EISDIR','ENOTSUP'].includes(e.code)))throw e;}finally{if(fd!==undefined)fs.closeSync(fd);}}
-function privateRead(file){safePrivate(file);check(fs.statSync(file).size<=65536,'VALIDATION_LIMIT');const b=fs.readFileSync(file);check(b.length<=65536,'VALIDATION_LIMIT');try{return JSON.parse(b);}catch{fail('INVALID_VALUE');}}
-function exclusive(file,value){const b=bytes(value);check(b.length<=65536,'VALIDATION_LIMIT');const fd=fs.openSync(safePrivate(file,{missing:true}),'wx',0o600);try{fs.writeFileSync(fd,b);fs.fsyncSync(fd);}finally{fs.closeSync(fd);}syncDir(path.dirname(file));}
-function access(file){const a=privateRead(file);exact(a,['schemaVersion','workspaceId','key','principals']);check(a.schemaVersion==='3djat.product-access.v1'&&/^[0-9a-f]{64}$/.test(a.key)&&Array.isArray(a.principals)&&a.principals.length<=32,'INVALID_VALUE');
-  for(const p of a.principals){exact(p,['id','role','tokenHash','products','sourceIds']);check(['human','source-proposer','conductor'].includes(p.role)&&/^[0-9a-f]{64}$/.test(p.tokenHash),'INVALID_SCOPE');shape('revision-ref',{id:p.id,revision:1,path:'principal.json',sha256:p.tokenHash});check((p.products==='*'||Array.isArray(p.products)&&p.products.length<=256)&&Array.isArray(p.sourceIds)&&p.sourceIds.length<=32,'INVALID_VALUE');}
-  check(new Set(a.principals.map(p=>p.id)).size===a.principals.length,'INVALID_VALUE');return a;
-}
+import {stable,digest,uuid,bytes,equal,same,fail,check,shape,exact,within,safePrivate,syncDir,privateRead,exclusive,access,reserveIntent,findBearer,signAction} from './domain-authority.mjs';
 // Trusted local provisioning only; never exposed by an HTTP endpoint.
 export function provisionProductPrincipal(file,{workspaceId,id,role,products='*',sourceIds=[]}){
   shape('revision-ref',{id,revision:1,path:'principal.json',sha256:'0'.repeat(64)});check(['human','source-proposer','conductor'].includes(role),'INVALID_SCOPE');
@@ -42,7 +16,7 @@ export function provisionProductPrincipal(file,{workspaceId,id,role,products='*'
   for(const sourceId of sourceIds)shape('revision-ref',{id:sourceId,revision:1,path:'source.json',sha256:'0'.repeat(64)});
   const token=randomBytes(32).toString('hex'),p={id,role,products,sourceIds,tokenHash:digest(token)};
   if(!fs.existsSync(file)){exclusive(file,{schemaVersion:'3djat.product-access.v1',workspaceId,key:randomBytes(32).toString('hex'),principals:[p]});}
-  else{const a=access(file);check(a.workspaceId===workspaceId&&!a.principals.some(x=>x.id===id)&&a.principals.length<32,'INVALID_SCOPE');a.principals.push(p);
+  else{const a=access(file);check(a.workspaceId===workspaceId&&!a.principals.some(x=>x.id===id)&&a.principals.length<32,'INVALID_SCOPE');if(a.schemaVersion==='3djat.product-access.v2')p.templateGrant=null;a.principals.push(p);
     const tmp=file+'.'+randomBytes(8).toString('hex');exclusive(tmp,a);safePrivate(file);fs.renameSync(tmp,file);syncDir(path.dirname(file));}
   return {principalId:id,role,token};
 }
@@ -172,7 +146,7 @@ export class DomainProducts {
     // The callback proves BVE identity. Registry text supplies policy, never authentication.
     if(p&&operation===DOSSIER_SUBMIT&&sourceBearing){const policy=a.principals.find(x=>x.id===p.id&&x.role===p.role);
       p={...p,sourceIds:policy?.sourceIds??[],products:policy?(p.products==='*'?policy.products:policy.products==='*'?p.products:p.products.filter(id=>policy.products.includes(id))):p.products};}
-    if(!p){check(typeof token==='string'&&/^[0-9a-f]{64}$/.test(token),'INVALID_SCOPE');const h=Buffer.from(digest(token));p=a.principals.find(x=>timingSafeEqual(Buffer.from(x.tokenHash),h));}
+    if(!p){check(typeof token==='string'&&/^[0-9a-f]{64}$/.test(token),'INVALID_SCOPE');p=findBearer(a,token);}
     check(p&&(!productId||p.products==='*'||p.products.includes(productId)),'INVALID_SCOPE');
     const caller=p.role==='source-proposer'&&operation==='product.read'?'source-reader':p.role;
     check(COMMANDS[operation]?.callers.includes(caller),'INVALID_SCOPE');return {...p,caller};
@@ -189,14 +163,9 @@ export class DomainProducts {
     }
     for(const row of this.#attachments.availability(attachments))check(row.current.status==='available','MISSING_SOURCE');
   }
-  #intent(p,packet){const dir=this.#file+'.intents';if(!fs.existsSync(dir)){fs.mkdirSync(dir,{mode:0o700});syncDir(path.dirname(dir));}
-    const stat=fs.lstatSync(dir);check(stat.isDirectory()&&!stat.isSymbolicLink(),'UNSAFE_PATH');check(fs.readdirSync(dir).length<=512,'VALIDATION_LIMIT');
-    const filename=path.join(dir,digest(stable([p.id,packet.operation,packet.key]))+'.json'),payloadHash=digest(stable(packet));
-    try{exclusive(filename,{payloadHash,createdAt:new Date().toISOString()});}catch(e){if(e.code!=='EEXIST')throw e;}
-    const i=privateRead(filename);exact(i,['payloadHash','createdAt']);check(i.payloadHash===payloadHash,'IDEMPOTENCY_CONFLICT');return i;
-  }
+  #intent(p,packet){return reserveIntent(this.#file,p,packet,{inclusive:false});}
   #audit(p,packet,intent){const event=actionEvent(this.#store.marker.workspaceId,p.id,packet,intent.createdAt),a=this.#registry();
-    const value={format:'3djat.product-action.v1',role:p.role,event,mac:createHmac('sha256',a.key).update(stable({role:p.role,event})).digest('hex')};
+    const value={format:'3djat.product-action.v1',role:p.role,event,mac:signAction(a,p.role,event)};
     return {event,ref:eventRef(event),record:{schemaVersion:'3djat.evidence.v1',id:event.id,revision:1,description:stable(value)}};
   }
   #auditFor(row,view){return auditRow(row,view,this.#registry());}
