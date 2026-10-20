@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path';
 import { hash, verifyPNG } from './png.mjs';
 import {PREVIEW_LIMITS,checkMediaQuery,checkMediaView,buildMedia,mediaKey,canonical,unavailableMedia} from './png-preview.mjs';
 import { DomainProducts } from './domain-products.mjs';
+import { DomainTemplates } from './domain-templates.mjs';
 import {AssetImports,checkImportFormat,installImportFormat,verifyImportedArtifact,importFailure} from './asset-import.mjs';
 import { WorkspaceConnection, RootGuard, inspectRuntime, acquireOperational, verifyLegacyMigration, projection, putProjection, validateAdoption, makeSelection, verifySelection, sameRef, check as domainCheck, fail as domainFail } from './workspace.mjs';
 const id = () => randomUUID();
@@ -28,10 +29,12 @@ const permissions={
 };
 export class Kernel {
   #db; #credentials; #closed=false; #workspace=null; #workspaceHook=()=>{}; #inTransaction=false; #operationalHeld=false; #products=null; #productOptions=null; #imports=null; #importOptions=null; #mediaCache=new Map(); #mediaBytes=0;
-  constructor(root,{recover=true,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,workspaceHook=()=>{},products=null,imports=null}={}) {
+  #templates=null; #templateOptions=null;
+  constructor(root,{recover=true,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,workspaceHook=()=>{},products=null,imports=null,templates=null}={}) {
     this.root=resolve(root);this.#workspaceHook=workspaceHook;
     this.#productOptions=products;
     this.#importOptions=imports;
+    if(templates){domainCheck(Object.keys(templates).length===1&&typeof templates.accessFile==='string','INVALID_VALUE');const file=resolve(templates.accessFile);domainCheck(file!==this.root&&!file.startsWith(this.root+'/')&&!file.startsWith(this.root+'\\'),'UNSAFE_PATH');domainCheck(!products||resolve(products.accessFile)===file,'INVALID_SCOPE');this.#templateOptions={accessFile:file};}
     const info=inspectRuntime(this.root), prior=info.integration;
     if(prior&&workspace)domainCheck(isDeepStrictEqual(prior.config,workspace),'ROOT_CONFLICT');
     const config=workspace??prior?.config;
@@ -140,6 +143,22 @@ export class Kernel {
     }return this.#products;
   }
   productReview(token,query){try{return clone(this.#productWriter().readReview(token,query));}catch(e){throw new Fault(e.code??'Product review unavailable',e.code==='INVALID_SCOPE'?403:409);}}
+  #templateWriter(){
+    requireThat(this.#workspace&&this.#templateOptions,'Template registry is not explicitly configured',409);this.#workspace.assertRuntime();
+    if(!this.#templates)this.#templates=new DomainTemplates(this.#workspace.config.domainRoot,{accessFile:this.#templateOptions.accessFile,authenticate:token=>{
+      let role;try{role=this.#role(token);}catch{return null;}const session=this.#session(token);if(!['human','conductor'].includes(role))return null;
+      return {id:session?'bve-session-'+session.id:'bve-'+role,role,products:session?[session.projectId]:'*'};
+    },hook:(stage,detail)=>this.#workspaceHook('templates:'+stage,detail)});return this.#templates;
+  }
+  templateReview(token,query){try{return clone(this.#templateWriter().readRegistry(token,query));}catch(e){throw new Fault(e.code??'CAPABILITY_UNAVAILABLE',e.code==='INVALID_SCOPE'?403:409);}}
+  templateCommand(token,packet){
+    let writer;try{writer=this.#templateWriter();}catch(e){return DomainTemplates.failure(packet,e);}
+    const result=writer.command(token,packet);if(result.schemaVersion==='3djat.failure.v1')return clone(result);
+    try{this.#workspaceHook('before-template-evidence',{});for(const event of writer.operationalEvidence())this.#copyProductAction(event);
+      this.#workspaceHook('before-template-projection',{});domainCheck(this.#currentDomain().status==='current','ACK_PENDING');
+      this.#workspaceHook('before-template-response',{result});return clone(result);
+    }catch(e){return writer.failure(packet,e,result.receipt);}
+  }
   productCommand(token,packet){
     let writer;try{writer=this.#productWriter();}catch(e){return DomainProducts.failure(packet,e);}
     const result=writer.command(token,packet);if(result.schemaVersion==='3djat.failure.v1')return clone(result);
