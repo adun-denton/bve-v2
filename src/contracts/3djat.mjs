@@ -74,6 +74,26 @@ record('proposal', { proposalId: uuid, productId: uuid, expectedRevision: rev,
 record('proposal-decision', { decisionId: uuid, productId: uuid, proposal: R, expectedRevision: rev,
   outcome: en('accepted', 'rejected', 'superseded'), reason: text, decidedAt: time,
   humanActionReceipt: R, supersedesDecision: nullable(R), correctedProposal: nullable(R) });
+// Governed extension; the product/proposal v1 shapes and their five fields stay frozen.
+const dossierFact = value => union('state', {
+  accepted: obj({ state: en('accepted'), value, sourceRefs: arr(S, 16) }),
+  unknown: obj({ state: en('unknown'), value: en(null), sourceRefs: arr(S, 16) }),
+  'not-applicable': obj({ state: en('not-applicable'), value: en(null), sourceRefs: arr(S, 16) })
+});
+schemas['dossier-payload'] = union('kind', {
+  field: union('field', Object.fromEntries(Object.entries({ description: text, modelingSoftware: str(500), productionCost: ref('price') })
+    .map(([field, value]) => [field, obj({ kind: en('field'), field: en(field), fact: dossierFact(value) })]))),
+  entry: obj({ kind: en('entry'), entryId: uuid, entryKind: en('design', 'production', 'finishing'),
+    entryType: en('design-file', 'design-revision', 'print-test', 'production-note', 'finishing-process'),
+    date, title: str(), text, attachmentRefs: arr(R, 15), sourceRefs: arr(S, 16) })
+});
+record('dossier-proposal', { proposalId: uuid, productId: uuid, expectedRevision: rev,
+  origin: en('source-extract', 'human-authored'), payload: ref('dossier-payload'), replaces: nullable(R), reason: text, corrects: nullable(R) });
+record('dossier-decision', { decisionId: uuid, productId: uuid, proposal: R, expectedRevision: rev,
+  outcome: en('accepted', 'rejected', 'superseded'), reason: text, decidedAt: time,
+  humanActionReceipt: R, supersedesDecision: nullable(R), correctedProposal: nullable(R) });
+record('dossier-record', { id: uuid, productId: uuid, revision: en(1), proposal: R, decision: R,
+  origin: en('source-extract', 'human-authored'), payload: ref('dossier-payload'), previous: nullable(R) });
 schemas['parameter'] = union('type', {
   enum: obj({ type: en('enum'), values: arr(str(100), 24, 1) }),
   number: obj({ type: en('number'), min: num(-1e9, 1e9), max: num(-1e9, 1e9) }),
@@ -174,6 +194,8 @@ const commandDefinitions = {
   'product.read': ['domain', ['human', 'conductor', 'butler', 'source-reader'], obj({ productId: uuid, atHead: R }), 'product'],
   'product.proposal.submit': ['domain', ['human', 'conductor', 'source-proposer'], ref('proposal'), 'proposal'],
   'product.proposal.decide': ['domain', ['human'], ref('proposal-decision'), 'product'],
+  'product.dossier.proposal.submit': ['domain', ['human', 'conductor', 'source-proposer'], ref('dossier-proposal'), 'dossier-proposal'],
+  'product.dossier.proposal.decide': ['domain', ['human'], ref('dossier-decision'), 'product'],
   'product.note.add': ['domain', ['human', 'conductor'], obj({ productId: uuid, text }), 'product'],
   'template.ingest': ['domain', ['human', 'conductor', 'source-proposer'], ref('template'), 'template'],
   'template.adopt': ['domain', ['human'], ref('template-decision'), 'template-decision'],
@@ -197,6 +219,8 @@ const commandRevisions = {
   'product.read': { entity: 'product', identity: 'productId', mode: 'existing' },
   'product.proposal.submit': { entity: 'product', identity: 'productId', mode: 'existing', expectedField: 'expectedRevision' },
   'product.proposal.decide': { entity: 'product', identity: 'productId', mode: 'existing', expectedField: 'expectedRevision' },
+  'product.dossier.proposal.submit': { entity: 'product', identity: 'productId', mode: 'existing', expectedField: 'expectedRevision' },
+  'product.dossier.proposal.decide': { entity: 'product', identity: 'productId', mode: 'existing', expectedField: 'expectedRevision' },
   'product.note.add': { entity: 'product', identity: 'productId', mode: 'existing' },
   'template.ingest': { entity: 'template-lineage', identity: 'templateId', mode: 'advance', proposedField: 'revision' },
   'template.adopt': { entity: 'template-adoption-pointer', identity: 'template.id', mode: 'append', expectedField: 'expectedRevision' },
@@ -239,6 +263,8 @@ schemas.context = obj({ currentRevision: optional(num(0, 2_147_483_647, true)), 
   authenticatedCaller: optional(en('human', 'conductor', 'butler', 'source-reader', 'source-proposer', 'worker', 'service')),
   proposal: optional(obj({ reference: R, record: ref('proposal') })),
   correctedProposal: optional(obj({ reference: R, record: ref('proposal') })),
+  dossierProposal: optional(obj({ reference: R, record: ref('dossier-proposal') })),
+  dossierCorrectedProposal: optional(obj({ reference: R, record: ref('dossier-proposal') })),
   experiment: optional(obj({ reference: R, record: ref('calibration') })),
   template: optional(obj({ reference: T, record: ref('template') })),
   product: optional(obj({ reference: R, record: ref('product') })),
@@ -398,6 +424,22 @@ function semantic(kind, v, c, add, p = '$') {
       if (x.field === 'workingName' && x.fact.state !== 'accepted') err('INVALID_VALUE', 'changes', 'Working name cannot be cleared');
     }
   }
+  if (['dossier-proposal', 'dossier-record'].includes(kind)) {
+    const x = v.payload, sources = x.kind === 'field' ? x.fact.sourceRefs : x.sourceRefs;
+    if (v.origin === 'source-extract' && sources.length === 0) err('MISSING_SOURCE', 'payload/sourceRefs');
+    if (x.kind === 'field' && x.field === 'productionCost' && x.fact.state === 'accepted')
+      semantic('price', x.fact.value, {}, add, `${p}/payload/fact/value`);
+    if (x.kind === 'entry') {
+      const pairs = { 'design-file': 'design', 'design-revision': 'design', 'print-test': 'production', 'production-note': 'production', 'finishing-process': 'finishing' };
+      if (pairs[x.entryType] !== x.entryKind) err('INVALID_VALUE', 'payload/entryKind');
+      if (x.entryType === 'design-file' && !x.attachmentRefs.length) err('MISSING_SOURCE', 'payload/attachmentRefs');
+      unique(x.attachmentRefs, stable, `${p}/payload/attachmentRefs`, add);
+    }
+  }
+  if (kind === 'dossier-decision') {
+    // Reuse the accepted C1 contextual semantics, with separate typed context slots.
+    semantic('proposal-decision', v, { ...c, proposal: c.dossierProposal, correctedProposal: c.dossierCorrectedProposal }, add, p);
+  }
   if (kind === 'proposal-decision') {
     if (v.correctedProposal) {
       if (same(v.correctedProposal, v.proposal) || v.outcome !== 'superseded') err('INVALID_REFERENCE', 'correctedProposal');
@@ -554,7 +596,8 @@ export function validate(kind, value, context = {}) {
       semantic(kind, value, context, add);
       // Standalone record checks bind only this record's documented revision, not its children.
       const field = { product: 'revision', template: 'revision', workspace: 'revision', 'domain-head': 'revision',
-        calibration: 'revision', proposal: 'expectedRevision', 'proposal-decision': 'expectedRevision', 'template-decision': 'expectedRevision' }[kind];
+        calibration: 'revision', proposal: 'expectedRevision', 'proposal-decision': 'expectedRevision', 'template-decision': 'expectedRevision',
+        'dossier-proposal': 'expectedRevision', 'dossier-decision': 'expectedRevision' }[kind];
       if (context.currentRevision !== undefined && field && value[field] !== context.currentRevision) add('REVISION_CONFLICT', `$/${field}`);
     }
   }

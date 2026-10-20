@@ -5,7 +5,7 @@ import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
 import {DomainStore,prepareRecord,StoreError,STORE_LIMITS} from './domain-store.mjs';
 import {validate,validateCommand,COMMANDS,ERROR_CODES} from './contracts/3djat.mjs';
 import {AttachmentFiles} from './attachment-files.mjs';
-const OPS=new Set(['product.create','product.read','product.proposal.submit','product.proposal.decide','product.note.add','attachment.register']);
+const OPS=new Set(['product.create','product.read','product.proposal.submit','product.proposal.decide','product.note.add','attachment.register','product.dossier.proposal.submit','product.dossier.proposal.decide']);
 const stable=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 const digest=x=>createHash('sha256').update(x).digest('hex');
 const uuid=x=>{const h=digest(x);return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-8${h.slice(17,20)}-${h.slice(20,32)}`;};
@@ -47,14 +47,14 @@ export function provisionProductPrincipal(file,{workspaceId,id,role,products='*'
   return {principalId:id,role,token};
 }
 function actionEvent(workspaceId,principalId,packet,time){
-  const input=structuredClone(packet.input);if(packet.operation==='product.proposal.decide')delete input.humanActionReceipt;
+  const input=structuredClone(packet.input);if(['product.proposal.decide','product.dossier.proposal.decide'].includes(packet.operation))delete input.humanActionReceipt;
   const commandHash=digest(stable({...packet,input}));
   return {id:uuid(stable([workspaceId,principalId,packet.operation,packet.key])),version:1,type:'product-action',workspaceId,principalId,operation:packet.operation,key:packet.key,productId:packet.input.productId,commandHash,recordedAt:packet.input.decidedAt??time};
 }
 const eventRef=event=>({id:event.id,revision:1,path:`Operational/event/${event.id}.json`,sha256:digest(stable(event))});
 // Public bytes helper, NOT authorization. The actual bearer is checked by command().
 export function decisionActionReference({workspaceId,principalId,packet}){
-  check(packet?.operation==='product.proposal.decide','INVALID_SCOPE');return eventRef(actionEvent(workspaceId,principalId,packet,packet.input.decidedAt));
+  check(['product.proposal.decide','product.dossier.proposal.decide'].includes(packet?.operation),'INVALID_SCOPE');return eventRef(actionEvent(workspaceId,principalId,packet,packet.input.decidedAt));
 }
 function published(view,kind){const found=new Map();const heads=[...view.records.values()].filter(x=>x.kind==='domain-head').sort((a,b)=>a.value.revision-b.value.revision);
   for(const h of heads)for(const ref of h.value.receipts){const receipt=view.records.get(ref.path);for(const r of receipt.value.records){const row=view.records.get(r.path);if(row.kind===kind&&!found.has(r.path))found.set(r.path,{...row,publication:h.reference,receipt:receipt.reference,storeReceipt:receipt.value});}}
@@ -62,7 +62,103 @@ function published(view,kind){const found=new Map();const heads=[...view.records
 }
 function productAt(view,id){const ref=view.head.products.find(x=>x.productId===id)?.dossier;check(ref,'MISSING_SOURCE');return view.records.get(ref.path);}
 function resolved(view,ref,kind){shape('revision-ref',ref);const row=view.records.get(ref.path);check(row&&row.kind===kind&&same(row.reference,ref),'EVIDENCE_MISMATCH');return row;}
-export function readProductDossier(root,{productId,atHead=null}){const view=new DomainStore(root).read({atHead});const p=productAt(view,productId);return {head:view.reference,product:{reference:p.reference,record:p.value}};}
+const DOSSIER_SUBMIT='product.dossier.proposal.submit',DOSSIER_DECIDE='product.dossier.proposal.decide';
+const sourcesOf=x=>x.kind==='field'?x.fact.sourceRefs:x.sourceRefs;
+const subject=x=>x.kind==='field'?'field:'+x.field:'entry:'+x.entryId;
+const sameSubject=(a,b)=>a.kind===b.kind&&(a.kind==='field'?a.field===b.field:a.entryId===b.entryId&&a.entryKind===b.entryKind&&a.entryType===b.entryType);
+const sameNullable=(a,b)=>a===null?b===null:b!==null&&same(a,b);
+const entryArray=kind=>({design:'designRevisions',production:'productionRecords',finishing:'finishingRecords'})[kind];
+function dossierTarget(x,h){const current=h.current.get(subject(x.payload));check(sameNullable(x.replaces,current?.reference??null),'EVIDENCE_MISMATCH');if(current)check(sameSubject(current.value.payload,x.payload),'EVIDENCE_MISMATCH');}
+function sourceStatus(store,s){try{if(s.kind!=='file')return {source:s,status:'unresolved',cause:'remote-source-unavailable'};
+  const verified=digest(store.readFile(s.location))===s.sha256;return {source:s,status:verified?'verified':'unresolved',cause:verified?null:'HASH_MISMATCH'};
+}catch(e){if(['ROOT_CHANGED','UNSAFE_PATH','PATH_CASE_MISMATCH'].includes(e.code))throw e;return {source:s,status:'unresolved',cause:e.code??'MISSING_SOURCE'};}}
+function auditRow(row,view,registry=null){
+  for(const x of row.storeReceipt.records.map(r=>view.records.get(r.path)).filter(r=>r.kind==='evidence')){
+    let a;try{a=JSON.parse(x.value.description);}catch{continue;}if(a.format!=='3djat.product-action.v1')continue;
+    check(a.event&&typeof a.event==='object'&&['human','conductor','source-proposer','butler'].includes(a.role),'EVIDENCE_MISMATCH');
+    if(registry){const expected=createHmac('sha256',registry.key).update(stable({role:a.role,event:a.event})).digest('hex');
+      check(typeof a.mac==='string'&&/^[0-9a-f]{64}$/.test(a.mac)&&timingSafeEqual(Buffer.from(a.mac),Buffer.from(expected)),'EVIDENCE_MISMATCH');}
+    check(a.event.workspaceId===view.head.workspaceId&&a.event.principalId===row.storeReceipt.principal&&a.event.operation===row.storeReceipt.operation&&a.event.key===row.storeReceipt.key&&a.event.productId===row.value.productId,'EVIDENCE_MISMATCH');
+    if(['proposal','proposal-decision','attachment','dossier-proposal','dossier-decision'].includes(row.kind)){
+      const packet={schemaVersion:'3djat.command.v1',operation:row.storeReceipt.operation,key:row.storeReceipt.key,expected:{domainHead:row.storeReceipt.previousHead,entityRevision:row.kind==='attachment'?0:row.value.expectedRevision},input:row.value};
+      check(actionEvent(view.head.workspaceId,a.event.principalId,packet,a.event.recordedAt).commandHash===a.event.commandHash,'EVIDENCE_MISMATCH');
+      if(['proposal-decision','dossier-decision'].includes(row.kind))check(same(row.value.humanActionReceipt,eventRef(a.event)),'EVIDENCE_MISMATCH');
+    }return {...a,reference:x.reference};
+  }fail('EVIDENCE_MISMATCH');
+}
+function dossierCorrection(original,corrected,h){
+  const a=original.value,b=corrected;check(a.productId===b.productId&&same(b.corrects,original.reference)&&a.proposalId!==b.proposalId&&a.origin===b.origin&&sameSubject(a.payload,b.payload),'EVIDENCE_MISMATCH');
+  for(const s of sourcesOf(b.payload))check(sourcesOf(a.payload).some(old=>equal(old,s)),'EVIDENCE_MISMATCH');
+  if(b.payload.kind==='entry')for(const r of b.payload.attachmentRefs)check(a.payload.attachmentRefs.some(old=>same(old,r)),'EVIDENCE_MISMATCH');
+  if(!sameNullable(a.replaces,b.replaces)){
+    const accepted=h.records.find(r=>same(r.value.proposal,original.reference));
+    check(accepted&&same(b.replaces,accepted.reference)&&same(h.current.get(subject(b.payload))?.reference,accepted.reference),'EVIDENCE_MISMATCH');
+  }
+}
+function dossierDecision(x,h,revision){
+  const original=h.proposals.find(r=>same(r.reference,x.proposal));check(original&&original.value.productId===x.productId,'EVIDENCE_MISMATCH');
+  const active=h.active.get(original.value.proposalId),ctx={dossierProposal:{reference:original.reference,record:original.value}};
+  check(active?(x.outcome==='superseded'&&x.correctedProposal&&active.value.outcome!=='superseded'&&same(active.reference,x.supersedesDecision)):x.supersedesDecision===null,'EVIDENCE_MISMATCH');
+  if(x.correctedProposal){const corrected=h.proposals.find(r=>same(r.reference,x.correctedProposal));check(corrected&&!h.active.has(corrected.value.proposalId),'EVIDENCE_MISMATCH');dossierCorrection(original,corrected.value,h);ctx.dossierCorrectedProposal={reference:corrected.reference,record:corrected.value};}
+  const checked=validate('dossier-decision',x,{...ctx,currentRevision:revision});check(checked.ok,checked.errors[0]?.code??'EVIDENCE_MISMATCH');
+  if(x.outcome==='accepted'){
+    if(original.value.corrects){const d=h.active.get(original.value.corrects.id);check(d?.value.outcome==='superseded'&&same(d.value.correctedProposal,original.reference)&&same(d.value.proposal,original.value.corrects),'EVIDENCE_MISMATCH');}
+    const current=h.current.get(subject(original.value.payload));check(sameNullable(original.value.replaces,current?.reference??null),'EVIDENCE_MISMATCH');
+    if(current)check(sameSubject(current.value.payload,original.value.payload),'EVIDENCE_MISMATCH');
+    check(!h.records.some(r=>same(r.value.proposal,original.reference)),'EVIDENCE_MISMATCH');
+  }return {original,context:ctx};
+}
+function materialize(proposal,decision){return {schemaVersion:'3djat.dossier-record.v1',id:decision.decisionId,productId:decision.productId,revision:1,proposal:decision.proposal,
+  decision:prepareRecord('dossier-decision',decision).reference,origin:proposal.origin,payload:structuredClone(proposal.payload),previous:proposal.replaces};}
+function withDossierRecord(previous,record,audit){const next=structuredClone(previous);next.revision++;next.sourceReceipt=audit;
+  const x=record.record.payload;if(x.kind==='entry')next[entryArray(x.entryKind)].push({id:record.record.id,date:x.date,kind:x.entryKind,title:x.title,references:[record.reference,...x.attachmentRefs],sourceRefs:x.sourceRefs});return next;}
+// One bounded join for standalone and authenticated reads. Only reachable receipt publications count.
+function dossierHistory(view,productId,registry=null){
+  const h={proposals:[],decisions:[],records:[],active:new Map(),current:new Map()};
+  const proposals=published(view,'dossier-proposal').filter(x=>x.value.productId===productId),decisions=published(view,'dossier-decision').filter(x=>x.value.productId===productId),records=published(view,'dossier-record').filter(x=>x.value.productId===productId);
+  check(proposals.length<=128&&decisions.length<=256&&records.length<=256,'VALIDATION_LIMIT');
+  const rows=[...proposals,...decisions].sort((a,b)=>a.publication.revision-b.publication.revision);
+  for(const row of rows){const x=row.value,audit=auditRow(row,view,registry),previousHead=view.records.get(row.storeReceipt.previousHead.path).value;
+    const previousRef=previousHead.products.find(p=>p.productId===productId)?.dossier;check(previousRef&&previousRef.revision===x.expectedRevision,'REVISION_CONFLICT');
+    const transitions=row.storeReceipt.transitions;
+    if(row.kind==='dossier-proposal'){
+      check(audit.event.operation===DOSSIER_SUBMIT&&['human','conductor','source-proposer'].includes(audit.role)&&(!x.corrects||audit.role==='human')&&(x.origin!=='human-authored'||audit.role==='human'),'INVALID_SCOPE');
+      check(transitions.length===0,'EVIDENCE_MISMATCH');dossierTarget(x,h);if(x.corrects){const old=h.proposals.find(p=>same(p.reference,x.corrects));check(old,'EVIDENCE_MISMATCH');dossierCorrection(old,x,h);}h.proposals.push(row);
+    }else{
+      check(audit.event.operation===DOSSIER_DECIDE&&audit.role==='human','INVALID_SCOPE');const {original}=dossierDecision(x,h,x.expectedRevision);
+      const materialized=records.filter(r=>same(r.receipt,row.receipt));
+      if(x.outcome==='accepted'){
+        check(materialized.length===1,'EVIDENCE_MISMATCH');const r=materialized[0];check(equal(r.value,materialize(original.value,x)),'EVIDENCE_MISMATCH');
+        check(transitions.length===1&&equal(transitions[0],{kind:'product',id:productId,from:x.expectedRevision,to:x.expectedRevision+1}),'EVIDENCE_MISMATCH');
+        const nextHead=view.records.get(row.publication.path).value,nextRef=nextHead.products.find(p=>p.productId===productId)?.dossier;
+        check(nextRef&&equal(view.records.get(nextRef.path).value,withDossierRecord(view.records.get(previousRef.path).value,{record:r.value,reference:r.reference},audit.reference)),'EVIDENCE_MISMATCH');
+        const p=r.value.payload;if(p.kind==='entry')for(const ref of p.attachmentRefs){const a=resolved(view,ref,'attachment');check(a.value.productId===productId,'INVALID_SCOPE');check(view.records.get(previousRef.path).value.attachments.some(v=>same(v,ref)),'EVIDENCE_MISMATCH');}
+        h.records.push(r);h.current.set(subject(r.value.payload),r);
+      }else check(materialized.length===0&&transitions.length===0,'EVIDENCE_MISMATCH');
+      h.decisions.push(row);h.active.set(x.proposal.id,row);
+    }
+  }
+  check(h.records.length===records.length,'EVIDENCE_MISMATCH');
+  // Later old commands cannot silently detach or rewrite any accepted typed envelope.
+  const product=productAt(view,productId).value;
+  for(const r of h.records)if(r.value.payload.kind==='entry'){
+    const p=r.value.payload,entries=product[entryArray(p.entryKind)].filter(x=>x.id===r.value.id);
+    check(entries.length===1&&equal(entries[0],{id:r.value.id,date:p.date,kind:p.entryKind,title:p.title,references:[r.reference,...p.attachmentRefs],sourceRefs:p.sourceRefs}),'EVIDENCE_MISMATCH');
+  }
+  for(const key of ['designRevisions','productionRecords','finishingRecords'])for(const entry of product[key])for(const ref of entry.references)
+    if(view.records.get(ref.path)?.kind==='dossier-record')check(h.records.some(r=>same(r.reference,ref)&&entry.id===r.value.id),'EVIDENCE_MISMATCH');
+  return h;
+}
+function dossierView(store,view,productId,registry=null){const h=dossierHistory(view,productId,registry),fields={};
+  for(const field of ['description','modelingSoftware','productionCost']){const r=h.current.get('field:'+field);fields[field]=r?{state:r.value.payload.fact.state,value:r.value.payload.fact.value,record:r.reference,decision:r.value.decision}:{state:'unknown',value:null,record:null,decision:null};}
+  return {schemaVersion:'3djat.dossier-view.v1',evidenceVerification:registry?'mac-verified':'hash-only',fields,
+    records:h.records.map(r=>({reference:r.reference,record:r.value,active:same(h.current.get(subject(r.value.payload))?.reference,r.reference)})),
+    proposals:h.proposals.map(r=>({reference:r.reference,record:r.value,status:h.active.get(r.value.proposalId)?.value.outcome??'pending',sources:sourcesOf(r.value.payload).map(s=>sourceStatus(store,s))})),
+    decisions:h.decisions.map(r=>({reference:r.reference,record:r.value}))};
+}
+export function readProductDossier(root,{productId,atHead=null,accessFile=null}){const store=new DomainStore(root),view=store.read({atHead}),p=productAt(view,productId);let registry=null;
+  if(accessFile!==null){safePrivate(accessFile);check(!within(store.root,accessFile)&&!within(accessFile+'.intents',store.root),'UNSAFE_PATH');registry=access(accessFile);check(registry.workspaceId===view.head.workspaceId,'INVALID_SCOPE');}
+  return {head:view.reference,product:{reference:p.reference,record:p.value},dossierExtension:dossierView(store,view,productId,registry)};}
 export class DomainProducts {
   #store; #file; #auth; #beforePublish; #hook; #attachments;
   constructor(root,{accessFile,authenticate=null,beforePublish=()=>{},hook=()=>{},attachmentSources={}}){
@@ -71,12 +167,27 @@ export class DomainProducts {
     this.#attachments=new AttachmentFiles(this.#store,{sources:attachmentSources,hook,privatePaths:[this.#file,this.#file+'.intents']});
   }
   #registry(){const a=access(this.#file);check(a.workspaceId===this.#store.marker.workspaceId,'INVALID_SCOPE');return a;}
-  #principal(token,operation,productId){
+  #principal(token,operation,productId,sourceBearing=false){
     const a=this.#registry();let p=this.#auth?.(token)??null;
+    // The callback proves BVE identity. Registry text supplies policy, never authentication.
+    if(p&&operation===DOSSIER_SUBMIT&&sourceBearing){const policy=a.principals.find(x=>x.id===p.id&&x.role===p.role);
+      p={...p,sourceIds:policy?.sourceIds??[],products:policy?(p.products==='*'?policy.products:policy.products==='*'?p.products:p.products.filter(id=>policy.products.includes(id))):p.products};}
     if(!p){check(typeof token==='string'&&/^[0-9a-f]{64}$/.test(token),'INVALID_SCOPE');const h=Buffer.from(digest(token));p=a.principals.find(x=>timingSafeEqual(Buffer.from(x.tokenHash),h));}
     check(p&&(!productId||p.products==='*'||p.products.includes(productId)),'INVALID_SCOPE');
     const caller=p.role==='source-proposer'&&operation==='product.read'?'source-reader':p.role;
     check(COMMANDS[operation]?.callers.includes(caller),'INVALID_SCOPE');return {...p,caller};
+  }
+  #dossierPolicy(p,x){
+    check(x.origin!=='human-authored'||p.role==='human','INVALID_SCOPE');check(!x.corrects||p.role==='human','INVALID_SCOPE');
+    for(const source of sourcesOf(x.payload))check(p.sourceIds.includes(source.sourceId),'INVALID_SCOPE');
+  }
+  #dossierInputs(view,product,x){
+    for(const source of sourcesOf(x.payload))check(this.#sourceStatus(source).status==='verified','MISSING_SOURCE');
+    const attachments=[];if(x.payload.kind==='entry')for(const ref of x.payload.attachmentRefs){const a=resolved(view,ref,'attachment');
+      check(a.value.productId===product.productId&&product.attachments.some(r=>same(r,ref)),'INVALID_SCOPE');
+      attachments.push({reference:a.reference,record:a.value});
+    }
+    for(const row of this.#attachments.availability(attachments))check(row.current.status==='available','MISSING_SOURCE');
   }
   #intent(p,packet){const dir=this.#file+'.intents';if(!fs.existsSync(dir)){fs.mkdirSync(dir,{mode:0o700});syncDir(path.dirname(dir));}
     const stat=fs.lstatSync(dir);check(stat.isDirectory()&&!stat.isSymbolicLink(),'UNSAFE_PATH');check(fs.readdirSync(dir).length<=512,'VALIDATION_LIMIT');
@@ -88,25 +199,11 @@ export class DomainProducts {
     const value={format:'3djat.product-action.v1',role:p.role,event,mac:createHmac('sha256',a.key).update(stable({role:p.role,event})).digest('hex')};
     return {event,ref:eventRef(event),record:{schemaVersion:'3djat.evidence.v1',id:event.id,revision:1,description:stable(value)}};
   }
-  #auditFor(row,view){
-    const candidates=row.storeReceipt.records.map(r=>view.records.get(r.path)).filter(r=>r.kind==='evidence');
-    for(const x of candidates){let a;try{a=JSON.parse(x.value.description);}catch{continue;}if(a.format!=='3djat.product-action.v1')continue;
-      const expected=createHmac('sha256',this.#registry().key).update(stable({role:a.role,event:a.event})).digest('hex');
-      check(typeof a.mac==='string'&&/^[0-9a-f]{64}$/.test(a.mac)&&timingSafeEqual(Buffer.from(a.mac),Buffer.from(expected)),'EVIDENCE_MISMATCH');
-      check(a.event.workspaceId===this.#store.marker.workspaceId&&a.event.principalId===row.storeReceipt.principal&&a.event.operation===row.storeReceipt.operation&&a.event.key===row.storeReceipt.key&&a.event.productId===row.value.productId,'EVIDENCE_MISMATCH');
-      if(['proposal','proposal-decision','attachment'].includes(row.kind)){
-        const packet={schemaVersion:'3djat.command.v1',operation:row.storeReceipt.operation,key:row.storeReceipt.key,expected:{domainHead:row.storeReceipt.previousHead,entityRevision:row.kind==='attachment'?0:row.value.expectedRevision},input:row.value};
-        check(actionEvent(this.#store.marker.workspaceId,a.event.principalId,packet,a.event.recordedAt).commandHash===a.event.commandHash,'EVIDENCE_MISMATCH');
-        if(row.kind==='proposal-decision')check(same(row.value.humanActionReceipt,eventRef(a.event)),'EVIDENCE_MISMATCH');
-      }return a;
-    }fail('EVIDENCE_MISMATCH');
-  }
-  operationalEvidence(){const view=this.#store.read(),events=new Map();for(const kind of ['proposal','proposal-decision','product','attachment'])for(const row of published(view,kind)){
+  #auditFor(row,view){return auditRow(row,view,this.#registry());}
+  operationalEvidence(){const view=this.#store.read(),events=new Map();for(const kind of ['proposal','proposal-decision','product','attachment','dossier-proposal','dossier-decision'])for(const row of published(view,kind)){
     if(!OPS.has(row.storeReceipt.operation))continue;const a=this.#auditFor(row,view);events.set(a.event.id,a.event);
   }return [...events.values()];}
-  #sourceStatus(s){try{if(s.kind!=='file')return {source:s,status:'unresolved',cause:'remote-source-unavailable'};
-    const b=this.#store.readFile(s.location),verified=digest(b)===s.sha256;return {source:s,status:verified?'verified':'unresolved',cause:verified?null:'HASH_MISMATCH'};
-  }catch(e){if(['ROOT_CHANGED','UNSAFE_PATH','PATH_CASE_MISMATCH'].includes(e.code))throw e;return {source:s,status:'unresolved',cause:e.code??'MISSING_SOURCE'};}}
+  #sourceStatus(s){return sourceStatus(this.#store,s);}
   #history(view,productId){const proposals=published(view,'proposal').filter(x=>x.value.productId===productId),decisions=published(view,'proposal-decision').filter(x=>x.value.productId===productId);
     check(proposals.length<=128&&decisions.length<=256,'VALIDATION_LIMIT');const active=new Map();
     for(const d of decisions){check(this.#auditFor(d,view).role==='human','INVALID_SCOPE');const prior=active.get(d.value.proposal.id);check(prior?same(prior.reference,d.value.supersedesDecision):d.value.supersedesDecision===null,'EVIDENCE_MISMATCH');active.set(d.value.proposal.id,d);}
@@ -119,9 +216,9 @@ export class DomainProducts {
     const attachments=this.#attachments.availability(product.value.attachments.map(ref=>{
       const row=resolved(view,ref,'attachment');check(row.value.productId===query.productId,'INVALID_SCOPE');return {reference:row.reference,record:row.value};
     }));
-    return {head:view.reference,product:{reference:product.reference,record:product.value},proposals:h.proposals.map(x=>({reference:x.reference,record:x.value,status:h.active.get(x.value.proposalId)?.value.outcome??'pending',sources:x.value.changes.flatMap(c=>c.fact.sourceRefs.map(s=>this.#sourceStatus(s)))})),decisions:h.decisions.map(x=>({reference:x.reference,record:x.value})),attachments,authority:'domain-files'};
+    return {head:view.reference,product:{reference:product.reference,record:product.value},proposals:h.proposals.map(x=>({reference:x.reference,record:x.value,status:h.active.get(x.value.proposalId)?.value.outcome??'pending',sources:x.value.changes.flatMap(c=>c.fact.sourceRefs.map(s=>this.#sourceStatus(s)))})),decisions:h.decisions.map(x=>({reference:x.reference,record:x.value})),attachments,authority:'domain-files',dossierExtension:dossierView(this.#store,view,query.productId,this.#registry())};
   }
-  #result(packet,commit,view){const type=COMMANDS[packet.operation].output,ref=type==='attachment'?commit.records.find(r=>r.id===packet.input.attachmentId&&view.records.get(r.path)?.kind==='attachment'):type==='proposal'?commit.records.find(r=>r.id===packet.input.proposalId):view.head.products.find(x=>x.productId===packet.input.productId)?.dossier;
+  #result(packet,commit,view){const type=COMMANDS[packet.operation].output,ref=type==='attachment'?commit.records.find(r=>r.id===packet.input.attachmentId&&view.records.get(r.path)?.kind==='attachment'):['proposal','dossier-proposal'].includes(type)?commit.records.find(r=>r.id===packet.input.proposalId&&view.records.get(r.path)?.kind===type):view.head.products.find(x=>x.productId===packet.input.productId)?.dossier;
     check(ref,'EVIDENCE_MISMATCH');const value={schemaVersion:'3djat.result.v1',operation:packet.operation,key:packet.key,receipt:commit.reference,owner:'domain',committedRevision:ref.revision,outputType:type,reference:ref};shape('result',value);return value;}
   static failure(packet,e,receipt=null){let code=ERROR_CODES.includes(e.code)?e.code:['ROOT_CHANGED','STORE_CHANGED','PATH_CASE_MISMATCH'].includes(e.code)?'UNSAFE_PATH':['ENOENT','MISSING_ROOT','MISSING_REFERENCE'].includes(e.code)?'MISSING_SOURCE':['COMMIT_UNCERTAIN','ACK_PENDING','REPLY_UNCERTAIN'].includes(e.code)?'EXPORT_PENDING':'CAPABILITY_UNAVAILABLE';
     if(receipt&&!ERROR_CODES.includes(e.code)&&!['ROOT_CHANGED','STORE_CHANGED','PATH_CASE_MISMATCH'].includes(e.code))code='EXPORT_PENDING';
@@ -131,9 +228,11 @@ export class DomainProducts {
     const checked=validate('command',packet);if(!checked.ok){const operation=Object.getOwnPropertyDescriptor(packet??{},'operation')?.value,key=Object.getOwnPropertyDescriptor(packet??{},'key')?.value;
       const error=new StoreError(checked.errors[0].code,{errors:checked.errors});if(OPS.has(operation)&&validate('revision-ref',{id:key,revision:1,path:'key.json',sha256:'0'.repeat(64)}).ok)return this.failure({operation,key},error);throw error;}
     check(OPS.has(packet.operation),'INVALID_SCOPE');let receipt=null;
-    try{const p=this.#principal(token,packet.operation,packet.input.productId),a=validateCommand(packet,{authenticatedCaller:p.caller,projectId:packet.input.productId});check(a.ok,a.errors[0]?.code);
+    const sourceBearing=packet.operation===DOSSIER_SUBMIT&&sourcesOf(packet.input.payload).length>0;
+    try{const p=this.#principal(token,packet.operation,packet.input.productId,sourceBearing),a=validateCommand(packet,{authenticatedCaller:p.caller,projectId:packet.input.productId});check(a.ok,a.errors[0]?.code);
       const current=this.#store.read();
       const attaching=packet.operation==='attachment.register';
+      if(packet.operation===DOSSIER_SUBMIT)this.#dossierPolicy(p,packet.input);
       if(attaching)this.#attachments.authorize(packet.input); // Current source policy also gates committed replay; no source-byte reread.
       const existing=[...current.records.values()].find(x=>x.kind==='store-receipt'&&x.value.principal===p.id&&x.value.operation===packet.operation&&x.value.key===packet.key);
       if(packet.operation==='product.read'){
@@ -143,7 +242,8 @@ export class DomainProducts {
       const intent=this.#intent(p,packet);
       if(existing){receipt=existing.reference;const owner=[...current.records.values()].find(x=>x.kind==='domain-head'&&x.value.receipts.some(r=>same(r,receipt)));const view=this.#store.read({atHead:owner.reference});
         const audit=view.records.get(existing.value.records.find(r=>view.records.get(r.path)?.kind==='evidence'&&r.id===uuid(stable([this.#store.marker.workspaceId,p.id,packet.operation,packet.key])))?.path);check(audit&&JSON.parse(audit.value.description).event.commandHash===actionEvent(this.#store.marker.workspaceId,p.id,packet,intent.createdAt).commandHash,'IDEMPOTENCY_CONFLICT');
-        const kind=attaching?'attachment':packet.operation==='product.proposal.decide'?'proposal-decision':packet.operation==='product.proposal.submit'?'proposal':'product',row=published(view,kind).find(r=>same(r.receipt,receipt));check(row,'EVIDENCE_MISMATCH');this.#auditFor(row,view);
+        const kind=attaching?'attachment':packet.operation===DOSSIER_DECIDE?'dossier-decision':packet.operation===DOSSIER_SUBMIT?'dossier-proposal':packet.operation==='product.proposal.decide'?'proposal-decision':packet.operation==='product.proposal.submit'?'proposal':'product',row=published(view,kind).find(r=>same(r.receipt,receipt));check(row,'EVIDENCE_MISMATCH');this.#auditFor(row,view);
+        if([DOSSIER_SUBMIT,DOSSIER_DECIDE].includes(packet.operation))dossierHistory(view,packet.input.productId,this.#registry());
         const result=this.#result(packet,{...existing.value,reference:receipt},view);this.#hook('before-response',{result});return result;
       }
       const view=this.#store.read({atHead:packet.expected.domainHead}),product=packet.operation==='product.create'?null:productAt(view,packet.input.productId),context={authenticatedCaller:p.caller,currentHead:view.reference,currentRevision:product?.value.revision??0,projectId:packet.input.productId,skus:view.head.skus};
@@ -152,7 +252,25 @@ export class DomainProducts {
       const audit=this.#audit(p,packet,intent),auditRecord=prepareRecord('evidence',audit.record),records=[{kind:'evidence',record:audit.record}],changes=[];
       const update=value=>{shape('product',value);changes.push({kind:'product',id:value.productId,expectedRevision:product?.value.revision??0,record:value});};
       const x=packet.input,h=product?this.#history(view,x.productId):null;
-      if(attaching){
+      let acceptedDossier=null;
+      if(packet.operation===DOSSIER_SUBMIT){
+        const history=dossierHistory(view,x.productId,this.#registry());check(history.proposals.length<128,'VALIDATION_LIMIT');
+        check(!published(view,'dossier-proposal').some(r=>r.value.proposalId===x.proposalId),'IDEMPOTENCY_CONFLICT');
+        dossierTarget(x,history);
+        if(x.corrects){const original=history.proposals.find(r=>same(r.reference,x.corrects));check(original,'EVIDENCE_MISMATCH');dossierCorrection(original,x,history);}
+        // Scope/identity of references is checked even on pending extracts; bytes are required at acceptance.
+        if(x.payload.kind==='entry')for(const ref of x.payload.attachmentRefs){const row=resolved(view,ref,'attachment');check(row.value.productId===x.productId&&product.value.attachments.some(r=>same(r,ref)),'INVALID_SCOPE');}
+        records.push({kind:'dossier-proposal',record:x});
+      }else if(packet.operation===DOSSIER_DECIDE){
+        const history=dossierHistory(view,x.productId,this.#registry());check(history.decisions.length<256,'VALIDATION_LIMIT');
+        check(!published(view,'dossier-decision').some(r=>r.value.decisionId===x.decisionId),'IDEMPOTENCY_CONFLICT');
+        const {original,context:ctx}=dossierDecision(x,history,product.value.revision);Object.assign(context,ctx);
+        check(same(x.humanActionReceipt,audit.ref),'EVIDENCE_MISMATCH');
+        if(x.outcome==='accepted'){
+          check(history.records.length<256,'VALIDATION_LIMIT');acceptedDossier=original.value;this.#dossierInputs(view,product.value,acceptedDossier);
+          const value=materialize(acceptedDossier,x),record=prepareRecord('dossier-record',value);update(withDossierRecord(product.value,record,auditRecord.reference));records.push({kind:'dossier-record',record:value});
+        }records.push({kind:'dossier-decision',record:x});
+      }else if(attaching){
         const attachment=prepareRecord('attachment',x),next=structuredClone(product.value);next.revision++;next.sourceReceipt=auditRecord.reference;next.attachments.push(attachment.reference);update(next);records.push({kind:'attachment',record:x});
       }else if(packet.operation==='product.create'){
         check(x.workingName.trim().length>0,'INVALID_VALUE');const unknown=()=>({state:'unknown',value:null,sourceRefs:[],decision:null});
@@ -181,11 +299,17 @@ export class DomainProducts {
       const valid=validateCommand(packet,context);check(valid.ok,valid.errors[0]?.code,{errors:valid.errors});
       let attachmentProof=null;
       this.#hook('before-publication',{});this.#store.hook=(stage,detail)=>{if(stage==='locked'){
-        const locked=this.#store.read();check(same(locked.reference,view.reference),'REVISION_CONFLICT');const caller=this.#principal(token,packet.operation,x.productId);check(caller.id===p.id&&caller.role===p.role,'INVALID_SCOPE');
+        const locked=this.#store.read();check(same(locked.reference,view.reference),'REVISION_CONFLICT');const caller=this.#principal(token,packet.operation,x.productId,sourceBearing);check(caller.id===p.id&&caller.role===p.role,'INVALID_SCOPE');
         const v=validateCommand(packet,context);check(v.ok,v.errors[0]?.code);
         if(packet.operation==='product.proposal.decide'&&x.outcome==='accepted')for(const c of context.proposal.record.changes)for(const s of c.fact.sourceRefs)check(this.#sourceStatus(s).status==='verified','MISSING_SOURCE');
-        this.#beforePublish(audit.event);
+        // New dossier actions are copied to operations only after file publication.
+        if(![DOSSIER_SUBMIT,DOSSIER_DECIDE].includes(packet.operation))this.#beforePublish(audit.event);
       }this.#hook(stage,detail);
+        if([DOSSIER_SUBMIT,DOSSIER_DECIDE].includes(packet.operation)&&(stage==='locked'||stage==='before-replace')){
+          const caller=this.#principal(token,packet.operation,x.productId,sourceBearing);check(caller.id===p.id&&caller.role===p.role,'INVALID_SCOPE');
+          if(packet.operation===DOSSIER_SUBMIT)this.#dossierPolicy(caller,x);
+          if(acceptedDossier)this.#dossierInputs(view,product.value,acceptedDossier);
+        }
         if(attaching&&(stage==='locked'||stage==='before-replace')){
           const caller=this.#principal(token,packet.operation,x.productId);check(caller.id===p.id&&caller.role===p.role,'INVALID_SCOPE');this.#attachments.authorize(x);
           if(stage==='locked')attachmentProof=this.#attachments.capture(x,view);else attachmentProof();
@@ -194,7 +318,12 @@ export class DomainProducts {
       const commit=this.#store.commit({principal:p.id,operation:packet.operation,key:packet.key,expectedHead:packet.expected.domainHead,changes,records});receipt=commit.receipt;
       const committed=this.#store.read({atHead:commit.head}),result=this.#result(packet,{reference:receipt,records:committed.records.get(receipt.path).value.records},committed);
       this.#hook('after-domain-commit',{result});this.#hook('before-response',{result});return result;
-    }catch(e){return this.failure(packet,e,receipt);}finally{this.#store.hook=()=>{};}
+    }catch(e){
+      if(!receipt&&[DOSSIER_SUBMIT,DOSSIER_DECIDE].includes(packet.operation)&&e.code==='COMMIT_UNCERTAIN'){
+        try{const view=this.#store.read();receipt=[...view.records.values()].find(r=>r.kind==='store-receipt'&&r.value.operation===packet.operation&&r.value.key===packet.key&&r.value.principal===this.#principal(token,packet.operation,packet.input.productId,sourceBearing).id)?.reference??null;}catch{}
+      }
+      return this.failure(packet,e,receipt);
+    }finally{this.#store.hook=()=>{};}
   }
   #correctionSources(original,corrected){check(original.productId===corrected.productId&&same(corrected.corrects,prepareRecord('proposal',original).reference),'EVIDENCE_MISMATCH');
     check(equal(original.changes.map(c=>c.field).sort(),corrected.changes.map(c=>c.field).sort()),'EVIDENCE_MISMATCH');for(const c of corrected.changes){const old=original.changes.find(x=>x.field===c.field);for(const s of c.fact.sourceRefs)check(old.fact.sourceRefs.some(x=>equal(x,s)),'EVIDENCE_MISMATCH');}}

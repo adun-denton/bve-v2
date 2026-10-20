@@ -260,8 +260,8 @@ test('domain head binds dossier/SKU indexes and exact previous revision', () => 
   mutate('domain-head', h, x => x.revision = 2, 'REVISION_CONFLICT');
   mutate('domain-head', h, x => x.products[0].dossier.id = V, 'INVALID_REFERENCE');
 });
-test('all 18 proposed commands have bounded input/output and exact owner/caller metadata', () => {
-  assert.equal(Object.keys(COMMANDS).length, 18);
+test('all 20 proposed commands have bounded input/output and exact owner/caller metadata', () => {
+  assert.equal(Object.keys(COMMANDS).length, 20);
   for (const [op, d] of Object.entries(COMMANDS)) {
     assert.ok(CONTRACT_SHAPES[d.output]); assert.ok(d.callers.length); assert.ok(['domain', 'operational'].includes(d.owner));
     fails(validateCommand(command(op, { arbitraryUpdate: true })), 'UNKNOWN_FIELD');
@@ -325,6 +325,9 @@ test('positive command matrix is executable and result references retain the com
   const inputs = {
     'product.create': { productId: U, productCode: null, workingName: 'Authored fixture' }, 'product.read': { productId: U, atHead: R(V) },
     'product.proposal.submit': proposal(), 'product.proposal.decide': d, 'product.note.add': { productId: U, text: 'Authored note' },
+    'product.dossier.proposal.submit': { schemaVersion: '3djat.dossier-proposal.v1', proposalId: V, productId: U, expectedRevision: 1,
+      origin: 'human-authored', payload: { kind: 'field', field: 'description', fact: { state: 'accepted', value: 'Inert description', sourceRefs: [] } }, replaces: null, reason: 'Authored only', corrects: null },
+    'product.dossier.proposal.decide': { ...d, schemaVersion: '3djat.dossier-decision.v1' },
     'template.ingest': template(), 'template.adopt': decision(), 'operation.request': resolved().run, 'operation.commission': resolved().run,
     'asset.import.stage': imported(), 'asset.import.commit': { importId: V, stageReceipt: R(), sha256: H }, 'attachment.register': a,
     'calibration.create': e, 'calibration.review': { schemaVersion: '3djat.calibration-review.v1', reviewId: U, experiment: R(), comments: 'Authored review', selectedVariants: [], humanActionReceipt: R(), reviewedAt: NOW },
@@ -334,6 +337,7 @@ test('positive command matrix is executable and result references retain the com
   // Independent command examples: current CAS subject revisions, not child/snapshot revisions.
   const currentRevisions = {
     'product.create': 0, 'product.read': 1, 'product.proposal.submit': 1, 'product.proposal.decide': 1, 'product.note.add': 1,
+    'product.dossier.proposal.submit': 1, 'product.dossier.proposal.decide': 1,
     'template.ingest': 0, 'template.adopt': 1, 'operation.request': 0, 'operation.commission': 4,
     'asset.import.stage': 0, 'asset.import.commit': 2, 'attachment.register': 0, 'calibration.create': 0,
     'calibration.review': 1, 'template.promote': 1, 'candidate.decide': 0, 'workspace.adopt': 0, 'workspace.export': 1
