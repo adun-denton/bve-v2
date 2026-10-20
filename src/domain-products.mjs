@@ -167,10 +167,10 @@ export class DomainProducts {
     this.#attachments=new AttachmentFiles(this.#store,{sources:attachmentSources,hook,privatePaths:[this.#file,this.#file+'.intents']});
   }
   #registry(){const a=access(this.#file);check(a.workspaceId===this.#store.marker.workspaceId,'INVALID_SCOPE');return a;}
-  #principal(token,operation,productId){
+  #principal(token,operation,productId,sourceBearing=false){
     const a=this.#registry();let p=this.#auth?.(token)??null;
     // The callback proves BVE identity. Registry text supplies policy, never authentication.
-    if(p&&operation===DOSSIER_SUBMIT){const policy=a.principals.find(x=>x.id===p.id&&x.role===p.role);
+    if(p&&operation===DOSSIER_SUBMIT&&sourceBearing){const policy=a.principals.find(x=>x.id===p.id&&x.role===p.role);
       p={...p,sourceIds:policy?.sourceIds??[],products:policy?(p.products==='*'?policy.products:policy.products==='*'?p.products:p.products.filter(id=>policy.products.includes(id))):p.products};}
     if(!p){check(typeof token==='string'&&/^[0-9a-f]{64}$/.test(token),'INVALID_SCOPE');const h=Buffer.from(digest(token));p=a.principals.find(x=>timingSafeEqual(Buffer.from(x.tokenHash),h));}
     check(p&&(!productId||p.products==='*'||p.products.includes(productId)),'INVALID_SCOPE');
@@ -228,7 +228,8 @@ export class DomainProducts {
     const checked=validate('command',packet);if(!checked.ok){const operation=Object.getOwnPropertyDescriptor(packet??{},'operation')?.value,key=Object.getOwnPropertyDescriptor(packet??{},'key')?.value;
       const error=new StoreError(checked.errors[0].code,{errors:checked.errors});if(OPS.has(operation)&&validate('revision-ref',{id:key,revision:1,path:'key.json',sha256:'0'.repeat(64)}).ok)return this.failure({operation,key},error);throw error;}
     check(OPS.has(packet.operation),'INVALID_SCOPE');let receipt=null;
-    try{const p=this.#principal(token,packet.operation,packet.input.productId),a=validateCommand(packet,{authenticatedCaller:p.caller,projectId:packet.input.productId});check(a.ok,a.errors[0]?.code);
+    const sourceBearing=packet.operation===DOSSIER_SUBMIT&&sourcesOf(packet.input.payload).length>0;
+    try{const p=this.#principal(token,packet.operation,packet.input.productId,sourceBearing),a=validateCommand(packet,{authenticatedCaller:p.caller,projectId:packet.input.productId});check(a.ok,a.errors[0]?.code);
       const current=this.#store.read();
       const attaching=packet.operation==='attachment.register';
       if(packet.operation===DOSSIER_SUBMIT)this.#dossierPolicy(p,packet.input);
@@ -298,14 +299,14 @@ export class DomainProducts {
       const valid=validateCommand(packet,context);check(valid.ok,valid.errors[0]?.code,{errors:valid.errors});
       let attachmentProof=null;
       this.#hook('before-publication',{});this.#store.hook=(stage,detail)=>{if(stage==='locked'){
-        const locked=this.#store.read();check(same(locked.reference,view.reference),'REVISION_CONFLICT');const caller=this.#principal(token,packet.operation,x.productId);check(caller.id===p.id&&caller.role===p.role,'INVALID_SCOPE');
+        const locked=this.#store.read();check(same(locked.reference,view.reference),'REVISION_CONFLICT');const caller=this.#principal(token,packet.operation,x.productId,sourceBearing);check(caller.id===p.id&&caller.role===p.role,'INVALID_SCOPE');
         const v=validateCommand(packet,context);check(v.ok,v.errors[0]?.code);
         if(packet.operation==='product.proposal.decide'&&x.outcome==='accepted')for(const c of context.proposal.record.changes)for(const s of c.fact.sourceRefs)check(this.#sourceStatus(s).status==='verified','MISSING_SOURCE');
         // New dossier actions are copied to operations only after file publication.
         if(![DOSSIER_SUBMIT,DOSSIER_DECIDE].includes(packet.operation))this.#beforePublish(audit.event);
       }this.#hook(stage,detail);
         if([DOSSIER_SUBMIT,DOSSIER_DECIDE].includes(packet.operation)&&(stage==='locked'||stage==='before-replace')){
-          const caller=this.#principal(token,packet.operation,x.productId);check(caller.id===p.id&&caller.role===p.role,'INVALID_SCOPE');
+          const caller=this.#principal(token,packet.operation,x.productId,sourceBearing);check(caller.id===p.id&&caller.role===p.role,'INVALID_SCOPE');
           if(packet.operation===DOSSIER_SUBMIT)this.#dossierPolicy(caller,x);
           if(acceptedDossier)this.#dossierInputs(view,product.value,acceptedDossier);
         }
@@ -319,7 +320,7 @@ export class DomainProducts {
       this.#hook('after-domain-commit',{result});this.#hook('before-response',{result});return result;
     }catch(e){
       if(!receipt&&[DOSSIER_SUBMIT,DOSSIER_DECIDE].includes(packet.operation)&&e.code==='COMMIT_UNCERTAIN'){
-        try{const view=this.#store.read();receipt=[...view.records.values()].find(r=>r.kind==='store-receipt'&&r.value.operation===packet.operation&&r.value.key===packet.key&&r.value.principal===this.#principal(token,packet.operation,packet.input.productId).id)?.reference??null;}catch{}
+        try{const view=this.#store.read();receipt=[...view.records.values()].find(r=>r.kind==='store-receipt'&&r.value.operation===packet.operation&&r.value.key===packet.key&&r.value.principal===this.#principal(token,packet.operation,packet.input.productId,sourceBearing).id)?.reference??null;}catch{}
       }
       return this.failure(packet,e,receipt);
     }finally{this.#store.hook=()=>{};}

@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import * as fs from 'node:fs';import * as path from 'node:path';import{randomUUID}from'node:crypto';import{pathToFileURL}from'node:url';import{DatabaseSync}from'node:sqlite';
 import{DomainProducts,readProductDossier}from'../src/domain-products.mjs';import{prepareRecord,restoreSnapshot,verifySnapshot}from'../src/domain-store.mjs';import{backupCombined,verifyCombined,restoreCombined}from'../src/workspace-backup.mjs';
 import{setup,packet,proposal,decision,entry,field,send,ok,fail,read,policy,changePolicy,tinyAttachment,PRODUCT,WORKSPACE,SUBMIT,DECIDE}from'./fixtures/3djat/dossier-fixture.mjs';
+import{UNICODE_TEXT,UNICODE_UTF8,assertUnicode}from'./fixtures/3djat/dossier-unicode.mjs';
 const submit=(w,p=proposal(w),who=w.source)=>({packet:p,result:send(w,p,who)});
 const accept=(w,r,extra={})=>send(w,decision(w,r.reference??r,'accepted',extra));
 const fields=w=>read(w).dossierExtension.fields;
@@ -11,7 +12,7 @@ test('group04 minimal create, missing fields and BVE-absent authenticated source
  assert.equal(read(w).dossierExtension.evidenceVerification,'mac-verified');assert.equal(readProductDossier(w.root,{productId:PRODUCT}).dossierExtension.evidenceVerification,'hash-only');assert(!fs.existsSync(w.runtime));
 });
 test('group05 all scalar fields, explicit unknown/not-applicable and independent payload bytes',t=>{
- const w=setup(t);for(const [name,value]of [['description','متن آزمایشی 🪴'],['modelingSoftware','INERT software'],['productionCost',{amount:'1',currency:'IRT',unit:'toman',per:'item',effectiveDate:'2026-01-01'}]]){const r=submit(w,proposal(w,field(w,name,value))).result;accept(w,r);assert.deepEqual(fields(w)[name].value,value);}
+ const w=setup(t);for(const [name,value]of [['description',UNICODE_TEXT],['modelingSoftware','INERT software'],['productionCost',{amount:'1',currency:'IRT',unit:'toman',per:'item',effectiveDate:'2026-01-01'}]]){const r=submit(w,proposal(w,field(w,name,value))).result;accept(w,r);assert.deepEqual(fields(w)[name].value,value);if(name==='description'){assertUnicode(fields(w)[name].value);const bytes=fs.readFileSync(path.join(w.root,fields(w)[name].record.path));assert(bytes.includes(UNICODE_UTF8));assertUnicode(JSON.parse(bytes).payload.fact.value);}}
  for(const state of ['unknown','not-applicable']){const prior=fields(w).description.record,p=proposal(w,field(w,'description',null,state),{replaces:prior});accept(w,submit(w,p).result);const f=fields(w).description;assert.equal(f.state,state);assert(f.record&&f.decision);assert.equal(JSON.parse(fs.readFileSync(path.join(w.root,f.record.path))).payload.fact.state,state);}
  assert.deepEqual(Object.keys(read(w).product.record.facts),['dimensions','material','sellingPrice']);
 });

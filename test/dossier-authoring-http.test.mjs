@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import*as fs from'node:fs';import*as path from'node:path';import{randomUUID}from'node:crypto';import{request}from'node:http';
 import{serve}from'../src/server.mjs';import{Kernel}from'../src/kernel.mjs';import{prepareRecord}from'../src/domain-store.mjs';
 import{setup,packet,proposal,decision,entry,field,send,ok,fail,read,policy,changePolicy,PRODUCT,SUBMIT}from'./fixtures/3djat/dossier-fixture.mjs';
+import{UNICODE_TEXT,UNICODE_UTF8,assertUnicode}from'./fixtures/3djat/dossier-unicode.mjs';
 async function start(w){w.k?.close();const app=await serve({root:w.runtime,port:0,products:{accessFile:w.accessFile}});w.k=app.kernel;return app;}
 async function post(app,token,route,value,{raw=Buffer.from(JSON.stringify(value)),cuts=[]}={}){return new Promise((yes,no)=>{const req=request(app.origin+route,{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'}},res=>{const b=[];res.on('data',x=>b.push(x));res.on('end',()=>{try{yes({status:res.statusCode,body:JSON.parse(Buffer.concat(b))});}catch(e){no(e);}});});req.on('error',no);(async()=>{let at=0;for(const end of cuts){req.write(raw.subarray(at,end));at=end;await new Promise(r=>setTimeout(r,10));}req.end(raw.subarray(at));})().catch(no);});}
 
@@ -25,7 +26,7 @@ test('group21 file-first event/cache acknowledgement faults expose real pending 
 });
 test('group22 actual UTF8/body128KiB/closed field/query errors with no fabricated command failure or private path',async t=>{
  const w=setup(t,{kernel:true});w.k.close();policy(w);const app=await start(w);try{
- const p=proposal(w,field(w,'description','متن آزمایشی 🧪')),raw=Buffer.from(JSON.stringify(p)),at=raw.indexOf(Buffer.from('🧪'));const r=await post(app,w.c.human,'/api/product',p,{raw,cuts:[at+1,at+3]});assert.equal(r.status,200);assert.equal(read(w).dossierExtension.proposals[0].record.payload.fact.value,'متن آزمایشی 🧪');
+ const chunks=[];app.server.prependListener('request',req=>req.on('data',b=>chunks.push(Buffer.from(b))));const p=proposal(w,field(w,'description',UNICODE_TEXT)),raw=Buffer.from(JSON.stringify(p)),at=raw.indexOf(Buffer.from([0xf0,0x9f,0xa7,0xaa]));assert(at>=0);const r=await post(app,w.c.human,'/api/product',p,{raw,cuts:[at+1,at+3]});assert.equal(r.status,200);assert.deepEqual(Buffer.concat(chunks),raw);let end=0;const observed=chunks.map(b=>(end+=b.length));assert(observed.includes(at+1)&&observed.includes(at+3),'Server must actually observe the requested multibyte boundaries');assertUnicode(read(w).dossierExtension.proposals[0].record.payload.fact.value);const bytes=fs.readFileSync(path.join(w.root,r.body.reference.path));assert(bytes.includes(UNICODE_UTF8));assertUnicode(JSON.parse(bytes).payload.fact.value);
  for(const route of ['/api/product','/api/product-review']){
   const value=route==='/api/product'?packet(w,'product.read',{productId:PRODUCT,atHead:w.store.read().reference}):{productId:PRODUCT,atHead:w.store.read().reference};const b=Buffer.from(JSON.stringify(value)),exact=Buffer.concat([b,Buffer.alloc(128*1024-b.length,32)]);assert.equal((await post(app,w.c.human,route,value,{raw:exact})).status,200);assert.equal((await post(app,w.c.human,route,value,{raw:Buffer.concat([exact,Buffer.from(' ')])})).status,413);assert.equal((await post(app,w.c.human,route,value,{raw:Buffer.from([0xff])})).status,400);
  }
@@ -33,7 +34,7 @@ test('group22 actual UTF8/body128KiB/closed field/query errors with no fabricate
  }finally{await app.stop();}
 });
 test('group23 joined HTTP bound refuses above1MiB without truncation while standalone content remains readable',async t=>{
- const w=setup(t,{kernel:true,reserve:4*1024**2});for(let n=0;n<27;n++)send(w,proposal(w,field(w,'description','گ'.repeat(20000))));const query={productId:PRODUCT,atHead:w.store.read().reference};assert(Buffer.byteLength(JSON.stringify(w.writer.readReview(w.human.token,query)))>1024**2);const app=await start(w);try{const r=await post(app,w.c.human,'/api/product-review',query);assert.equal(r.status,409);assert.deepEqual(r.body,{error:'VALIDATION_LIMIT'});assert.equal(read(w).dossierExtension.proposals.length,27);}finally{await app.stop();}
+ const w=setup(t,{kernel:true,reserve:4*1024**2});for(let n=0;n<27;n++)send(w,proposal(w,field(w,'description','\u06af'.repeat(20000))));const query={productId:PRODUCT,atHead:w.store.read().reference};assert(Buffer.byteLength(JSON.stringify(w.writer.readReview(w.human.token,query)))>1024**2);const app=await start(w);try{const r=await post(app,w.c.human,'/api/product-review',query);assert.equal(r.status,409);assert.deepEqual(r.body,{error:'VALIDATION_LIMIT'});assert.equal(read(w).dossierExtension.proposals.length,27);}finally{await app.stop();}
 });
 test('group24 duplicate materialization/entry envelope tampering and existing head/file capacities fail closed',async t=>{
  const w=setup(t,{kernel:true,reserve:2*1024**2});const p=proposal(w,entry(w)),r=send(w,p,w.source);send(w,decision(w,r.reference));const d=read(w),record=structuredClone(d.dossierExtension.records[0].record);record.id=randomUUID();
