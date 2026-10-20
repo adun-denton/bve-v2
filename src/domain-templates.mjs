@@ -28,6 +28,10 @@ function auditOf(row,view,a){
  shape('source-ref',{kind:'file',sourceId:'time-check',revision:'1',sha256:'0'.repeat(64),location:'source.txt',locator:{kind:'page',page:1},observedAt:event.recordedAt});
  check(equal(event,signed.event)&&['human','conductor','source-proposer'].includes(signed.role),'EVIDENCE_MISMATCH');
  check(e.reference.id===event.id&&e.reference.revision===1&&row.storeReceipt.records.length===2,'EVIDENCE_MISMATCH');
+ const subject=row.reference,audit=e.reference,ingest=row.kind==='template';
+ const transitions=ingest?[{kind:'template',id:subject.id,from:subject.revision-1,to:subject.revision}]:[];
+ const plan={expectedHead:row.storeReceipt.previousHead,changes:ingest?[{kind:'template',id:subject.id,expectedRevision:subject.revision-1,reference:subject}]:[],records:[{kind:'evidence',reference:audit},...(!ingest?[{kind:'template-decision',reference:subject}]:[])]};
+ check(equal(row.storeReceipt.records,[audit,subject])&&equal(row.storeReceipt.transitions,transitions)&&row.storeReceipt.payloadHash===digest(stable(plan)+'\n'),'EVIDENCE_MISMATCH');
  if(a)verifyAction(a,signed.role,event,signed.mac);else check(typeof signed.mac==='string'&&/^[0-9a-f]{64}$/.test(signed.mac),'EVIDENCE_MISMATCH');
  if(row.kind==='template-decision')check(same(row.value.humanActionReceipt,eventRef(event))&&signed.role==='human','EVIDENCE_MISMATCH');
  const v=validateCommand(packet,{authenticatedCaller:signed.role});check(v.ok,'EVIDENCE_MISMATCH');

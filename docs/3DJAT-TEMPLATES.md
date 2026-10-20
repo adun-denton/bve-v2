@@ -32,6 +32,8 @@ Adoption requires experiment/evidenceReceipt=null and outputs=[]. It creates no 
 
 File publication is authoritative first. Native action copy/projection failure returns EXPORT_PENDING with real domain receipt; explicit same-key reconciliation copies the same event without another decision/head/job. Preserve partial roots/first outcomes; do not pretend cross-store atomicity or diagnose earlier unrelated publication/lock failures from a passing retry.
 
+Semantic history also reconstructs each frozen store plan from its verified subject and audit references, checks SHA256 of canonical JSON with its trailing LF, and requires exact receipt record order and transitions. A mismatch refuses EVIDENCE_MISMATCH before selection, command replay, intent creation or operational acknowledgement, including in non-authoritative hash-only reads. The action command hash has different bytes and cannot substitute for this store-plan hash.
+
 ## Closed queries and views
 
 All queries have schemaVersion=`3djat.template-query.v1`, kind and exact current atHead (revision-ref). Unknown/omitted fields refuse:
