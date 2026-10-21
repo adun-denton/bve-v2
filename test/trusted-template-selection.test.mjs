@@ -4,13 +4,13 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {randomUUID,createHash} from 'node:crypto';
 import {DomainTemplates} from '../src/domain-templates.mjs';
-import {template,setup,ready,ingest,adopt,injectIngestAudit,injectDecisionSequence,defaultGrant,W,P,OTHER,TIME} from './fixtures/3djat/trusted-template-selection-fixture.mjs';
+import {template,setup,ready,ingest,adopt,injectIngestAudit,injectDecisionSequence,rewriteLatestReceipt,largeValidTemplate,defaultGrant,W,P,OTHER,TIME} from './fixtures/3djat/trusted-template-selection-fixture.mjs';
 
 let assertions=0;
 const equal=(a,b)=>{assertions++;assert.deepEqual(a,b);};
 const truth=x=>{assertions++;assert.ok(x);};
 const refusal=(fn,code)=>{assertions++;assert.throws(fn,e=>e?.code===code,code);};
-after(()=>{assert.ok(assertions<=180,`Authored assertion count ${assertions} exceeds 180`);});
+after(()=>{process.stdout.write(`AUTHORED_ASSERTIONS=${assertions}\n`);assert.ok(assertions<=200,`Authored assertion count ${assertions} exceeds 200`);});
 
 test('01 signed active operation returns closed bounded provenance, not a capability',t=>{
  const w=ready(t),r=w.resolve();equal(Object.keys(r).sort(),['applicability','brand','head','operation','principalId','productId','sourceStatus'].sort());
@@ -145,4 +145,60 @@ test('23 source file limit and old read route retain their own semantics',t=>{
 test('24 actual immutable byte corruption keeps HASH_MISMATCH, not a semantic-audit substitute',t=>{
  const w=ready(t),ref=w.resolve().operation.reference;truth(ref.path.startsWith('Domain/template/'));
  fs.writeFileSync(path.join(w.root,ref.path),'Changed authored bytes\n');refusal(()=>w.resolve(),'HASH_MISMATCH');
+});
+test('25 signed receipt plan payload, order and transition faults reach audit',t=>{
+ for(const fault of ['payloadHash','recordOrder','transition']){
+  const w=ready(t);equal(w.resolve().operation.reference.id,'operation-a');
+  rewriteLatestReceipt(w,r=>{
+   if(fault==='payloadHash')r.payloadHash='f'.repeat(64);
+   if(fault==='recordOrder')r.records.reverse();
+   if(fault==='transition')r.transitions=[{kind:'template',id:'operation-a',from:1,to:2}];
+  });
+  refusal(()=>w.resolve(),'EVIDENCE_MISMATCH');
+ }
+});
+test('26 valid-MAC packet mismatch, omitted reachable subject and wrong signed tail refuse',t=>{
+ const a=ready(t);equal(a.resolve().operation.reference.id,'operation-a');
+ injectIngestAudit(a,{eventChange:e=>e.commandHash='f'.repeat(64)}); // MAC is signed over altered event.
+ refusal(()=>a.resolve(),'EVIDENCE_MISMATCH');
+ const b=ready(t);ingest(b,template('other'));equal(b.resolve().operation.reference.id,'operation-a');
+ rewriteLatestReceipt(b,r=>r.records=r.records.filter(x=>x.id!== 'other'));
+ refusal(()=>b.resolve(),'EVIDENCE_MISMATCH'); // Head index proves a receipt-omitted subject before loose-subject count.
+ const c=ready(t),ref=c.resolve().operation.reference,first=c.resolve().operation.decisionReference;
+ adopt(c,ref);equal(c.resolve().operation.reference.id,'operation-a');
+ injectDecisionSequence(c,ref,2,first);refusal(()=>c.resolve(),'EVIDENCE_MISMATCH');
+});
+test('27 mixed Brand identity and changed final read, product and source policy refuse',t=>{
+ const mixed=ready(t);adopt(mixed,ingest(mixed,template('brand-a')));
+ truth(mixed.resolve({branded:true,brandTemplateId:'brand-a'}).brand!==null);
+ mixed.nativeCalls=0;mixed.onNative=n=>{if(n===2)mixed.native={...mixed.native,id:'other'};};
+ refusal(()=>mixed.resolve({branded:true,brandTemplateId:'brand-a'}),'INVALID_SCOPE');
+ for(const mode of ['native-product','read','template','private-product']){
+  const w=ready(t);equal(w.resolve({mode:'historical'}).operation.reference.id,'operation-a');w.nativeCalls=0;
+  w.onNative=n=>{if(n!==2)return;
+   if(mode==='native-product')w.native={...w.native,products:[OTHER]};
+   if(mode==='read')w.setGrant({...defaultGrant(),operations:['ingest','adopt']});
+   if(mode==='template')w.setGrant({...defaultGrant(),templateIds:['other']});
+   if(mode==='private-product')w.changeAccess(a=>a.principals[0].products=[OTHER]);
+  };
+  refusal(()=>w.resolve({mode:'historical'}),'INVALID_SCOPE');
+ }
+ for(const mode of ['new','historical']){
+  const w=setup(t),ref=ingest(w,template('operation-a',{sourceRefs:[w.sourceRef]}));adopt(w,ref);
+  equal(w.resolve({mode}).sourceStatus.operation[0].status,'verified');w.nativeCalls=0;
+  w.onNative=n=>{if(n===2)w.setGrant({...defaultGrant(),sourceIds:[]});};
+  if(mode==='new')refusal(()=>w.resolve({mode}),'INVALID_SCOPE');
+  else equal(w.resolve({mode}).sourceStatus.operation[0].cause,'INVALID_SCOPE');
+ }
+});
+test('28 output limit refuses a valid bounded historical selection; clones remain independent',t=>{
+ const small=ready(t),result=small.resolve();result.operation.record.title='Caller edit';
+ equal(small.resolve().operation.record.title,'Authored template');
+ const w=setup(t),ids=Array.from({length:16},(_,i)=>'large-'+i);
+ w.setGrant({...defaultGrant(),sourceIds:ids});
+ const operation=ingest(w,largeValidTemplate('operation-a'));
+ const brand=ingest(w,largeValidTemplate('brand-a'));
+ injectDecisionSequence(w,operation,0);injectDecisionSequence(w,brand,0);
+ w.setGrant(defaultGrant()); // Historical source IDs now blocked without byte reads.
+ refusal(()=>w.resolve({mode:'historical',branded:true,brandTemplateId:'brand-a'}),'VALIDATION_LIMIT');
 });

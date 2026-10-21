@@ -62,12 +62,34 @@ export function injectIngestAudit(w,{mac='valid',role='human',eventChange=null}=
  const evidence={schemaVersion:'3djat.evidence.v1',id:event.id,revision:1,description:stable(signed)};
  return w.store.commit({principal:w.human.principalId,operation:'template.ingest',key,expectedHead:head,changes:[{kind:'template',id:input.templateId,expectedRevision:0,record:input}],records:[{kind:'evidence',record:evidence}]});
 }
-export function injectDecisionSequence(w,ref,sequence=9){
+export function injectDecisionSequence(w,ref,sequence=9,tail=null){
  const key=randomUUID(),head=w.store.read().reference,input={schemaVersion:'3djat.template-decision.v1',decisionId:randomUUID(),template:ref,action:'adopt',purpose:'Authored sequence',appliesTo:['artistic'],expectedRevision:sequence,experiment:null,outputs:[],evidenceReceipt:null,humanActionReceipt:{id:'placeholder',revision:1,path:'placeholder.json',sha256:'0'.repeat(64)},decidedAt:TIME,supersedesDecision:null,reason:'Authored only'};
+ input.supersedesDecision=tail;
  const packet={schemaVersion:'3djat.command.v1',operation:'template.adopt',key,expected:{domainHead:head,entityRevision:sequence},input};
  input.humanActionReceipt=templateDecisionActionReference({workspaceId:W,principalId:w.human.principalId,packet});
  const normalized=structuredClone(input);delete normalized.humanActionReceipt;
  const event={id:uuid(stable([W,w.human.principalId,packet.operation,key])),version:1,type:'template-action',workspaceId:W,principalId:w.human.principalId,operation:packet.operation,key,templateId:ref.id,commandHash:digest(stable({...packet,input:normalized})),recordedAt:TIME};
  const evidence={schemaVersion:'3djat.evidence.v1',id:event.id,revision:1,description:stable({format:'3djat.template-action.v1',role:'human',event,mac:signAction(access(w.accessFile),'human',event)})};
  return w.store.commit({principal:w.human.principalId,operation:'template.adopt',key,expectedHead:head,changes:[],records:[{kind:'evidence',record:evidence},{kind:'template-decision',record:input}]});
+}
+
+// Rehash an isolated newest receipt and its owning head, retaining all earlier
+// immutable records and the signed action. This is authored negative evidence.
+export function rewriteLatestReceipt(w,change){
+ const current=w.store.read(),h=structuredClone(current.head),rr=h.receipts[0];
+ const receipt=structuredClone(current.records.get(rr.path).value);change(receipt,h);
+ const rb=Buffer.from(stable(receipt)+'\n');rr.sha256=hash(rb);
+ const hb=Buffer.from(stable(h)+'\n');
+ fs.writeFileSync(path.join(w.root,rr.path),rb);
+ fs.writeFileSync(path.join(w.root,current.reference.path),hb);
+ fs.writeFileSync(path.join(w.root,'domain-head.json'),hb);
+ return w.store.read();
+}
+
+export function largeValidTemplate(id){
+ const glyph='\u0800',long=glyph.repeat(97);
+ const parameters=Object.fromEntries(Array.from({length:24},(_,i)=>['p'+i,{type:'enum',values:Array.from({length:24},(_,j)=>long+String(j).padStart(3,'0'))}]));
+ const presets=Object.fromEntries(Array.from({length:24},(_,i)=>['preset'+i,Object.fromEntries(Array.from({length:24},(_,j)=>['p'+j,long+'000']))]));
+ const sourceRefs=Array.from({length:16},(_,i)=>({kind:'file',sourceId:'large-'+i,revision:glyph.repeat(200),sha256:'a'.repeat(64),location:'Sources/'+glyph.repeat(400),locator:{kind:'section',section:glyph.repeat(500)},observedAt:TIME}));
+ return template(id,{instructions:glyph.repeat(20_000),allowedChanges:Array.from({length:24},()=>glyph.repeat(500)),exploration:{parameters,presets},sourceRefs});
 }

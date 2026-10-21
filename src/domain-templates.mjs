@@ -158,9 +158,11 @@ export class DomainTemplates {
  #store;#file;#auth;#hook;
  constructor(root,{accessFile,authenticate=null,hook=()=>{}}){this.#store=new DomainStore(root);this.#file=safePrivate(accessFile);this.#auth=authenticate;this.#hook=hook;this.#registry();}
  #registry(){return privateContext(this.#store,this.#file);}
- #principal(token,op,id=null,apps=[],sourceRefs=[],productId=null){
-  const a=this.#registry();let p;
-  if(this.#auth){const native=this.#auth(token);check(native&&typeof native.id==='string'&&['human','conductor','source-proposer'].includes(native.role)&&(native.products==='*'||Array.isArray(native.products)&&native.products.length<=256&&native.products.every(x=>typeof x==='string')),'INVALID_SCOPE');const policy=a.principals.find(x=>x.id===native.id&&x.role===native.role);check(policy,'INVALID_SCOPE');
+ #principal(token,op,id=null,apps=[],sourceRefs=[],productId=null,strictNative=false){
+  const a=strictNative?null:this.#registry();let p;
+  if(this.#auth){const native=this.#auth(token);check(native,'INVALID_SCOPE');
+   if(strictNative)check(typeof native.id==='string'&&['human','conductor','source-proposer'].includes(native.role)&&(native.products==='*'||Array.isArray(native.products)&&native.products.length<=256&&native.products.every(x=>typeof x==='string')),'INVALID_SCOPE');
+   const policy=(strictNative?this.#registry():a).principals.find(x=>x.id===native.id&&x.role===native.role);check(policy,'INVALID_SCOPE');
    p={...policy,role:native.role,products:native.products==='*'?policy.products:policy.products==='*'?native.products:native.products.filter(id=>policy.products.includes(id))};
   }else p=findBearer(a,token);
   const g=p?.templateGrant;check(p&&g&&g.operations.includes(op)&&(!id||g.templateIds.includes(id))&&apps.every(k=>g.appliesTo.includes(k))&&sourceRefs.every(s=>g.sourceIds.includes(s.sourceId)),'INVALID_SCOPE');
@@ -191,7 +193,7 @@ export class DomainTemplates {
   resolveAdoptedForOperation(token,input){
    const q=selectionQuery(input);check(this.#auth,'CAPABILITY_UNAVAILABLE');
    const ids=q.branded?[q.operationTemplateId,q.brandTemplateId]:[q.operationTemplateId];
-   const principals=()=>ids.map(id=>this.#principal(token,'read',id,[q.applicability],[],q.projectId));
+   const principals=()=>ids.map(id=>this.#principal(token,'read',id,[q.applicability],[],q.projectId,true));
    const consistent=(ps,a)=>{
     check(ps.every(p=>p.id===ps[0].id&&p.role===ps[0].role),'INVALID_SCOPE');
     const policy=a.principals.find(p=>p.id===ps[0].id&&p.role===ps[0].role);
