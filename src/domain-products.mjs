@@ -60,6 +60,92 @@ function auditRow(row,view,registry=null){
     }return {...a,reference:x.reference};
   }fail('EVIDENCE_MISMATCH');
 }
+// Opt-in exact product receipt audit. A Store closure proves the bytes and links;
+// this reconstruction proves that the signed action produced this precise plan.
+function baseReceipt(view,head,receipt,productId,registry,state,correctionSources){
+  const previous=view.records.get(head.previousHead.path).value;
+  const before=previous.products.find(x=>x.productId===productId)?.dossier??null;
+  const after=head.products.find(x=>x.productId===productId)?.dossier??null;
+  const rows=receipt.records.map(r=>resolved(view,r,view.records.get(r.path)?.kind));
+  const target=rows.some(r=>r.value?.productId===productId)||receipt.transitions.some(t=>t.kind==='product'&&t.id===productId);
+  const evidence=rows.filter(r=>r.kind==='evidence');
+  const claimed=evidence.some(r=>{try{return JSON.parse(r.value.description).event?.productId===productId;}catch{return false;}});
+  if(!target&&!claimed){check(sameNullable(before,after),'EVIDENCE_MISMATCH');return;}
+  check(!rows.some(r=>['attachment','dossier-proposal','dossier-decision','dossier-record'].includes(r.kind)&&r.value.productId===productId),'CAPABILITY_UNAVAILABLE');
+  check(target&&evidence.length===1&&rows[0]===evidence[0]&&receipt.workspaceId===view.head.workspaceId,'EVIDENCE_MISMATCH');
+  const operation=receipt.operation;
+  check(['product.create','product.note.add','product.proposal.submit','product.proposal.decide'].includes(operation),'CAPABILITY_UNAVAILABLE');
+  let a;try{a=JSON.parse(evidence[0].value.description);}catch{fail('EVIDENCE_MISMATCH');}
+  exact(a,['format','role','event','mac']);check(a.format==='3djat.product-action.v1'&&a.event?.productId===productId,'EVIDENCE_MISMATCH');
+  const roles={'product.create':['human'],'product.note.add':['human','conductor'],'product.proposal.submit':['human','conductor','source-proposer'],'product.proposal.decide':['human']};
+  check(roles[operation].includes(a.role),'INVALID_SCOPE');
+  check(typeof a.mac==='string'&&/^[0-9a-f]{64}$/.test(a.mac)&&a.mac===signAction(registry,a.role,a.event),'EVIDENCE_MISMATCH');
+  check(receipt.principal===a.event.principalId&&same(evidence[0].reference,prepareRecord('evidence',evidence[0].value).reference)&&evidence[0].value.id===a.event.id,'EVIDENCE_MISMATCH');
+  const subject=rows.find(r=>({
+    'product.create':'product','product.note.add':'product','product.proposal.submit':'proposal','product.proposal.decide':'proposal-decision'
+  })[operation]===r.kind);
+  check(subject&&subject.value.productId===productId,'EVIDENCE_MISMATCH');
+  let input,revision=before?.revision??0,planned=[{kind:'evidence',reference:evidence[0].reference}],changed=null,next=null;
+  const old=before?resolved(view,before,'product').value:null;
+  if(operation==='product.create'){
+    check(!before&&rows.length===2&&subject.value.revision===1,'REVISION_CONFLICT');
+    const x=subject.value;check(x.notes.length<=1,'EVIDENCE_MISMATCH');
+    input={productId,productCode:x.productCode,workingName:x.workingName,...(x.notes.length?{note:x.notes[0].text}:{})};
+    const unknown=()=>({state:'unknown',value:null,sourceRefs:[],decision:null});
+    next={schemaVersion:'3djat.product.v1',productId,revision:1,productCode:x.productCode,workingName:x.workingName,
+      facts:{material:unknown(),dimensions:unknown(),sellingPrice:unknown()},designRevisions:[],productionRecords:[],finishingRecords:[],attachments:[],notes:x.notes,sourceReceipt:evidence[0].reference};
+    changed=subject;
+  }else{
+    check(old&&state.product&&same(state.product.reference,before),'EVIDENCE_MISMATCH');
+    if(operation==='product.note.add'){
+      check(rows.length===2&&subject.value.notes.length===old.notes.length+1,'EVIDENCE_MISMATCH');
+      const note=subject.value.notes.at(-1);input={productId,text:note.text};
+      next=structuredClone(old);next.revision++;next.sourceReceipt=evidence[0].reference;next.notes.push(note);changed=subject;
+    }else if(operation==='product.proposal.submit'){
+      check(rows.length===2&&!state.proposals.has(subject.value.proposalId),'EVIDENCE_MISMATCH');
+      input=subject.value;
+      if(input.corrects){const prior=state.proposals.get(input.corrects.id);check(prior&&same(prior.reference,input.corrects),'EVIDENCE_MISMATCH');correctionSources(prior.value,input);}
+      state.proposals.set(input.proposalId,subject);
+    }else{
+      const x=subject.value;input=x;const original=state.proposals.get(x.proposal.id);
+      check(original&&same(original.reference,x.proposal)&&original.value.productId===productId,'EVIDENCE_MISMATCH');
+      const active=state.active.get(x.proposal.id),corrected=x.correctedProposal?state.proposals.get(x.correctedProposal.id):null;
+      check(active?(x.outcome==='superseded'&&corrected&&active.value.outcome!=='superseded'&&same(active.reference,x.supersedesDecision)):x.supersedesDecision===null,'EVIDENCE_MISMATCH');
+      if(corrected){check(same(corrected.reference,x.correctedProposal)&&!state.active.has(corrected.value.proposalId),'EVIDENCE_MISMATCH');correctionSources(original.value,corrected.value);
+        planned.push({kind:'proposal',reference:corrected.reference});}
+      if(x.outcome==='accepted'){
+        if(original.value.corrects){const d=state.active.get(original.value.corrects.id);check(d?.value.outcome==='superseded'&&same(d.value.correctedProposal,original.reference)&&same(d.value.proposal,original.value.corrects),'EVIDENCE_MISMATCH');}
+        next=structuredClone(old);next.revision++;next.sourceReceipt=evidence[0].reference;
+        for(const c of original.value.changes){if(['workingName','productCode'].includes(c.field)){
+          if(c.field==='workingName')check(c.fact.state==='accepted'&&c.fact.value.trim().length>0,'INVALID_VALUE');
+          next[c.field]=c.fact.state==='accepted'?c.fact.value:null;state.metadata[c.field]=structuredClone(c.fact.sourceRefs);
+        }else next.facts[c.field]={...structuredClone(c.fact),decision:c.fact.state==='unknown'?null:subject.reference};}
+        changed=rows.find(r=>r.kind==='product'&&r.value.productId===productId);
+        check(changed,'EVIDENCE_MISMATCH');
+      }
+      state.active.set(x.proposal.id,subject);
+    }
+  }
+  const packet={schemaVersion:'3djat.command.v1',operation,key:receipt.key,expected:{domainHead:receipt.previousHead,entityRevision:revision},input};
+  const context={authenticatedCaller:a.role==='source-proposer'?'source-proposer':a.role,currentHead:receipt.previousHead,currentRevision:revision,projectId:productId,skus:previous.skus};
+  if(operation==='product.proposal.decide'){
+    const o=state.proposals.get(input.proposal.id);context.proposal={reference:o.reference,record:o.value};
+    if(input.correctedProposal){const c=state.proposals.get(input.correctedProposal.id);context.correctedProposal={reference:c.reference,record:c.value};}
+  }
+  const valid=validateCommand(packet,context);check(valid.ok,valid.errors[0]?.code??'EVIDENCE_MISMATCH');
+  const expectedEvent=actionEvent(view.head.workspaceId,receipt.principal,packet,a.event.recordedAt);
+  check(equal(a.event,expectedEvent)&&same(eventRef(a.event),input.humanActionReceipt??eventRef(a.event)),'EVIDENCE_MISMATCH');
+  if(operation==='product.create'&&input.note)check(equal(next.notes,[{id:uuid(a.event.id+'note'),text:input.note,createdAt:a.event.recordedAt,receipt:evidence[0].reference}]),'EVIDENCE_MISMATCH');
+  if(operation==='product.note.add')check(equal(next.notes.at(-1),{id:uuid(a.event.id+'note'),text:input.text,createdAt:a.event.recordedAt,receipt:evidence[0].reference}),'EVIDENCE_MISMATCH');
+  if(changed){check(equal(changed.value,next)&&same(changed.reference,after),'EVIDENCE_MISMATCH');state.product=changed;}
+  else check(sameNullable(before,after),'EVIDENCE_MISMATCH');
+  if(operation==='product.create'||operation==='product.note.add')check(same(subject.reference,changed.reference),'EVIDENCE_MISMATCH');
+  else planned.push({kind:subject.kind,reference:subject.reference});
+  const changes=changed?[{kind:'product',id:productId,expectedRevision:revision,reference:changed.reference}]:[];
+  const records=[...planned,...(changed?[{kind:'product',reference:changed.reference}]:[])];
+  check(equal(receipt.records,records.map(r=>r.reference))&&equal(receipt.transitions,changed?[{kind:'product',id:productId,from:revision,to:revision+1}]:[]),'EVIDENCE_MISMATCH');
+  check(receipt.payloadHash===digest(bytes({expectedHead:receipt.previousHead,changes,records:planned})),'EVIDENCE_MISMATCH');
+}
 function dossierCorrection(original,corrected,h){
   const a=original.value,b=corrected;check(a.productId===b.productId&&same(b.corrects,original.reference)&&a.proposalId!==b.proposalId&&a.origin===b.origin&&sameSubject(a.payload,b.payload),'EVIDENCE_MISMATCH');
   for(const s of sourcesOf(b.payload))check(sourcesOf(a.payload).some(old=>equal(old,s)),'EVIDENCE_MISMATCH');
@@ -173,6 +259,59 @@ export class DomainProducts {
     if(!OPS.has(row.storeReceipt.operation))continue;const a=this.#auditFor(row,view);events.set(a.event.id,a.event);
   }return [...events.values()];}
   #sourceStatus(s){return sourceStatus(this.#store,s);}
+  #baseCaller(token,productId){
+    check(typeof this.#auth==='function','INVALID_SCOPE');
+    const native=this.#auth(token); // The native callback may itself change private policy.
+    check(native&&typeof native==='object'&&!Array.isArray(native)&&typeof native.id==='string'&&typeof native.role==='string'&&
+      (native.products==='*'||Array.isArray(native.products)&&native.products.every(x=>typeof x==='string')),'INVALID_SCOPE');
+    const a=this.#registry(),p=a.principals.find(x=>x.id===native.id&&x.role===native.role);
+    check(p&&(native.products==='*'||native.products.includes(productId))&&(p.products==='*'||p.products.includes(productId)),'INVALID_SCOPE');
+    const caller=native.role==='source-proposer'?'source-reader':native.role;
+    check(COMMANDS['product.read'].callers.includes(caller),'INVALID_SCOPE');
+    return {id:native.id,role:native.role,policy:p,key:a.key,registry:a};
+  }
+  resolveBaseProductForOperation(token,query){
+    check(query&&typeof query==='object'&&!Array.isArray(query)&&[Object.prototype,null].includes(Object.getPrototypeOf(query)),'INVALID_VALUE');
+    exact(query,['mode','atHead','productId']);
+    for(const k of ['mode','atHead','productId'])check(Object.getOwnPropertyDescriptor(query,k)?.get===undefined&&Object.getOwnPropertyDescriptor(query,k)?.set===undefined,'INVALID_VALUE');
+    check(['new','historical'].includes(query.mode),'INVALID_VALUE');
+    shape('revision-ref',query.atHead);shape('revision-ref',{id:query.productId,revision:1,path:'product.json',sha256:'0'.repeat(64)});
+    const {mode,atHead,productId}=structuredClone(query),start=this.#baseCaller(token,productId);
+    if(mode==='new')check(start.role==='human','INVALID_SCOPE');
+    const current=this.#store.read();
+    if(mode==='new')check(same(current.reference,atHead),'REVISION_CONFLICT');
+    else check([...current.records.values()].some(r=>r.kind==='domain-head'&&same(r.reference,atHead)),'MISSING_SOURCE');
+    const view=mode==='new'?current:this.#store.read({atHead});
+    const heads=[...view.records.values()].filter(r=>r.kind==='domain-head').sort((a,b)=>a.value.revision-b.value.revision);
+    const state={product:null,proposals:new Map(),active:new Map(),metadata:{workingName:[],productCode:[]}};
+    for(const h of heads)for(const ref of h.value.receipts){const receipt=resolved(view,ref,'store-receipt').value;
+      baseReceipt(view,h.value,receipt,productId,start.registry,state,(a,b)=>this.#correctionSources(a,b));}
+    const selected=productAt(view,productId);check(state.product&&same(state.product.reference,selected.reference),'EVIDENCE_MISMATCH');
+    check(!['attachments','designRevisions','productionRecords','finishingRecords'].some(k=>selected.value[k].length),'CAPABILITY_UNAVAILABLE');
+    const sources=['material','dimensions','sellingPrice'].flatMap(k=>selected.value.facts[k].sourceRefs).concat(state.metadata.workingName,state.metadata.productCode);
+    let total=0;const statuses=[];
+    for(const source of sources){
+      const policy=this.#registry().principals.find(p=>p.id===start.id&&p.role===start.role);
+      check(policy&&(policy.products==='*'||policy.products.includes(productId)),'INVALID_SCOPE');
+      let cause=null;
+      if(!policy.sourceIds.includes(source.sourceId))cause='INVALID_SCOPE';
+      else if(source.kind!=='file')cause='CAPABILITY_UNAVAILABLE';
+      else try{const b=this.#store.readFile(source.location);total+=b.length;check(total<=16*1024**2,'CAPACITY');if(digest(b)!==source.sha256)cause='HASH_MISMATCH';}
+        catch(e){if(['ROOT_CHANGED','UNSAFE_PATH','PATH_CASE_MISMATCH','CAPACITY'].includes(e.code))throw e;cause=e.code==='MISSING_REFERENCE'?'MISSING_SOURCE':e.code??'MISSING_SOURCE';}
+      if(mode==='new'&&cause)fail(cause);
+      statuses.push({source,status:cause?'unresolved':'verified',cause});
+    }
+    const finish=this.#baseCaller(token,productId),latest=this.#store.read();
+    check(finish.id===start.id&&finish.role===start.role,'INVALID_SCOPE');
+    check(finish.key===start.key,'EVIDENCE_MISMATCH');
+    check(same(latest.reference,current.reference),'HEAD_CHANGED');
+    if(mode==='new')check(finish.role==='human'&&same(latest.reference,atHead),'REVISION_CONFLICT');
+    for(const status of statuses)if(!finish.policy.sourceIds.includes(status.source.sourceId)){
+      if(mode==='new')fail('INVALID_SCOPE');status.status='unresolved';status.cause='INVALID_SCOPE';
+    }
+    const value={head:view.reference,productId,principalId:start.id,product:{reference:selected.reference,record:selected.value,acceptedFacts:selected.value.facts},sourceStatus:{base:statuses}};
+    check(bytes(value).length<=1024**2,'OVERSIZE');return structuredClone(value);
+  }
   #history(view,productId){const proposals=published(view,'proposal').filter(x=>x.value.productId===productId),decisions=published(view,'proposal-decision').filter(x=>x.value.productId===productId);
     check(proposals.length<=128&&decisions.length<=256,'VALIDATION_LIMIT');const active=new Map();
     for(const d of decisions){check(this.#auditFor(d,view).role==='human','INVALID_SCOPE');const prior=active.get(d.value.proposal.id);check(prior?same(prior.reference,d.value.supersedesDecision):d.value.supersedesDecision===null,'EVIDENCE_MISMATCH');active.set(d.value.proposal.id,d);}
