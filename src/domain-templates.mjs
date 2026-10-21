@@ -99,6 +99,21 @@ export function validateTemplateQuery(q){
   check(typeof q.branded==='boolean'&&(q.branded?q.brandTemplateId!==null:q.brandTemplateId===null),'INVALID_VALUE');if(q.brandTemplateId!==null)identifier(q.brandTemplateId);
  }else fail('INVALID_VALUE');shape('revision-ref',q.atHead);return q;
 }
+function selectionQuery(input){
+ check(input!==null&&typeof input==='object'&&!Array.isArray(input)&&[Object.prototype,null].includes(Object.getPrototypeOf(input)),'INVALID_VALUE');
+ const fields=['mode','atHead','projectId','applicability','operationTemplateId','branded','brandTemplateId'];
+ exact(input,fields);const d=Object.getOwnPropertyDescriptors(input);check(fields.every(k=>Object.hasOwn(d[k],'value')),'INVALID_VALUE');
+ const q=Object.fromEntries(fields.map(k=>[k,d[k].value]));
+ check(q.atHead!==null&&typeof q.atHead==='object'&&!Array.isArray(q.atHead)&&[Object.prototype,null].includes(Object.getPrototypeOf(q.atHead)),'INVALID_VALUE');
+ exact(q.atHead,['id','revision','sha256','path']);
+ const refDescriptors=Object.getOwnPropertyDescriptors(q.atHead);check(Object.values(refDescriptors).every(v=>Object.hasOwn(v,'value')),'INVALID_VALUE');
+ q.atHead=Object.fromEntries(Object.entries(refDescriptors).map(([k,v])=>[k,v.value]));
+ check(['new','historical'].includes(q.mode)&&typeof q.branded==='boolean','INVALID_VALUE');
+ identifier(q.operationTemplateId);
+ check(q.branded?typeof q.brandTemplateId==='string'&&q.brandTemplateId!==q.operationTemplateId:q.brandTemplateId===null,'INVALID_VALUE');
+ validateTemplateQuery({schemaVersion:'3djat.template-query.v1',kind:'discovery',atHead:q.atHead,productId:q.projectId,applicability:q.applicability,branded:q.branded,brandTemplateId:q.brandTemplateId});
+ return q;
+}
 function status(h,row,app){const decisions=h.decisions.filter(d=>same(d.value.template,row.reference)&&d.value.appliesTo.includes(app)),last=decisions.at(-1),active=h.active.get(app);
  return {contract:{state:'valid',errors:[]},operational:{state:'not-assessed',assessment:null},visual:{state:'untested',assessment:null},human:{state:last?(same(last.reference,active?.reference)?'adopted':'superseded'):'unreviewed',decision:last?.reference??null}};
 }
@@ -145,7 +160,7 @@ export class DomainTemplates {
  #registry(){return privateContext(this.#store,this.#file);}
  #principal(token,op,id=null,apps=[],sourceRefs=[],productId=null){
   const a=this.#registry();let p;
-  if(this.#auth){const native=this.#auth(token);check(native,'INVALID_SCOPE');const policy=a.principals.find(x=>x.id===native.id&&x.role===native.role);check(policy,'INVALID_SCOPE');
+  if(this.#auth){const native=this.#auth(token);check(native&&typeof native.id==='string'&&['human','conductor','source-proposer'].includes(native.role)&&(native.products==='*'||Array.isArray(native.products)&&native.products.length<=256&&native.products.every(x=>typeof x==='string')),'INVALID_SCOPE');const policy=a.principals.find(x=>x.id===native.id&&x.role===native.role);check(policy,'INVALID_SCOPE');
    p={...policy,role:native.role,products:native.products==='*'?policy.products:policy.products==='*'?native.products:native.products.filter(id=>policy.products.includes(id))};
   }else p=findBearer(a,token);
   const g=p?.templateGrant;check(p&&g&&g.operations.includes(op)&&(!id||g.templateIds.includes(id))&&apps.every(k=>g.appliesTo.includes(k))&&sourceRefs.every(s=>g.sourceIds.includes(s.sourceId)),'INVALID_SCOPE');
@@ -173,6 +188,50 @@ export class DomainTemplates {
   check(new Set(x.appliesTo).size===x.appliesTo.length,'INVALID_VALUE');const checked=validateCommand(packet,context);check(checked.ok,checked.errors[0]?.code);
  }
  readRegistry(token,query){validateTemplateQuery(query);const p=this.#principal(token,'read',query.kind==='template'?query.templateId:query.kind==='discovery'&&query.branded?query.brandTemplateId:null,query.applicability?[query.applicability]:[],[],query.kind==='discovery'?query.productId:null),view=this.#store.read(),a=this.#registry();check(same(view.reference,query.atHead),'REVISION_CONFLICT');const result=render(this.#store,view,history(view,a),query,a,p);check(same(this.#store.read().reference,view.reference),'REVISION_CONFLICT');return result;}
+  resolveAdoptedForOperation(token,input){
+   const q=selectionQuery(input);check(this.#auth,'CAPABILITY_UNAVAILABLE');
+   const ids=q.branded?[q.operationTemplateId,q.brandTemplateId]:[q.operationTemplateId];
+   const principals=()=>ids.map(id=>this.#principal(token,'read',id,[q.applicability],[],q.projectId));
+   const consistent=(ps,a)=>{
+    check(ps.every(p=>p.id===ps[0].id&&p.role===ps[0].role),'INVALID_SCOPE');
+    const policy=a.principals.find(p=>p.id===ps[0].id&&p.role===ps[0].role);
+    check(policy&&equal(policy.templateGrant,ps[0].templateGrant)&&ps.every(p=>equal(p.templateGrant,ps[0].templateGrant))&&
+      (policy.products==='*'||policy.products.includes(q.projectId)),'INVALID_SCOPE');
+   };
+   const entry=principals(),a=this.#registry();consistent(entry,a);
+   if(q.mode==='new')check(entry[0].role==='human','INVALID_SCOPE');
+   const current=this.#store.read();
+   if(q.mode==='new')check(same(current.reference,q.atHead),'REVISION_CONFLICT');
+   else{const ancestor=current.records.get(q.atHead.path);check(ancestor?.kind==='domain-head'&&same(ancestor.reference,q.atHead),'REVISION_CONFLICT');}
+   const view=q.mode==='new'?current:this.#store.read({atHead:q.atHead});
+   check(same(view.reference,q.atHead),'REVISION_CONFLICT');
+   check(view.head.products.some(p=>p.productId===q.projectId),'MISSING_SOURCE');
+   const hist=history(view,a);
+   const selected=(id,kind)=>{
+    const h=hist.map.get(id);check(h,'MISSING_SOURCE');check(h.latest.value.kind===kind,'INVALID_SCOPE');
+    const d=h.active.get(q.applicability);check(d,'CAPABILITY_UNAVAILABLE');
+    const row=h.revisions.find(r=>same(r.reference,d.value.template));check(row&&row.value.appliesTo.includes(q.applicability)&&d.value.appliesTo.includes(q.applicability),'EVIDENCE_MISMATCH');
+    return {reference:row.reference,record:row.value,decisionReference:d.reference,decision:d.value,publication:d.publication,receipt:d.receipt};
+   };
+   const operation=selected(q.operationTemplateId,'operation'),brand=q.branded?selected(q.brandTemplateId,'brand'):null;
+   const read=sourceReader(this.#store,entry[0].templateGrant.sourceIds);
+   const sources=choice=>choice===null?null:choice.record.sourceRefs.map(source=>{
+    const status=read(source);
+    if(q.mode==='new')check(status.status==='verified',status.cause??'MISSING_SOURCE');
+    return status;
+   });
+   const sourceStatus={operation:sources(operation),brand:sources(brand)};
+   const final=principals(),last=this.#registry();consistent(final,last);
+   check(final[0].id===entry[0].id&&final[0].role===entry[0].role,'INVALID_SCOPE');
+   check(last.key===a.key,'EVIDENCE_MISMATCH');
+   if(q.mode==='new')for(const status of [...sourceStatus.operation,...(sourceStatus.brand??[])])
+    check(final[0].templateGrant.sourceIds.includes(status.source.sourceId),'INVALID_SCOPE');
+   else for(const status of [...sourceStatus.operation,...(sourceStatus.brand??[])])if(!final[0].templateGrant.sourceIds.includes(status.source.sourceId)){
+    status.status='unresolved';status.cause='INVALID_SCOPE';
+   }
+   check(same(this.#store.read().reference,current.reference),'REVISION_CONFLICT');
+   return boundedView(structuredClone({head:view.reference,productId:q.projectId,applicability:q.applicability,operation,brand,principalId:entry[0].id,sourceStatus}));
+  }
  operationalEvidence(){const a=this.#registry(),view=this.#store.read();return history(view,a).events;}
  static failure(...args){return DomainProducts.failure(...args);}
  failure(...args){return DomainTemplates.failure(...args);}
