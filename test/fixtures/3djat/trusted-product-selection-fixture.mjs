@@ -80,12 +80,14 @@ export function signedDossierPublication(w,p,{actor=w.human,role=actor.role,even
   return w.store.commit({principal,operation:p.operation,key:p.key,expectedHead:before.reference,changes,records});
 }
 
-export function signedAttachment(w,input){
-  const before=w.store.read(),p=packet(w,'attachment.register',input,{revision:0}),principal=w.human.principalId;
+export function signedAttachment(w,input,{entityRevision=0,eventEdit=()=>{},auditEdit=()=>{}}={}){
+  const before=w.store.read(),p=packet(w,'attachment.register',input,{revision:entityRevision}),principal=w.human.principalId;
   const event={id:uuid(stable([WORKSPACE,principal,p.operation,p.key])),version:1,type:'product-action',workspaceId:WORKSPACE,
     principalId:principal,operation:p.operation,key:p.key,productId:PRODUCT,commandHash:digest(stable(p)),recordedAt:'2026-01-01T00:00:00.000Z'};
+  eventEdit(event);
   const key=JSON.parse(fs.readFileSync(w.accessFile)).key,audit={schemaVersion:'3djat.evidence.v1',id:event.id,revision:1,
     description:stable({format:'3djat.product-action.v1',role:'human',event,mac:createHmac('sha256',key).update(stable({role:'human',event})).digest('hex')})};
+  auditEdit(audit);
   const previous=before.records.get(before.head.products.find(x=>x.productId===PRODUCT).dossier.path).value,next=structuredClone(previous);
   next.revision++;next.sourceReceipt=prepareRecord('evidence',audit).reference;next.attachments.push(prepareRecord('attachment',input).reference);
   return w.store.commit({principal,operation:p.operation,key:p.key,expectedHead:before.reference,
@@ -93,10 +95,11 @@ export function signedAttachment(w,input){
     records:[{kind:'evidence',record:audit},{kind:'attachment',record:input}]});
 }
 
-export function signedAcceptedDecisionFault(w,{payload=field('description','Signed accepted'),proposalEdit=()=>{},decisionEdit=()=>{},
+export function signedAcceptedDecisionFault(w,{payload=field('description','Signed accepted'),existingProposal=null,proposalEdit=()=>{},decisionEdit=()=>{},
   actionRefEdit=()=>{},materialEdit=()=>{},productEdit=()=>{},recordsEdit=()=>{},eventEdit=()=>{},role='human'}={}){
-  const proposed=dossierProposal(w,payload);proposalEdit(proposed.input);
-  const proposalResult=send(w,proposed);
+  const proposed=existingProposal?{input:w.store.read().records.get(existingProposal.path).value}:dossierProposal(w,payload);
+  if(!existingProposal)proposalEdit(proposed.input);
+  const proposalResult=existingProposal?{reference:existingProposal}:send(w,proposed);
   const p=dossierDecision(w,proposalResult.reference);decisionEdit(p.input);
   // The action reference is derived from the final signed decision input.
   p.input.humanActionReceipt=decisionActionReference({workspaceId:WORKSPACE,principalId:w.human.principalId,packet:p});
@@ -122,4 +125,13 @@ export function signedAcceptedDecisionFault(w,{payload=field('description','Sign
   w.store.commit({principal,operation:p.operation,key:p.key,expectedHead:before.reference,
     changes:[{kind:'product',id:PRODUCT,expectedRevision:prior.revision,record:next}],records});
   return {proposal:proposalResult.reference,packet:p,material};
+}
+
+// Terminal head index mutation with a fully recomputed current head hash.
+// The prior Store closure and unrelated publication remain unchanged.
+export function tamperTerminalHead(w,edit){
+  const view=w.store.read(),head=structuredClone(view.head);edit(head,view);
+  const data=Buffer.from(stable(head)+'\n');
+  fs.writeFileSync(path.join(w.root,view.reference.path),data);
+  fs.writeFileSync(path.join(w.root,'domain-head.json'),data);
 }
