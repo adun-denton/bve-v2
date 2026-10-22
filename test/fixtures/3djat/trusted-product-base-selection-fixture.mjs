@@ -8,10 +8,12 @@ import {DomainProducts,provisionProductPrincipal,decisionActionReference} from '
 import {stable,digest,uuid} from '../../../src/domain-authority.mjs';
 export const WORKSPACE='bbbbbbbb-bbbb-4bbb-9bbb-bbbbbbbbbbbb';
 export const PRODUCT='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
-export const roots=[];
-export function world({authenticate=true,hook=()=>{},attachment=false}={}){
-  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'pd1-authored-')),root=path.join(dir,'domain'),accessFile=path.join(dir,'access.json');
-  roots.push(dir);const store=DomainStore.initialize(root,{workspaceId:WORKSPACE,sourceCommit:'fce2473202da3509ccc9f044863da9d90d6fde5d'});
+export const roots=[],boundaryRoots=[];
+export function world({authenticate=true,hook=()=>{},attachment=false,boundary=false}={}){
+  const dir=fs.mkdtempSync(path.join(os.tmpdir(),boundary?'pd1-boundary-':'pd1-authored-')),
+    root=path.join(dir,'domain'),accessFile=path.join(dir,'access.json');
+  roots.push(dir);if(boundary)boundaryRoots.push(dir);
+  const store=DomainStore.initialize(root,{workspaceId:WORKSPACE,sourceCommit:'fce2473202da3509ccc9f044863da9d90d6fde5d'});
   for(const p of Object.values(store.workspace.paths))fs.mkdirSync(path.join(root,p));
   const human=provisionProductPrincipal(accessFile,{workspaceId:WORKSPACE,id:'authored-human',role:'human',sourceIds:['authored-source']});
   const source=provisionProductPrincipal(accessFile,{workspaceId:WORKSPACE,id:'authored-source',role:'source-proposer',sourceIds:['authored-source']});
@@ -71,6 +73,61 @@ export function forgedProposal(w,{time='2026-02-30T00:00:00.000Z'}={}){
   const audit={schemaVersion:'3djat.evidence.v1',id:event.id,revision:1,description:stable({format:'3djat.product-action.v1',role:'source-proposer',event,mac})};
   w.store.commit({principal:principalId,operation:p.operation,key:p.key,expectedHead:before.reference,changes:[],
     records:[{kind:'evidence',record:audit},{kind:'proposal',record:p.input}]});
+}
+// Synthesized historical faults are signed by disposable authored principals.
+// DomainStore builds the canonical receipt plan and verifies the surrounding
+// closure. These helpers do not represent ordinary DomainProducts writer output.
+function signedAudit(w,p,actor){
+  const input=structuredClone(p.input);if(p.operation==='product.proposal.decide')delete input.humanActionReceipt;
+  const event={id:uuid(stable([WORKSPACE,actor.principalId,p.operation,p.key])),version:1,type:'product-action',
+    workspaceId:WORKSPACE,principalId:actor.principalId,operation:p.operation,key:p.key,productId:PRODUCT,
+    commandHash:digest(stable({...p,input})),recordedAt:p.input.decidedAt??'2026-01-01T00:00:00.000Z'};
+  const policy=JSON.parse(fs.readFileSync(w.accessFile));
+  const mac=createHmac('sha256',policy.key).update(stable({role:actor.role,event})).digest('hex');
+  const record={schemaVersion:'3djat.evidence.v1',id:event.id,revision:1,description:stable({format:'3djat.product-action.v1',role:actor.role,event,mac})};
+  return {record,reference:prepareRecord('evidence',record).reference,event};
+}
+export function synthesizedProposal(w,p,actor=w.human){
+  const before=w.store.read(),audit=signedAudit(w,p,actor);
+  return w.store.commit({principal:actor.principalId,operation:p.operation,key:p.key,expectedHead:before.reference,
+    changes:[],records:[{kind:'evidence',record:audit.record},{kind:'proposal',record:p.input}]});
+}
+export function synthesizedDecision(w,p,{editProduct=()=>{},copiedProposal=null}={}){
+  const before=w.store.read(),audit=signedAudit(w,p,w.human),product=before.records.get(before.head.products.find(x=>x.productId===PRODUCT).dossier.path).value;
+  const decisionRef=prepareRecord('proposal-decision',p.input).reference,proposalRecord=before.records.get(p.input.proposal.path).value;
+  const records=[{kind:'evidence',record:audit.record},...(copiedProposal?[{kind:'proposal',record:before.records.get(copiedProposal.path).value}]:[]),{kind:'proposal-decision',record:p.input}];
+  const changes=[];
+  if(p.input.outcome==='accepted'){
+    const next=structuredClone(product);next.revision++;next.sourceReceipt=audit.reference;
+    for(const c of proposalRecord.changes){if(['workingName','productCode'].includes(c.field))next[c.field]=c.fact.state==='accepted'?c.fact.value:null;
+      else next.facts[c.field]={...structuredClone(c.fact),decision:c.fact.state==='unknown'?null:decisionRef};}
+    editProduct(next,{audit:audit.reference,decision:decisionRef,original:product});
+    changes.push({kind:'product',id:PRODUCT,expectedRevision:product.revision,record:next});
+  }
+  return w.store.commit({principal:w.human.principalId,operation:p.operation,key:p.key,expectedHead:before.reference,changes,records});
+}
+export function largeSourceRef(w){
+  const location='Sources/'+['a'.repeat(180),'b'.repeat(180),'c'.repeat(116)].join('/');
+  fs.mkdirSync(path.dirname(path.join(w.root,location)),{recursive:true});
+  fs.writeFileSync(path.join(w.root,location),Buffer.from('Inert bounded source\n'));
+  const data=fs.readFileSync(path.join(w.root,location));
+  return {...w.ref,location,sha256:digest(data),revision:'r'.repeat(195),
+    locator:{kind:'section',section:'s'.repeat(470)}};
+}
+export function extraLocalSourceRef(w){
+  const data=Buffer.from('Independent inert correction source\n'),location='Sources/extra.txt';
+  fs.writeFileSync(path.join(w.root,location),data);
+  return {...w.ref,location,sha256:digest(data)};
+}
+export function fiveFieldProposal(w,ref){
+  const sourceRefs=Array.from({length:16},()=>structuredClone(ref)),accepted=value=>({state:'accepted',value,sourceRefs:structuredClone(sourceRefs)});
+  return packet(w,'product.proposal.submit',{schemaVersion:'3djat.proposal.v1',proposalId:randomUUID(),productId:PRODUCT,
+    expectedRevision:w.store.read().head.products.find(x=>x.productId===PRODUCT).dossier.revision,
+    changes:[{field:'material',fact:accepted('Authored inert material')},
+      {field:'dimensions',fact:accepted({length:1,width:2,height:3,unit:'mm'})},
+      {field:'sellingPrice',fact:accepted({amount:'1.00',currency:'USD',unit:'major',per:'item',effectiveDate:'2026-01-01'})},
+      {field:'workingName',fact:accepted('Bounded authored name')},
+      {field:'productCode',fact:accepted('BOUND-1')}],reason:'Authored bounded source set',corrects:null});
 }
 // Rewrite one isolated fixture's terminal receipt and its head together. The
 // surrounding Store closure remains hash-consistent; only receipt semantics vary.
