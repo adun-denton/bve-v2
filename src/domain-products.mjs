@@ -39,6 +39,7 @@ function resolved(view,ref,kind){shape('revision-ref',ref);const row=view.record
 const DOSSIER_SUBMIT='product.dossier.proposal.submit',DOSSIER_DECIDE='product.dossier.proposal.decide';
 const sourcesOf=x=>x.kind==='field'?x.fact.sourceRefs:x.sourceRefs;
 const subject=x=>x.kind==='field'?'field:'+x.field:'entry:'+x.entryId;
+const subjectOfDossier=subject;
 const sameSubject=(a,b)=>a.kind===b.kind&&(a.kind==='field'?a.field===b.field:a.entryId===b.entryId&&a.entryKind===b.entryKind&&a.entryType===b.entryType);
 const sameNullable=(a,b)=>a===null?b===null:b!==null&&same(a,b);
 const entryArray=kind=>({design:'designRevisions',production:'productionRecords',finishing:'finishingRecords'})[kind];
@@ -62,7 +63,7 @@ function auditRow(row,view,registry=null){
 }
 // Opt-in exact product receipt audit. A Store closure proves the bytes and links;
 // this reconstruction proves that the signed action produced this precise plan.
-function baseReceipt(view,head,receipt,productId,registry,state,correctionSources){
+function baseReceipt(view,head,receipt,productId,registry,state,correctionSources,extended=false){
   const previous=view.records.get(head.previousHead.path).value;
   const before=previous.products.find(x=>x.productId===productId)?.dossier??null;
   const after=head.products.find(x=>x.productId===productId)?.dossier??null;
@@ -71,13 +72,14 @@ function baseReceipt(view,head,receipt,productId,registry,state,correctionSource
   const evidence=rows.filter(r=>r.kind==='evidence');
   const claimed=evidence.some(r=>{try{return JSON.parse(r.value.description).event?.productId===productId;}catch{return false;}});
   if(!target&&!claimed){check(sameNullable(before,after),'EVIDENCE_MISMATCH');return;}
-  check(!rows.some(r=>['attachment','dossier-proposal','dossier-decision','dossier-record'].includes(r.kind)&&r.value.productId===productId),'CAPABILITY_UNAVAILABLE');
+  if(!extended)check(!rows.some(r=>['attachment','dossier-proposal','dossier-decision','dossier-record'].includes(r.kind)&&r.value.productId===productId),'CAPABILITY_UNAVAILABLE');
   check(target&&evidence.length===1&&rows[0]===evidence[0]&&receipt.workspaceId===view.head.workspaceId,'EVIDENCE_MISMATCH');
   const operation=receipt.operation;
-  check(['product.create','product.note.add','product.proposal.submit','product.proposal.decide'].includes(operation),'CAPABILITY_UNAVAILABLE');
+  check(['product.create','product.note.add','product.proposal.submit','product.proposal.decide',...(extended?['attachment.register',DOSSIER_SUBMIT,DOSSIER_DECIDE]:[])].includes(operation),'CAPABILITY_UNAVAILABLE');
   let a;try{a=JSON.parse(evidence[0].value.description);}catch{fail('EVIDENCE_MISMATCH');}
   exact(a,['format','role','event','mac']);check(a.format==='3djat.product-action.v1'&&a.event?.productId===productId,'EVIDENCE_MISMATCH');
-  const roles={'product.create':['human'],'product.note.add':['human','conductor'],'product.proposal.submit':['human','conductor','source-proposer'],'product.proposal.decide':['human']};
+  const roles={'product.create':['human'],'product.note.add':['human','conductor'],'product.proposal.submit':['human','conductor','source-proposer'],'product.proposal.decide':['human'],
+    'attachment.register':['human','conductor'],[DOSSIER_SUBMIT]:['human','conductor','source-proposer'],[DOSSIER_DECIDE]:['human']};
   check(roles[operation].includes(a.role),'INVALID_SCOPE');
   check(typeof a.mac==='string'&&/^[0-9a-f]{64}$/.test(a.mac)&&a.mac===signAction(registry,a.role,a.event),'EVIDENCE_MISMATCH');
   // The signed event is historical authority. Validate its clock field before
@@ -86,10 +88,11 @@ function baseReceipt(view,head,receipt,productId,registry,state,correctionSource
   check(receipt.principal===a.event.principalId&&evidence[0].value.revision===1&&evidence[0].reference.revision===1&&
     same(evidence[0].reference,prepareRecord('evidence',evidence[0].value).reference)&&evidence[0].value.id===a.event.id,'EVIDENCE_MISMATCH');
   const subject=rows.find(r=>({
-    'product.create':'product','product.note.add':'product','product.proposal.submit':'proposal','product.proposal.decide':'proposal-decision'
+    'product.create':'product','product.note.add':'product','product.proposal.submit':'proposal','product.proposal.decide':'proposal-decision',
+    'attachment.register':'attachment',[DOSSIER_SUBMIT]:'dossier-proposal',[DOSSIER_DECIDE]:'dossier-decision'
   })[operation]===r.kind);
   check(subject&&subject.value.productId===productId,'EVIDENCE_MISMATCH');
-  let input,revision=before?.revision??0,planned=[{kind:'evidence',reference:evidence[0].reference}],changed=null,next=null;
+  let input,revision=before?.revision??0,planned=[{kind:'evidence',reference:evidence[0].reference}],changed=null,next=null,dossierContext=null;
   const old=before?resolved(view,before,'product').value:null;
   if(operation==='product.create'){
     check(!before&&rows.length===2&&subject.value.revision===1,'REVISION_CONFLICT');
@@ -110,7 +113,7 @@ function baseReceipt(view,head,receipt,productId,registry,state,correctionSource
       input=subject.value;
       if(input.corrects){const prior=state.proposals.get(input.corrects.id);check(prior&&same(prior.reference,input.corrects),'EVIDENCE_MISMATCH');correctionSources(prior.value,input);}
       state.proposals.set(input.proposalId,subject);
-    }else{
+    }else if(operation==='product.proposal.decide'){
       const x=subject.value;input=x;const original=state.proposals.get(x.proposal.id);
       check(original&&same(original.reference,x.proposal)&&original.value.productId===productId,'EVIDENCE_MISMATCH');
       const active=state.active.get(x.proposal.id),corrected=x.correctedProposal?state.proposals.get(x.correctedProposal.id):null;
@@ -128,14 +131,47 @@ function baseReceipt(view,head,receipt,productId,registry,state,correctionSource
         check(changed,'EVIDENCE_MISMATCH');
       }
       state.active.set(x.proposal.id,subject);
+    }else if(operation==='attachment.register'){
+      const x=subject.value;input=x;
+      check(rows.length===3&&x.attachmentId===subject.reference.id&&!old.attachments.some(r=>same(r,subject.reference)),'EVIDENCE_MISMATCH');
+      check(x.source.kind==='file'&&x.source.sha256===x.sha256&&x.availability==='available','EVIDENCE_MISMATCH');
+      check(x.location===`${state.productsPath}/${productId}/Sources/${x.sha256}.bin`,'UNSAFE_PATH');
+      next=structuredClone(old);next.revision++;next.sourceReceipt=evidence[0].reference;next.attachments.push(subject.reference);
+      changed=rows.find(r=>r.kind==='product'&&r.value.productId===productId);check(changed,'EVIDENCE_MISMATCH');
+      state.attachments.set(subject.reference.path,subject);
+    }else if(operation===DOSSIER_SUBMIT){
+      const x=subject.value,h=state.dossier;input=x;
+      check(rows.length===2&&!h.proposals.some(r=>r.value.proposalId===x.proposalId),'EVIDENCE_MISMATCH');
+      check((x.origin!=='human-authored'||a.role==='human')&&(!x.corrects||a.role==='human'),'INVALID_SCOPE');
+      dossierTarget(x,h);
+      if(x.corrects){const original=h.proposals.find(r=>same(r.reference,x.corrects));check(original,'EVIDENCE_MISMATCH');dossierCorrection(original,x,h);}
+      if(x.payload.kind==='entry')for(const ref of x.payload.attachmentRefs){const attachment=resolved(view,ref,'attachment');
+        check(attachment.value.productId===productId&&old.attachments.some(r=>same(r,ref))&&state.attachments.has(ref.path),'INVALID_SCOPE');}
+      h.proposals.push(subject);
+    }else if(operation===DOSSIER_DECIDE){
+      const x=subject.value,h=state.dossier;input=x;
+      check(!h.decisions.some(r=>r.value.decisionId===x.decisionId),'EVIDENCE_MISMATCH');
+      const relation=dossierDecision(x,h,revision);dossierContext=relation.context;
+      if(x.outcome==='accepted'){
+        check(rows.length===4,'EVIDENCE_MISMATCH');
+        const r=rows[1];check(r.kind==='dossier-record'&&equal(r.value,materialize(relation.original.value,x)),'EVIDENCE_MISMATCH');
+        if(r.value.payload.kind==='entry')for(const ref of r.value.payload.attachmentRefs){const attachment=resolved(view,ref,'attachment');
+          check(attachment.value.productId===productId&&old.attachments.some(v=>same(v,ref))&&state.attachments.has(ref.path),'INVALID_SCOPE');}
+        next=withDossierRecord(old,{record:r.value,reference:r.reference},evidence[0].reference);
+        changed=rows[3];check(changed.kind==='product'&&changed.value.productId===productId,'EVIDENCE_MISMATCH');
+        planned.push({kind:'dossier-record',reference:r.reference});h.records.push(r);h.current.set(subjectOfDossier(r.value.payload),r);
+      }else check(rows.length===2,'EVIDENCE_MISMATCH');
+      h.decisions.push(subject);h.active.set(x.proposal.id,subject);
     }
   }
-  const packet={schemaVersion:'3djat.command.v1',operation,key:receipt.key,expected:{domainHead:receipt.previousHead,entityRevision:revision},input};
-  const context={authenticatedCaller:a.role==='source-proposer'?'source-proposer':a.role,currentHead:receipt.previousHead,currentRevision:revision,projectId:productId,skus:previous.skus};
+  const entityRevision=operation==='attachment.register'?0:revision;
+  const packet={schemaVersion:'3djat.command.v1',operation,key:receipt.key,expected:{domainHead:receipt.previousHead,entityRevision},input};
+  const context={authenticatedCaller:a.role==='source-proposer'?'source-proposer':a.role,currentHead:receipt.previousHead,currentRevision:entityRevision,projectId:productId,skus:previous.skus};
   if(operation==='product.proposal.decide'){
     const o=state.proposals.get(input.proposal.id);context.proposal={reference:o.reference,record:o.value};
     if(input.correctedProposal){const c=state.proposals.get(input.correctedProposal.id);context.correctedProposal={reference:c.reference,record:c.value};}
   }
+  if(operation===DOSSIER_DECIDE)Object.assign(context,dossierContext);
   const valid=validateCommand(packet,context);check(valid.ok,valid.errors[0]?.code??'EVIDENCE_MISMATCH');
   const expectedEvent=actionEvent(view.head.workspaceId,receipt.principal,packet,a.event.recordedAt);
   check(equal(a.event,expectedEvent)&&same(eventRef(a.event),input.humanActionReceipt??eventRef(a.event)),'EVIDENCE_MISMATCH');
@@ -324,6 +360,97 @@ export class DomainProducts {
       if(mode==='new')fail('INVALID_SCOPE');status.status='unresolved';status.cause='INVALID_SCOPE';
     }
     const value={head:view.reference,productId,principalId:start.id,product:{reference:selected.reference,record:selected.value,acceptedFacts:selected.value.facts},sourceStatus:{base:statuses}};
+    check(bytes(value).length<=1024**2,'OVERSIZE');return structuredClone(value);
+  }
+  resolveProductForOperation(token,query){
+    check(query&&typeof query==='object'&&!Array.isArray(query)&&[Object.prototype,null].includes(Object.getPrototypeOf(query)),'INVALID_VALUE');
+    exact(query,['mode','atHead','productId']);
+    for(const k of ['mode','atHead','productId'])check(Object.getOwnPropertyDescriptor(query,k)?.get===undefined&&Object.getOwnPropertyDescriptor(query,k)?.set===undefined,'INVALID_VALUE');
+    check(['new','historical'].includes(query.mode),'INVALID_VALUE');
+    check(query.atHead&&typeof query.atHead==='object'&&!Array.isArray(query.atHead)&&[Object.prototype,null].includes(Object.getPrototypeOf(query.atHead)),'INVALID_VALUE');
+    exact(query.atHead,['id','revision','path','sha256']);
+    for(const k of ['id','revision','path','sha256']){
+      const descriptor=Object.getOwnPropertyDescriptor(query.atHead,k);check(descriptor&&Object.hasOwn(descriptor,'value'),'INVALID_VALUE');
+    }
+    shape('revision-ref',query.atHead);
+    shape('command',{schemaVersion:'3djat.command.v1',operation:'product.read',key:'selector-preflight',
+      expected:{domainHead:query.atHead,entityRevision:1},input:{productId:query.productId,atHead:query.atHead}});
+    const {mode,atHead,productId}=structuredClone(query),start=this.#baseCaller(token,productId);
+    if(mode==='new')check(start.role==='human','INVALID_SCOPE');
+    const current=this.#store.read();
+    if(mode==='new')check(same(current.reference,atHead),'REVISION_CONFLICT');
+    else check([...current.records.values()].some(r=>r.kind==='domain-head'&&same(r.reference,atHead)),'MISSING_SOURCE');
+    const view=mode==='new'?current:this.#store.read({atHead});
+    const heads=[...view.records.values()].filter(r=>r.kind==='domain-head').sort((a,b)=>a.value.revision-b.value.revision);
+    const state={product:null,proposals:new Map(),active:new Map(),metadata:{workingName:[],productCode:[]},attachments:new Map(),productsPath:this.#store.workspace.paths.products,
+      dossier:{proposals:[],decisions:[],records:[],active:new Map(),current:new Map()}};
+    for(const h of heads)for(const ref of h.value.receipts){const receipt=resolved(view,ref,'store-receipt').value;
+      baseReceipt(view,h.value,receipt,productId,start.registry,state,(a,b)=>this.#correctionSources(a,b),true);}
+    const selected=productAt(view,productId);check(state.product&&same(state.product.reference,selected.reference),'EVIDENCE_MISMATCH');
+    const statuses={base:[],dossier:[],attachments:[]};let metadataBytes=0;
+    const inspect=(source,group,active,record=null)=>{
+      const policy=this.#registry().principals.find(p=>p.id===start.id&&p.role===start.role);
+      check(policy&&(policy.products==='*'||policy.products.includes(productId)),'INVALID_SCOPE');
+      let cause=null;
+      if(!policy.sourceIds.includes(source.sourceId))cause='INVALID_SCOPE';
+      else if(source.kind!=='file')cause='CAPABILITY_UNAVAILABLE';
+      else try{const data=this.#store.readFile(source.location);metadataBytes+=data.length;check(metadataBytes<=16*1024**2,'CAPACITY');
+        if(digest(data)!==source.sha256)cause='HASH_MISMATCH';}
+        catch(e){if(['ROOT_CHANGED','UNSAFE_PATH','PATH_CASE_MISMATCH','CAPACITY'].includes(e.code))throw e;
+          cause=e.code==='MISSING_REFERENCE'?'MISSING_SOURCE':e.code??'MISSING_SOURCE';}
+      if(mode==='new'&&active&&cause)fail(cause);
+      const status={...(record?{record}:{}),source,status:cause?'unresolved':'verified',cause};statuses[group].push(status);
+    };
+    for(const source of ['material','dimensions','sellingPrice'].flatMap(k=>selected.value.facts[k].sourceRefs)
+      .concat(state.metadata.workingName,state.metadata.productCode))inspect(source,'base',true);
+    for(const row of state.dossier.records){const active=same(state.dossier.current.get(subjectOfDossier(row.value.payload))?.reference,row.reference);
+      for(const source of sourcesOf(row.value.payload))inspect(source,'dossier',active,row.reference);}
+    const mapping=new Map(),attachments=[];
+    for(const ref of selected.value.attachments){const row=resolved(view,ref,'attachment');
+      check(row.value.productId===productId&&state.attachments.has(ref.path)&&same(state.attachments.get(ref.path).reference,ref),'EVIDENCE_MISMATCH');
+      const source=row.value.source,policy=this.#registry().principals.find(p=>p.id===start.id&&p.role===start.role);
+      check(policy&&(policy.products==='*'||policy.products.includes(productId)),'INVALID_SCOPE');
+      let cause=null,configuration=null;
+      if(!policy.sourceIds.includes(source.sourceId))cause='INVALID_SCOPE';
+      else if(source.kind!=='file')cause='CAPABILITY_UNAVAILABLE';
+      else try{const entry=this.#attachments.authorize(row.value);
+        configuration={root:path.resolve(entry.root),products:[...entry.products].sort()};
+        this.#attachments.verify(row.value);
+      }catch(e){if(['ROOT_CHANGED','UNSAFE_PATH','PATH_CASE_MISMATCH'].includes(e.code))throw e;
+        cause=['ENOENT','MISSING_REFERENCE'].includes(e.code)?'MISSING_SOURCE':e.code==='FILE_CHANGED'?'HASH_MISMATCH':e.code??'CAPABILITY_UNAVAILABLE';}
+      if(configuration)mapping.set(ref.path,configuration);
+      if(mode==='new'&&cause)fail(cause);
+      statuses.attachments.push({reference:ref,source,status:cause?'unresolved':'verified',cause});
+      attachments.push({reference:ref,record:row.value,current:{status:!cause?'available':cause==='MISSING_SOURCE'?'missing':cause==='HASH_MISMATCH'?'corrupt':'unavailable',cause}});
+    }
+    const finish=this.#baseCaller(token,productId),latest=this.#store.read();
+    check(finish.id===start.id&&finish.role===start.role,'INVALID_SCOPE');
+    check(finish.key===start.key,'EVIDENCE_MISMATCH');check(same(latest.reference,current.reference),'HEAD_CHANGED');
+    if(mode==='new')check(finish.role==='human'&&same(latest.reference,atHead),'REVISION_CONFLICT');
+    for(const group of ['base','dossier'])for(const status of statuses[group])if(!finish.policy.sourceIds.includes(status.source.sourceId)){
+      if(mode==='new'&&(group==='base'||same(state.dossier.current.get(subjectOfDossier(view.records.get(status.record.path).value.payload))?.reference,status.record)))fail('INVALID_SCOPE');
+      status.status='unresolved';status.cause='INVALID_SCOPE';
+    }
+    for(let i=0;i<attachments.length;i++){
+      const row=attachments[i],status=statuses.attachments[i],source=row.record.source;
+      if(!finish.policy.sourceIds.includes(source.sourceId)){
+        if(mode==='new')fail('INVALID_SCOPE');status.status='unresolved';status.cause='INVALID_SCOPE';
+        row.current={status:'unavailable',cause:'INVALID_SCOPE'};continue;
+      }
+      if(source.kind!=='file')continue;
+      let entry;
+      try{entry=this.#attachments.authorize(row.record);}catch(e){
+        if(['ROOT_CHANGED','UNSAFE_PATH','PATH_CASE_MISMATCH'].includes(e.code))throw e;
+        if(mode==='new')fail(e.code??'INVALID_SCOPE');status.status='unresolved';status.cause=e.code??'INVALID_SCOPE';
+        row.current={status:'unavailable',cause:status.cause};continue;
+      }
+      const was=mapping.get(row.reference.path),now={root:path.resolve(entry.root),products:[...entry.products].sort()};
+      if(was&&!equal(was,now))fail('ROOT_CHANGED');
+    }
+    const dossier=state.dossier.records.map(row=>({reference:row.reference,record:row.value,
+      active:same(state.dossier.current.get(subjectOfDossier(row.value.payload))?.reference,row.reference)}));
+    const value={head:view.reference,productId,principalId:start.id,
+      product:{reference:selected.reference,record:selected.value,acceptedFacts:selected.value.facts},dossier,attachments,sourceStatus:statuses};
     check(bytes(value).length<=1024**2,'OVERSIZE');return structuredClone(value);
   }
   #history(view,productId){const proposals=published(view,'proposal').filter(x=>x.value.productId===productId),decisions=published(view,'proposal-decision').filter(x=>x.value.productId===productId);
