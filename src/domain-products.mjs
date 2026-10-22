@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import {createHash,createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
 import {DomainStore,prepareRecord,StoreError,STORE_LIMITS} from './domain-store.mjs';
 import {validate,validateCommand,COMMANDS,ERROR_CODES} from './contracts/3djat.mjs';
-import {AttachmentFiles} from './attachment-files.mjs';
+import {AttachmentFiles,ATTACHMENT_IO_LIMITS} from './attachment-files.mjs';
 const OPS=new Set(['product.create','product.read','product.proposal.submit','product.proposal.decide','product.note.add','attachment.register','product.dossier.proposal.submit','product.dossier.proposal.decide']);
 import {stable,digest,uuid,bytes,equal,same,fail,check,shape,exact,within,safePrivate,syncDir,privateRead,exclusive,access,reserveIntent,findBearer,signAction} from './domain-authority.mjs';
 // Trusted local provisioning only; never exposed by an HTTP endpoint.
@@ -405,9 +405,11 @@ export class DomainProducts {
       .concat(state.metadata.workingName,state.metadata.productCode))inspect(source,'base',true);
     for(const row of state.dossier.records){const active=same(state.dossier.current.get(subjectOfDossier(row.value.payload))?.reference,row.reference);
       for(const source of sourcesOf(row.value.payload))inspect(source,'dossier',active,row.reference);}
-    const mapping=new Map(),attachments=[];
+    const mapping=new Map(),attachments=[];let attachmentReviewBytes=0;
     for(const ref of selected.value.attachments){const row=resolved(view,ref,'attachment');
       check(row.value.productId===productId&&state.attachments.has(ref.path)&&same(state.attachments.get(ref.path).reference,ref),'EVIDENCE_MISMATCH');
+      attachmentReviewBytes+=row.value.bytes;
+      check(attachmentReviewBytes<=ATTACHMENT_IO_LIMITS.reviewBytes,'OUT_OF_BOUNDS');
       const source=row.value.source,policy=this.#registry().principals.find(p=>p.id===start.id&&p.role===start.role);
       check(policy&&(policy.products==='*'||policy.products.includes(productId)),'INVALID_SCOPE');
       let cause=null,configuration=null;
