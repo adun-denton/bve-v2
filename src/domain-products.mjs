@@ -80,7 +80,11 @@ function baseReceipt(view,head,receipt,productId,registry,state,correctionSource
   const roles={'product.create':['human'],'product.note.add':['human','conductor'],'product.proposal.submit':['human','conductor','source-proposer'],'product.proposal.decide':['human']};
   check(roles[operation].includes(a.role),'INVALID_SCOPE');
   check(typeof a.mac==='string'&&/^[0-9a-f]{64}$/.test(a.mac)&&a.mac===signAction(registry,a.role,a.event),'EVIDENCE_MISMATCH');
-  check(receipt.principal===a.event.principalId&&same(evidence[0].reference,prepareRecord('evidence',evidence[0].value).reference)&&evidence[0].value.id===a.event.id,'EVIDENCE_MISMATCH');
+  // The signed event is historical authority. Validate its clock field before
+  // using it to reconstruct a command or to compare an authored note.
+  shape('note',{id:a.event.id,text:'event',createdAt:a.event.recordedAt,receipt:evidence[0].reference});
+  check(receipt.principal===a.event.principalId&&evidence[0].value.revision===1&&evidence[0].reference.revision===1&&
+    same(evidence[0].reference,prepareRecord('evidence',evidence[0].value).reference)&&evidence[0].value.id===a.event.id,'EVIDENCE_MISMATCH');
   const subject=rows.find(r=>({
     'product.create':'product','product.note.add':'product','product.proposal.submit':'proposal','product.proposal.decide':'proposal-decision'
   })[operation]===r.kind);
@@ -275,7 +279,17 @@ export class DomainProducts {
     exact(query,['mode','atHead','productId']);
     for(const k of ['mode','atHead','productId'])check(Object.getOwnPropertyDescriptor(query,k)?.get===undefined&&Object.getOwnPropertyDescriptor(query,k)?.set===undefined,'INVALID_VALUE');
     check(['new','historical'].includes(query.mode),'INVALID_VALUE');
-    shape('revision-ref',query.atHead);shape('revision-ref',{id:query.productId,revision:1,path:'product.json',sha256:'0'.repeat(64)});
+    check(query.atHead&&typeof query.atHead==='object'&&!Array.isArray(query.atHead)&&[Object.prototype,null].includes(Object.getPrototypeOf(query.atHead)),'INVALID_VALUE');
+    exact(query.atHead,['id','revision','path','sha256']);
+    for(const k of ['id','revision','path','sha256']){
+      const descriptor=Object.getOwnPropertyDescriptor(query.atHead,k);
+      check(descriptor&&Object.hasOwn(descriptor,'value'),'INVALID_VALUE');
+    }
+    shape('revision-ref',query.atHead);
+    // Use the existing command contract for the product UUID and the selected
+    // head. This runs before the native caller can observe a malformed query.
+    shape('command',{schemaVersion:'3djat.command.v1',operation:'product.read',key:'selector-preflight',
+      expected:{domainHead:query.atHead,entityRevision:1},input:{productId:query.productId,atHead:query.atHead}});
     const {mode,atHead,productId}=structuredClone(query),start=this.#baseCaller(token,productId);
     if(mode==='new')check(start.role==='human','INVALID_SCOPE');
     const current=this.#store.read();
