@@ -1,0 +1,41 @@
+// Inert authored data only. Retain every new root, partial and first failure.
+import * as fs from 'node:fs';import * as path from 'node:path';import * as os from 'node:os';
+import {randomUUID,createHash} from 'node:crypto';import assert from 'node:assert/strict';
+import {DomainStore} from '../../../src/domain-store.mjs';
+import {DomainProducts,provisionProductPrincipal,decisionActionReference,readProductDossier} from '../../../src/domain-products.mjs';
+import {Kernel} from '../../../src/kernel.mjs';
+export const PRODUCT='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',WORKSPACE='bbbbbbbb-bbbb-4bbb-9bbb-bbbbbbbbbbbb',TIME='2026-01-01T00:00:00.000Z';
+export const SUBMIT='product.dossier.proposal.submit',DECIDE='product.dossier.proposal.decide';
+export const hash=b=>createHash('sha256').update(b).digest('hex');export const stable=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
+export function usage(root){if(!fs.existsSync(root))return 0;let n=0;for(const d of fs.readdirSync(root,{withFileTypes:true})){const p=path.join(root,d.name);assert(!d.isSymbolicLink());try{n+=d.isDirectory()?usage(p):fs.statSync(p).size;}catch(e){
+ // Another test process can finish its normal transaction between readdir/stat.
+ // Only that transient lock may disappear; retained evidence and all other errors stay strict.
+ if(!(e.code==='ENOENT'&&d.name==='domain-write.lock'))throw e;
+ }}return n;}
+export function guard(parent,reserve=0){fs.mkdirSync(parent,{recursive:true});assert(usage(parent)+reserve<=32*1024**2,'New dossier fixture aggregate exceeds fixed32MiB');assert(fs.statfsSync(parent).bavail*fs.statfsSync(parent).bsize>64*1024**2);}
+export function setup(t,{kernel=false,hook=()=>{},workspaceHook=()=>{},reserve=768*1024}={}){
+ const parent=process.env.DOSSIER_EVIDENCE_ROOT??path.join(os.tmpdir(),'bve-dossier-authored');guard(parent,reserve);const dir=fs.mkdtempSync(path.join(parent,'dossier-')),root=path.join(dir,'business'),runtime=path.join(dir,'runtime'),accessFile=path.join(dir,'access.json');
+ const store=DomainStore.initialize(root,{workspaceId:WORKSPACE,sourceCommit:'b30c9543d3285925c2f8b792629f7f7b76048f29'});for(const v of Object.values(store.workspace.paths))fs.mkdirSync(path.join(root,v));fs.mkdirSync(path.join(root,'Sources'));
+ const human=provisionProductPrincipal(accessFile,{workspaceId:WORKSPACE,id:'authored-human',role:'human',sourceIds:['inert-source']}),source=provisionProductPrincipal(accessFile,{workspaceId:WORKSPACE,id:'authored-source',role:'source-proposer',sourceIds:['inert-source'],products:[PRODUCT]}),conductor=provisionProductPrincipal(accessFile,{workspaceId:WORKSPACE,id:'authored-conductor',role:'conductor',sourceIds:['inert-source'],products:[PRODUCT]});
+ const sourceBytes=Buffer.from('INERT dossier source, no product truth.\n');fs.writeFileSync(path.join(root,'Sources/inert.txt'),sourceBytes);const ref={kind:'file',sourceId:'inert-source',revision:'authored-1',sha256:hash(sourceBytes),location:'Sources/inert.txt',locator:{kind:'section',section:'Authored inert source'},observedAt:TIME};
+ const config={schemaVersion:'3djat.connection.v1',workspaceId:WORKSPACE,domainRoot:root,runtimeRoot:runtime,paths:Object.fromEntries(Object.entries(store.workspace.paths).map(([k,v])=>[k,path.join(root,v)])),storage:'local-unsynced'};
+ const w={parent,dir,root,runtime,accessFile,store,human,source,conductor,ref,config,k:null,c:null,reserve,writer:new DomainProducts(root,{accessFile,hook})};
+ if(kernel){w.k=new Kernel(runtime,{workspace:config,expectedHead:store.read().reference,products:{accessFile},workspaceHook});w.c=JSON.parse(fs.readFileSync(path.join(runtime,'credentials.json')));}
+ fs.writeFileSync(path.join(dir,'unrelated-sentinel'),'DOSSIER_INERT_SENTINEL\n');t.after(()=>{w.k?.close();assert.equal(fs.readFileSync(path.join(dir,'unrelated-sentinel'),'utf8'),'DOSSIER_INERT_SENTINEL\n');fs.writeFileSync(path.join(dir,'FIXTURE-RETAINED.json'),JSON.stringify({test:t.name,authoredOnly:true,noCleanup:true,bytes:usage(dir)})+'\n');guard(parent);assert(usage(dir)<=reserve,'Group reservation exceeded');});
+ send(w,packet(w,'product.create',{productId:PRODUCT,productCode:null,workingName:'Authored concept only',note:'Inert initial note'}));return w;
+}
+export function packet(w,operation,input,{head=w.store.read().reference,revision=w.store.read().head.products.find(p=>p.productId===input.productId)?.dossier.revision??0,key=randomUUID()}={}){return {schemaVersion:'3djat.command.v1',operation,key,expected:{domainHead:head,entityRevision:revision},input};}
+export function field(w,name='description',value='INERT description',state='accepted'){return {kind:'field',field:name,fact:{state,value,sourceRefs:[w.ref]}};}
+export function entry(w,kind='production',type='production-note',attachmentRefs=[]){return {kind:'entry',entryId:randomUUID(),entryKind:kind,entryType:type,date:'2026-01-01',title:'Inert title',text:'Authored assertion; not actual production evidence.',attachmentRefs,sourceRefs:[w.ref]};}
+export function proposal(w,payload=field(w),extra={}){const revision=w.store.read().head.products.find(p=>p.productId===PRODUCT).dossier.revision;return packet(w,SUBMIT,{schemaVersion:'3djat.dossier-proposal.v1',proposalId:randomUUID(),productId:PRODUCT,expectedRevision:revision,origin:'source-extract',payload,replaces:null,reason:'Authored proposal only',corrects:null,...extra});}
+export function decision(w,proposal,outcome='accepted',extra={},principalId=w.human.principalId){const revision=w.store.read().head.products.find(p=>p.productId===PRODUCT).dossier.revision;const input={schemaVersion:'3djat.dossier-decision.v1',decisionId:randomUUID(),productId:PRODUCT,proposal,expectedRevision:revision,outcome,reason:'Authored human-scoped test only; no genuine approval',decidedAt:TIME,humanActionReceipt:{id:'placeholder',revision:1,path:'placeholder.json',sha256:'0'.repeat(64)},supersedesDecision:null,correctedProposal:null,...extra};const p=packet(w,DECIDE,input);input.humanActionReceipt=decisionActionReference({workspaceId:WORKSPACE,principalId,packet:p});return p;}
+export function ok(r){assert.equal(r.schemaVersion,'3djat.result.v1',JSON.stringify(r));return r;}
+export function fail(r,code){assert.equal(r.schemaVersion,'3djat.failure.v1',JSON.stringify(r));assert.equal(r.error.code,code,JSON.stringify(r));return r;}
+export function send(w,p,principal=w.human){guard(w.parent);return ok(w.writer.command(principal.token,p));}
+export const read=w=>readProductDossier(w.root,{productId:PRODUCT,accessFile:w.accessFile});
+export function policy(w,id='bve-human',role='human',products=[PRODUCT],sourceIds=['inert-source']){return provisionProductPrincipal(w.accessFile,{workspaceId:WORKSPACE,id,role,products,sourceIds});}
+export function changePolicy(w,id,fn){const a=JSON.parse(fs.readFileSync(w.accessFile));const p=a.principals.find(p=>p.id===id);assert(p);fn(p,a);fs.writeFileSync(w.accessFile,JSON.stringify(a));}
+export function tinyAttachment(w){const b=Buffer.from('INERT opaque design bytes\0');const id=randomUUID(),location='Business/inert-'+id+'.bin';fs.writeFileSync(path.join(w.root,location),b);const a={schemaVersion:'3djat.attachment.v1',attachmentId:id,productId:PRODUCT,sha256:hash(b),bytes:b.length,location,filename:'inert.3mf',mime:'application/octet-stream',availability:'available',source:{...w.ref,location,sha256:hash(b)}};
+ // Existing trusted store fixture path; no real file parser or counterfeit attachment-install claim.
+ const v=w.store.read(),prior=v.records.get(v.head.products[0].dossier.path).value;const ref={id,revision:1,path:`Domain/attachment/${id}/1.json`,sha256:hash(Buffer.from(stable(a)+'\n'))};const next={...structuredClone(prior),revision:prior.revision+1,attachments:[...prior.attachments,ref]};w.store.commit({principal:'authored-owner',operation:'authored-attachment-fixture',key:randomUUID(),expectedHead:v.reference,records:[{kind:'attachment',record:a}],changes:[{kind:'product',id:PRODUCT,expectedRevision:prior.revision,record:next}]});return {reference:ref,record:a};
+}

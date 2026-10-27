@@ -1,12 +1,25 @@
 // Role-session entry point. Access envelope is private; never print or publish it.
 import { readFileSync, existsSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { join } from 'node:path';
+import { join,isAbsolute } from 'node:path';
 import { Kernel } from '../src/kernel.mjs';
+function openScopedKernel(access){
+  if(typeof access.root!=='string'||!existsSync(join(access.root,'bve-v2-root.json')))throw Error('Scoped transport requires an existing recognized private root');
+  let options={};
+  if(access.runtimeOptionsFile!==undefined){
+    if(typeof access.runtimeOptionsFile!=='string'||!isAbsolute(access.runtimeOptionsFile))throw Error('Private runtime options require an absolute file');
+    const bytes=readFileSync(access.runtimeOptionsFile);if(bytes.length>128*1024)throw Error('Private runtime options too large');
+    options=JSON.parse(bytes);
+    if(!options||typeof options!=='object'||Array.isArray(options)||!Object.keys(options).every(k=>['products','templates','business','operations','services'].includes(k)))throw Error('Unsupported private runtime options');
+  }
+  // Reopen v5 with its existing pinned policy; never promote a root here.
+  if(options.services && JSON.parse(readFileSync(join(access.root,'bve-v2-root.json'))).version!==5)throw Error('Unsupported private runtime options: services require an existing v5 root');
+  // Existing policies only: never accept migration, recovery or owner options.
+  return new Kernel(access.root,{...options,recover:false});
+}
 export async function sessionCall(access,{op,key=randomUUID(),input={}}){
   if(access.transport==='kernel'){
-    if(typeof access.root!=='string'||!existsSync(join(access.root,'bve-v2-root.json')))throw Error('Scoped transport requires an existing recognized private root');
-    const kernel=new Kernel(access.root,{recover:false});
+    const kernel=openScopedKernel(access);
     try{return kernel.call(access.token,op,key,input);}finally{kernel.close();}
   }
   const r=await fetch(access.origin+'/api/op',{method:'POST',headers:{Authorization:`Bearer ${access.token}`,'Content-Type':'application/json'},body:JSON.stringify({op,key,input})});
@@ -14,8 +27,7 @@ export async function sessionCall(access,{op,key=randomUUID(),input={}}){
 }
 export async function sessionOriginal(access,artifactId){
   if(access.transport==='kernel'){
-    if(typeof access.root!=='string'||!existsSync(join(access.root,'bve-v2-root.json')))throw Error('Scoped transport requires an existing recognized private root');
-    const kernel=new Kernel(access.root,{recover:false});
+    const kernel=openScopedKernel(access);
     try{return kernel.original(access.token,artifactId);}finally{kernel.close();}
   }
   const r=await fetch(access.origin+'/api/original?id='+encodeURIComponent(artifactId),{headers:{Authorization:`Bearer ${access.token}`}});

@@ -1,0 +1,9 @@
+# Historical imported-original inspection candidate
+
+`Kernel.inspectImportedOriginalSources(token,query)` is a local, additive read of committed imported PNGs. It requires an active project-bound SOL Conductor session and a connected 3DJAT workspace. The exact query contains `mode:'historical'`, a reachable selected `atHead`, `projectId`, one to six distinct `source-artifact` records, `parentRoundId:null`, and `parentArtifacts:[]`.
+
+The method locks the domain before the owned operational transaction. It checks the selected domain head, workspace integration, project and session, installed import/PNG format, the selected stage and artifact, five immutable import rows, both SQLite idempotency receipts, and each captured PNG. Metadata and byte limits are local to inspection. SQLite BLOB length is checked before retrieving the BLOB. It returns a bounded report with exact import references and verified measurements; an absent committed BLOB is reported as a historical per-source `MISSING_SOURCE` blocker only when its other provenance is intact. Contradictory or corrupt evidence refuses the entire read.
+
+The report has `authority:'not-established'`, `freshAcceptance:false` and `historicalClaims:'unverified'`. It contains no original bytes and grants no source-use permission, new operation, approval, or right to start a worker. A file outside the retained import BLOB is not reopened. Produced sources, imported historical-parent claims, review links, and operation parent lineage are unsupported in this slice. The installed ordinary limit remains 16 MP/24 MiB; 20 MP requires the preexisting experimental format policy and remains unqualified.
+
+This read does not persist operation selection, alter old APIs or register a new HTTP/native route. Product, template and business authority, produced lineage, region review provenance, format rollout, request/commission/start rechecks, recovery, real host and user acceptance remain separate work.

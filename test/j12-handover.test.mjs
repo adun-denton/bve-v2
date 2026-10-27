@@ -1,0 +1,17 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import {createHash} from 'node:crypto';
+import {handover} from '../src/handover.mjs';import {prepared,adoption,PRODUCT} from './fixtures/3djat/workspace-fixture.mjs';import {backupRoot} from '../scripts/backup.mjs';import {verifyCombined,restoreCombined} from '../src/workspace-backup.mjs';import {Kernel} from '../src/kernel.mjs';
+const snapshot=root=>{const out={};function walk(p){for(const x of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,x.name);if(x.isDirectory())walk(f);else out[path.relative(root,f)]=createHash('sha256').update(fs.readFileSync(f)).digest('hex');}}walk(root);return out;};
+test('J12 missing roots, definitions and future schema block without creating or changing files',t=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'j12-readonly-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const before=snapshot(root);
+ const report=handover({businessRoot:path.join(root,'absent-business'),runtimeRoot:path.join(root,'absent-runtime'),sourceRoot:root});assert.equal(report.activationAllowed,false);assert.equal(report.rows.filter(r=>r.status==='blocked').length>=4,true);assert.deepEqual(snapshot(root),before);
+ const runtime=path.join(root,'runtime');fs.mkdirSync(runtime);fs.writeFileSync(path.join(runtime,'bve-v2-root.json'),JSON.stringify({format:'bve-v2',version:999}));const prior=snapshot(root);assert.ok(handover({businessRoot:root,runtimeRoot:runtime}).rows.some(r=>r.reason==='UNSUPPORTED_SCHEMA'));assert.deepEqual(snapshot(root),prior);
+});
+test('J12 authored handover smoke: read-only discovery, same-root restart, combined backup and separate restore preserve file authority and saved request',async t=>{
+ const w=prepared(t,{attachment:true});w.k.adoptWorkspace(w.c,adoption(w));const request=w.call('human','request.create',{projectId:PRODUCT,intent:'Authored J12 retained instructions; no generation',count:1});const head=w.store.read().reference;
+ w.k.close();const before=snapshot(w.dir),report=handover({businessRoot:w.domainRoot,runtimeRoot:w.runtimeRoot});assert.equal(report.activationAllowed,false);assert.equal(report.rows.find(r=>r.criterion==='Role and contract definitions').status,'ready');assert.equal(report.rows.find(r=>r.criterion==='Supported Conductor and Butler').status,'blocked');assert.deepEqual(snapshot(w.dir),before);
+ w.k=new Kernel(w.runtimeRoot);assert.equal(w.k.read(w.c.human,'request').find(r=>r.id===request.id).intent,request.intent);assert.deepEqual(w.store.read().reference,head);assert.equal(w.k.read(w.c.human,'job').length,0);
+ const backup=path.join(w.dir,'combined');await backupRoot(w.runtimeRoot,backup);assert.equal(verifyCombined(backup).head.sha256,head.sha256);w.k.close();
+ const businessRoot=path.join(w.dir,'restored-business'),runtimeRoot=path.join(w.dir,'restored-runtime'),mapping={businessRoot,runtimeRoot,paths:Object.fromEntries(Object.entries(w.store.workspace.paths).map(([k,v])=>[k,path.join(businessRoot,v)])),storage:'local-unsynced'};restoreCombined(backup,mapping);
+ const k=new Kernel(runtimeRoot);try{assert.equal(k.read(w.c.human,'request').find(r=>r.id===request.id).intent,request.intent);assert.equal(k.read(w.c.human,'job').length,0);assert.equal(handover({businessRoot,runtimeRoot}).details.domainHead.sha256,head.sha256);}finally{k.close();}
+ assert.deepEqual(w.store.read().reference,head);assert.throws(()=>restoreCombined(backup,mapping));
+});

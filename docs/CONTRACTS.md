@@ -1,12 +1,14 @@
 # Current operating contracts
 
+The additive [3DJAT v1 contracts](3DJAT-CONTRACTS.md) define versioned domain-file and operational interfaces with pure validators. The [product dossier writer](3DJAT-PRODUCTS.md) implements the five governed product commands through a separate explicit endpoint; other 3DJAT workflows are not installed. Existing APIs, legacy acceptance semantics and the current 16MP/24MiB PNG policy remain unchanged.
+
+The separate [J03B integration candidate](3DJAT-WORKSPACE.md) supplies trusted owner connection/adoption using the frozen workspace.adopt request, independent file authority, disposable projection, frozen selections and combined private recovery. Kernel.call retains its existing interface; product delegation uses productCommand/POST /api/product and the bounded productReview query. Other workflows and image limits remain unchanged.
+
 Read the fixed [Examples A–C](EXAMPLES.md). Use the implemented method when a capability has an example. For unsupported capabilities, propose a bounded solution using actual tools; do not invent a platform requirement.
 
 ## Project and staffing
 
 Exploration is the existing Conductor conversation; it creates no production staff or round. On explicit production intent, project.activate persists the name, brief/current instructions and bounded request, binds that same SOL Conductor and establishes the project folder identity. Human UI requests also persist bounded intent. Project instructions are immutable revisions with expectedVersion; the latest revision is current. Historical revisions are not appended to active instructions.
-
-Project-entry gate: before first production for an unconfirmed project context or an ambiguous project switch, Conductor inspects the project registry and active binding and obtains an explicit user choice: continue a specific existing project or create a new one. Surface relevant existing matches and the proposed new-project name. A brand, a new design direction, or “new visual exploration” is not evidence of a new project. Until that choice is resolved, do not activate or recreate a project, create a round or staff, generate images, or create production files. If the user chooses an existing project, preserve its ID, instructions, history and staff; if new, activate it once. A verified user-confirmed binding with unambiguous continuation needs no repeated confirmation. This is a Conductor precondition using existing reads and operations, not a new kernel API or an approval gate on every round.
 
 Only one Conductor and Butler are active per project. Butler and workers declare LUNA; Conductor declares SOL. Host evidence must independently establish actual model/session availability. Role/tier strings alone provide no authority. A worker is bound to one commissioned project/round/job. Each actual session identity has one active assignment. BVE reserves a durable staff key/slot in existing job records before host creation; active plus pending worker slots cannot exceed six. Explicit replacement revokes old authority; it does not recreate a project/staff or authorize a new invocation. Retired worker records remain discoverable.
 

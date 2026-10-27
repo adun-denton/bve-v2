@@ -125,7 +125,7 @@ async function refresh(force=false){
       const chosen=(selectedPresentation?.references??selectedRound.references).map(ref=>state.data.artifact.find(a=>a.id===ref.artifactId)).filter(Boolean);
       await renderCards($('cards'),chosen,{library:true});
     }else await renderCards($('cards'),artifacts());
-    $('project-work').replaceChildren(...projectRounds.map(r=>{const box=el('details'),summary=el('summary',r.code+' · '+r.operation+' · '+r.state);box.append(summary,el('p',r.intent));for(const st of state.data.statement.filter(st=>st.roundId===r.id)){box.append(el('p',st.code+' / '+(st.worker?.sessionId??st.butler.sessionId)+' · '+st.status));for(const e of st.events)box.append(el('p',e.actor.sessionId+' / '+e.kind+': '+e.report.text));}return box;}));
+    $('project-work').replaceChildren(...projectRounds.map(r=>{const box=el('details'),summary=el('summary',r.code+' · '+r.operation+' · '+r.state);box.append(summary,el('p',r.intent));for(const st of state.data.statement.filter(st=>st.roundId===r.id)){box.append(el('p',st.code+' / '+(st.service?'service: '+st.service.executorId:(st.worker?.sessionId??st.butler.sessionId))+' · '+st.status));for(const e of st.events)box.append(el('p',e.actor.sessionId+' / '+e.kind+': '+e.report.text));}return box;}));
     if(!$('library').hidden)await renderCards($('library-cards'),state.data.artifact.filter(a=>a.projectId===p.id),{library:true});
     $('inspection').textContent=JSON.stringify(inspect(),null,2);
   }catch(e){toast(e.message);}finally{polling=false;}

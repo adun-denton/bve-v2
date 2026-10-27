@@ -10,6 +10,12 @@ One SOL Conductor, one on-demand LUNA Butler, 0–6 LUNA Gen workers; maximum ei
 
 Node 24.x is required (tested 24.19.0). Runtime dependencies are zero. Use a pinned checkout and exact private BVE_ROOT. Preserve existing roots/work and back up before runtime changes. Never replace an existing installation with an empty workspace.
 
+The optional [prepared 3DJAT workspace integration candidate](docs/3DJAT-WORKSPACE.md) connects reviewed file identities, a disposable domain projection and combined private recovery. It does not authorize production setup or establish native readiness.
+
+The [governed product dossier candidate](docs/3DJAT-PRODUCTS.md) adds independent file-owned creation, notes and human-reviewed source proposals through explicit local capabilities and narrow BVE delegation. The broader product UI remains a separate task.
+
+The [historical PNG import candidate](docs/3DJAT-IMPORTS.md) captures explicitly configured local originals into a durable SQLite inbox, verifies them without conversion, and retains import provenance independently of generation. Ordinary roots remain limited to 16MP/24MiB. The explicitly opt-in [20MP experiment](docs/IMG20.md) has a separate root safeguard and evidence harness; IMG20, attachments/previews and operating setup remain open.
+
 ```sh
 npm ci --omit=dev --ignore-scripts
 npm test
@@ -17,3 +23,11 @@ npm start
 ```
 
 The server binds http://127.0.0.1:4317/ and keeps original bytes, records and credentials in the private root. UI drafts autosave. Offline verification uses authored fixtures and no image-model calls. Actual SOL/LUNA provisioning, native original return, automatic initiating-chat completion and browser opening require separate host verification. This cloud work does not modify the operator's Windows installation or claim a ready native staff handoff.
+
+The bounded [J08 conventional PNG executor](docs/3DJAT-DETERMINISTIC.md) consumes frozen adopted-operation selections, creates zero AI workers and preserves independent intake, whole-batch checkpoints and separate human acceptance. Its explicit local tool configuration and disposable tests do not establish production/native readiness.
+
+The [product operation/review interface](docs/3DJAT-OPERATIONS-UI.md) supplies adopted-template controls, exact human decisions and current Approved Content by channel. Saving a request grants no native execution or output approval.
+
+The [calibration comparison candidate](docs/3DJAT-CALIBRATION.md) connects the existing Test entry, comparison boards and explicit scoped promotion. Authored protocol checks do not establish visual or native acceptance.
+
+J12 authored packaging: [environment-first handover and readiness](docs/3DJAT-HANDOVER.md). Use the exact return-package source identity; current production/native/user acceptance remains incomplete.

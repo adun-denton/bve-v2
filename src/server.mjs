@@ -1,23 +1,37 @@
+import {operationUIHandler,operationUIFailure} from './operation-ui-http.mjs';
 import { createServer } from 'node:http';
 import { readFileSync, writeFileSync, existsSync, unlinkSync, openSync, closeSync } from 'node:fs';
-import { resolve, join, dirname } from 'node:path';
+import { resolve, join, dirname, isAbsolute, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 import { randomUUID } from 'node:crypto';
+import { WorkspaceConnection, inspectRuntime, RootGuard, sameRef, check } from './workspace.mjs';
+import { isDeepStrictEqual } from 'node:util';
 import { Kernel, Fault } from './kernel.mjs';
 import { capabilities, seedDemo } from './adapters.mjs';
 const here=dirname(fileURLToPath(import.meta.url)),publicRoot=resolve(here,'../public');
 export const defaultRoot=()=>join(homedir(),'.bve-v2','workspace-v1');
-export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Number(process.env.PORT||4317),demo=false}={}){
+async function boundedJSON(req,limit){
+  const chunks=[];let length=0;for await(const b of req){length+=b.length;if(length>limit)throw new Fault('Request too large',413);chunks.push(b);}
+  let body;try{body=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(Buffer.concat(chunks,length));}catch{throw new Fault('Invalid UTF-8 request body',400);}
+  return JSON.parse(body);
+}
+export async function serve(options={}){
+  const {root=process.env.BVE_ROOT||defaultRoot(),port=Number(process.env.PORT||4317),demo=false,workspace=null,expectedHead=null,migrate=false,migrationBackup=null,confirmedQuiescent=false,products=null,imports=null,templates=null,business=null,operations=false,operationBackup=null,services=null,serviceBackup=null}=options;
+  if(workspace){check(Object.hasOwn(options,'root')&&isAbsolute(root),'EXPLICIT_ROOT_REQUIRED');const prior=inspectRuntime(root).integration;
+    if(prior)check(isDeepStrictEqual(prior.config,workspace),'ROOT_CONFLICT');
+    const connection=new WorkspaceConnection(root,workspace,{existing:!!prior});if(!prior)check(sameRef(connection.store.read().reference,expectedHead),'REVISION_CONFLICT');}
+
   // A single owner is important: a second server must not mark active attempts uncertain.
   const lockPath=join(root,'owner.json');
   if(existsSync(lockPath)){
+    if(!existsSync(join(root,'bve-v2-root.json')))throw new Fault('Refusing an owner file in an unrecognized root',409);
     const owner=JSON.parse(readFileSync(lockPath));
     let alive=false;try{process.kill(owner.pid,0);alive=true;}catch(e){if(e.code!=='ESRCH')throw e;}
     if(alive)throw Error('This private root already has a running owner. Open its browser URL instead.');
     unlinkSync(lockPath);
   }
-  const kernel=new Kernel(root),credentials=JSON.parse(readFileSync(join(root,'credentials.json')));
+  const kernel=new Kernel(root,{workspace,expectedHead,migrate,migrationBackup,confirmedQuiescent,products,imports,templates,business,operations,operationBackup,services,serviceBackup}),credentials=JSON.parse(readFileSync(join(root,'credentials.json')));
   const fd=openSync(lockPath,'wx',0o600);writeFileSync(fd,JSON.stringify({pid:process.pid,startedAt:new Date().toISOString()}));closeSync(fd);
   if(demo)await seedDemo(kernel,credentials);
   let origin,timer;
@@ -28,7 +42,7 @@ export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Numbe
       if(req.headers.origin&&req.headers.origin!==origin)throw new Fault('Cross-origin request rejected',403);
       const url=new URL(req.url,origin);
       const credential=req.headers.authorization?.replace(/^Bearer /,'');
-      if(req.method==='GET'&&['/','/app.js','/style.css'].includes(url.pathname)){
+      if(req.method==='GET'&&['/','/app.js','/style.css','/products.html','/products.js','/products.css'].includes(url.pathname)){
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1),ext=path.split('.').at(-1);
         res.writeHead(200,{'Content-Type':({html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8'})[ext],
           'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"});
@@ -39,23 +53,68 @@ export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Numbe
       if(req.method==='GET'&&url.pathname==='/api/read'){
         json(200,kernel.read(credential,url.searchParams.get('kind')));return;
       }
+      if(req.method==='GET'&&url.pathname==='/api/products'){json(200,kernel.productIndex(credential));return;}
       if(req.method==='GET'&&url.pathname==='/api/round'){json(200,kernel.round(credential,url.searchParams.get('id')));return;}
       if(req.method==='GET'&&url.pathname==='/api/assignment'){json(200,kernel.assignment(credential));return;}
       if(req.method==='GET'&&url.pathname==='/api/original'){
+        if(url.searchParams.has('view')){
+          const keys=['view','productId','id','version','sha256','width','height'];
+          if(Buffer.byteLength(url.search)>1024||url.searchParams.get('view')!=='media'||[...url.searchParams.keys()].length!==keys.length||keys.some(k=>url.searchParams.getAll(k).length!==1)||[...url.searchParams.keys()].some(k=>!keys.includes(k)))throw new Fault('Invalid media query',400);
+          for(const k of ['version','width','height'])if(!/^[1-9][0-9]{0,9}$/.test(url.searchParams.get(k)))throw new Fault('Invalid media query',400);
+          const q={productId:url.searchParams.get('productId'),artifactId:url.searchParams.get('id'),version:Number(url.searchParams.get('version')),sha256:url.searchParams.get('sha256'),width:Number(url.searchParams.get('width')),height:Number(url.searchParams.get('height'))};
+          json(200,kernel.artifactMedia(credential,q));return;
+        }
         const bytes=kernel.original(credential,url.searchParams.get('id'));
         res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'private, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'});res.end(bytes);return;
       }
       if(req.method==='GET'&&url.pathname==='/api/portable'){
         res.setHeader('Content-Disposition',`attachment; filename="bve-review-${url.searchParams.get('id')}.json"`);json(200,kernel.portable(credential,url.searchParams.get('id'),{jobId:url.searchParams.get('jobId')}));return;
       }
+      if(req.method==='GET'&&url.pathname==='/api/import'){json(200,kernel.importReview(credential,url.searchParams.get('id')));return;}
+      if(req.method==='GET'&&url.pathname==='/api/import-portable'){json(200,kernel.importPortable(credential,url.searchParams.get('id')));return;}
+      if(req.method==='GET'&&url.pathname==='/api/operation-selection'){
+        try{json(200,kernel.operationSelection(credential,url.searchParams.get('requestId')));}
+        catch(e){if(e.code==='INVALID_SCOPE')throw new Fault('INVALID_SCOPE',403);throw e;}
+        return;
+      }
+      if(req.method==='GET'&&url.pathname==='/api/operation-discovery'){
+        json(200,kernel.operationDiscovery(credential,{productId:url.searchParams.get('productId'),applicability:url.searchParams.get('applicability'),
+          branded:url.searchParams.get('branded')==='true',brandTemplateId:url.searchParams.get('brandTemplateId')}));return;
+      }
+      if(req.method==='GET'&&['/api/calibration','/api/content-review','/api/operation-preparation'].includes(url.pathname)){
+        json(200,operationUIHandler(kernel,credential,{method:'GET',path:url.pathname,query:Object.fromEntries(url.searchParams)}));return;
+      }
+      if(req.method==='POST'&&['/api/calibration','/api/operation-request','/api/operation-preparation','/api/candidate-action-reference','/api/candidate-decision'].includes(url.pathname)){
+        const input=await boundedJSON(req,1024**2);json(200,operationUIHandler(kernel,credential,{method:'POST',path:url.pathname,input}));return;
+      }
+      if(req.method==='POST'&&url.pathname==='/api/operation-commission'){
+        const input=await boundedJSON(req,1024**2);json(200,kernel.operationCommission(credential,input.packet,input));return;
+      }
+      if(req.method==='POST'&&['/api/template','/api/template-review'].includes(url.pathname)){
+        const packet=await boundedJSON(req,128*1024),value=url.pathname==='/api/template'?kernel.templateCommand(credential,packet):kernel.templateReview(credential,packet);
+        if(Buffer.byteLength(JSON.stringify(value),'utf8')>1024**2)throw new Fault('VALIDATION_LIMIT',409);
+        json(value.schemaVersion==='3djat.failure.v1'?(value.error.code==='INVALID_SCOPE'?403:409):200,value);return;
+      }
+      if(req.method==='POST'&&['/api/product','/api/product-review','/api/asset-import'].includes(url.pathname)){
+        const packet=await boundedJSON(req,128*1024),value=url.pathname==='/api/product'?kernel.productCommand(credential,packet):url.pathname==='/api/asset-import'?kernel.assetCommand(credential,packet):kernel.productReview(credential,packet);
+        if(url.pathname==='/api/product-review'&&Buffer.byteLength(JSON.stringify(value),'utf8')>1024**2)throw new Fault('VALIDATION_LIMIT',409);
+        json(value.schemaVersion==='3djat.failure.v1'?409:200,value);return;
+      }
+      if(req.method==='POST'&&url.pathname==='/api/product-action-reference'){
+        json(200,kernel.productActionReference(credential,await boundedJSON(req,128*1024)));return;
+      }
+      if(req.method==='POST'&&url.pathname==='/api/business'){
+        const packet=await boundedJSON(req,128*1024),value=kernel.businessCommand(credential,packet);
+        json(value.schemaVersion==='3djat.failure.v1'?409:200,value);return;
+      }
       if(req.method==='POST'&&url.pathname==='/api/op'){
-        let body='',length=0;
-        for await (const b of req){length+=b.length;if(length>34*1024*1024)throw new Fault('Request too large',413);body+=b;}
-        const x=JSON.parse(body);
+        const x=await boundedJSON(req,34*1024*1024);
         const value=kernel.call(credential,x.op,x.key,x.input);json(value.conflict?409:200,value);return;
       }
       throw new Fault('Not found',404);
-    }catch(e){json(e.status||400,{error:e.message});}
+    }catch(e){
+      json(e.status||400,operationUIFailure(e,new URL(req.url,origin).pathname));
+    }
   });
   try{await new Promise((ok,no)=>{server.once('error',no);server.listen(port,'127.0.0.1',ok);});}catch(e){kernel.close();unlinkSync(lockPath);throw e;}
   origin=`http://127.0.0.1:${server.address().port}`;
@@ -64,7 +123,10 @@ export async function serve({root=process.env.BVE_ROOT||defaultRoot(),port=Numbe
   return {server,kernel,credentials,origin,stop};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
-  const app=await serve({demo:process.argv.includes('--demo')});
+  const argument=flag=>{const i=process.argv.indexOf(flag);return i<0?null:process.argv[i+1];};
+  const root=argument('--root')??process.env.BVE_ROOT,configPath=argument('--workspace-config');let setup={};
+  if(configPath){check(root&&isAbsolute(root)&&isAbsolute(configPath),'EXPLICIT_ROOT_REQUIRED');const g=new RootGuard(dirname(configPath));setup=JSON.parse(g.read(basename(configPath)));check(Object.keys(setup).every(k=>['workspace','expectedHead'].includes(k)),'INVALID_METADATA');}
+  const app=await serve({...setup,...(root?{root}:{}),demo:process.argv.includes('--demo')});
   console.log(`BVE V2 development candidate: ${app.origin}\nPrivate root: ${app.kernel.root}\n${process.argv.includes('--demo')?'SIMULATION: authored fixtures. No native workers.':'Project records are available. Native project staffing/return requires the installed host driver; see installation status.'}\nStop with Ctrl+C; resume with the same BVE_ROOT.`);
   for(const signal of ['SIGINT','SIGTERM'])process.once(signal,()=>app.stop().then(()=>process.exit(0)));
 }

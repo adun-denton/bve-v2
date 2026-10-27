@@ -6,7 +6,7 @@ These fixed examples define supported work. C1 is SOL; B1 and Gen workers are LU
 
 Iman opens a SOL chat C1 and discusses his website, brand texts, images, references and links over several turns. This exploration creates no production project, round, Butler or Gen workers.
 
-Iman asks: “Generate three different homepage design concepts based on what we've discussed.” Before producing anything, C1 checks registered projects and the current binding. Project identity has not yet been confirmed, so C1 asks: “Should I create a new BVE project called Iman Website, or continue an existing project?” It identifies any plausible existing matches. Iman confirms: “Create Iman Website as a new project.” Only then `project.activate` binds the existing C1 to P001, records the brief/current instructions and explicit three-result request, and identifies BVE_ROOT/Projects/P001 (the physical folder uses its immutable project ID). Had Iman selected an existing project, C1 would resume its original identity and instructions rather than create a duplicate.
+Iman asks: “Generate three different homepage design concepts based on what we've discussed.” C1 obtains the missing project name: **Iman Website**. `project.activate` binds the existing C1 to P001, records the brief/current instructions and explicit three-result request, and identifies BVE_ROOT/Projects/P001 (the physical folder uses its immutable project ID).
 
 C1 uses the installed host's session tools to obtain B1, then `staff.bind` records B1's actual LUNA identity. `round.create` establishes R001, operation generate, expected_results 3 and an immutable Butler statement: prepare the project folder/context, receive three original results, coordinate independent validation, arrange BVE review and return completion. B1 verifies its own assignment and reports ready. The deterministic service prepares the folder. No Gen exists yet.
 
@@ -15,8 +15,6 @@ C1 authors three distinct specifications and calls `round.commission`. It obtain
 B1 resumes the round as arrivals commit. Expected count was three before the first arrival. Independent services validate originals; B1 presents the three verified references with `round.present` and reports its operational outcome. Completion automatically commits an immutable checkpoint and a durable completion event. The host returns the statement/event to the originating C1; actual notification delivery is evidenced separately. C1 reads, acknowledges and records its disposition, then tells Iman: “Your three homepage concepts are ready in BVE. Open Iman Website to review them and submit your feedback.”
 
 Five AI sessions: C1 + B1 + Gen1 + Gen2 + Gen3. No supervisor. If automatic return/opening is unavailable, report that exact gap and retain the durable return event; do not pretend the initiating interaction completed unattended.
-
-Project-entry regression: a brief titled “BVE CONDUCTOR — PENHUN VISUAL DESIGN EXPLORATION” requests three visual alternatives. “New visual exploration” identifies creative intent, not whether PENHUN is a new BVE project. If no user-confirmed PENHUN binding exists, C1 checks the registry and asks whether to resume an existing project or create PENHUN, then follows the same round sequence after confirmation. C1 must not generate three images directly with its own image tool and subsequently try to import them into BVE. Once PENHUN has been confirmed and bound, later clearly scoped rounds do not repeat this question.
 
 ## B · R004 comparison, no generation
 
