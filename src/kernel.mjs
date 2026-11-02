@@ -1,3 +1,4 @@
+import {briefInput,briefCheck} from './photo-briefs.mjs';
 import * as cal from './calibration.mjs';
 import {candidateAction,candidateActionReference as contentActionReference,decisionReference,verifyContentDecisions,deriveContent} from './content-review.mjs';
 import {PNG_SERVICE,recipesForRun,recipeHash,stable as recipeStable} from './executors/png-recipes.mjs';
@@ -857,6 +858,43 @@ export class Kernel {
       const {closure,permissionEvidence,principalId,sessionId,...body}=row.body;
       return clone({schemaVersion:'3djat.operation-selection-view.v1',id:row.id,
         retainedBodySha256:row.bodySha256,body});
+    }finally{release();}
+  }
+
+  // Imported-source instructions are independent of generation iterations and reviews.
+  // The existing records/receipts transaction stores drafts and immutable submissions.
+  photoBrief(token,packet){
+    briefCheck(packet&&Object.keys(packet).length===3&&['action','key','input'].every(k=>Object.hasOwn(packet,k)));
+    const {action,key}=packet,x=briefInput(action,packet.input),ref=x.artifact;
+    briefCheck(typeof key==='string'&&key.length>0&&key.length<=200);
+    const role=this.#role(token),session=this.#session(token);
+    briefCheck(['human','conductor'].includes(role)&&(!session||session.projectId===ref.productId),'INVALID_SCOPE');
+    briefCheck(action==='read'||role==='human'&&!session,'INVALID_SCOPE');
+    briefCheck(this.#workspace&&this.#operations,'CAPABILITY_UNAVAILABLE');
+    const release=this.#workspace.lockDomain();
+    try{
+      const head=this.#contentAuthority(token,ref.productId),a=this.#get('artifact',ref.artifactId);
+      briefCheck(a.origin==='import'&&a.projectId===ref.productId&&a.version===ref.version&&a.sha256===ref.sha256&&a.width===ref.width&&a.height===ref.height,'EVIDENCE_MISMATCH');
+      this.#verifyArtifact(a);
+      const fence=()=>{briefCheck(sameRef(this.#workspace.read().reference,head),'REVISION_CONFLICT');this.#contentAuthority(token,ref.productId);};
+      const draft=()=>this.#list('photoBriefDraft').find(d=>d.id===a.id)??null;
+      const requests=()=>this.#list('photoEditRequest').filter(d=>d.artifact.artifactId===a.id&&d.projectId===ref.productId);
+      if(action==='read'){fence();return clone({artifact:ref,draft:draft(),requests:requests()});}
+      return clone(this.#tx(()=>this.#once('photoBrief:'+role+':'+action,key,x,()=>{
+        fence();
+        const previous=draft();
+        if(action==='save'){
+          briefCheck((previous?.version??0)===x.expectedVersion,'REVISION_CONFLICT');
+          return this.#put('photoBriefDraft',{schemaVersion:'bve.photo-brief-draft.v1',id:a.id,projectId:ref.productId,artifact:ref,version:x.expectedVersion+1,note:x.note,regions:x.regions,savedAt:now()});
+        }
+        briefCheck(previous&&previous.version===x.draftVersion,'REVISION_CONFLICT');
+        briefInput('save',{artifact:previous.artifact,expectedVersion:previous.version,note:previous.note,regions:previous.regions});
+        briefCheck(previous.note.trim().length>0||previous.regions.length>0,'INVALID_VALUE');
+        const existing=requests().find(r=>r.draftVersion===previous.version);
+        if(existing)return existing;
+        return this.#put('photoEditRequest',{schemaVersion:'bve.photo-edit-request.v1',id:id(),projectId:ref.productId,artifact:ref,draftVersion:previous.version,note:previous.note,regions:previous.regions,
+          source:{artifact:ref,role:'scene',regions:previous.regions},status:'instructions-submitted',submittedAt:now()});
+      })));
     }finally{release();}
   }
 

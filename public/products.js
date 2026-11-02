@@ -1,3 +1,4 @@
+import {createPhotoBriefEditor} from './photo-brief-ui.js';
 // A presentation client for the existing authenticated product and operation contracts.
 const $=id=>document.getElementById(id),node=(tag,text='',className='')=>{const n=document.createElement(tag);n.textContent=text;if(className)n.className=className;return n;};
 const state={token:null,index:null,review:null,productId:null,artifacts:[],previewUrls:[],viewEpoch:0,mediaEpoch:0,discoveryEpoch:0,preparationEpoch:0,calibrationEpoch:0,contentEpoch:{candidate:0,approved:0},preparation:null,content:null};
@@ -74,6 +75,7 @@ async function api(path,{method='GET',body}={}){
   }return value;
 }
 const post=(path,body)=>api(path,{method:'POST',body});
+const photoBriefEditor=createPhotoBriefEditor({api});
 const formatted=x=>{
   if(typeof x!=='object')return String(x);
   if('length' in x&&'width' in x&&'height' in x)return [x.length,x.width,x.height].join(' × ')+' '+x.unit;
@@ -354,7 +356,7 @@ async function renderPhotos(){
       const imp=await api('/api/import?id='+encodeURIComponent(a.importId));title.textContent=imp.declaration?.payload?.filename??'Imported photo';
       if(epoch!==state.mediaEpoch||productId!==state.productId)return;
       importStatus=imp.artifact?.id===a.id?'Retained import verified for this artifact':'Import identity mismatch';
-      title.dir='auto';
+      title.dir='auto';a.briefLabel=title.textContent;
       if(imp.declaration?.payload?.historicalApproval)card.append(node('p','Historical approval claim · unverified','fine'));
     }catch(e){card.append(node('p','Import details unavailable: '+e.message));}
     try{
@@ -374,6 +376,15 @@ async function renderPhotos(){
       if(state.preparation?.previewUrl){URL.revokeObjectURL(state.preparation.previewUrl);state.previewUrls=state.previewUrls.filter(url=>url!==state.preparation.previewUrl);}
       state.preparation={productId,artifactId:a.id};route(productId,'prepare');
     };
+    const edit=node('button','Edit instructions');
+    edit.onclick=()=>photoBriefEditor.open(state.artifacts,a.id).catch(e=>say('Photo instructions unavailable: '+e.message));
+    card.append(edit);
+    try{
+      const brief=await post('/api/photo-brief',{action:'read',key:'read-only',input:{artifact:artifactRef(a)}});
+      if(epoch!==state.mediaEpoch||productId!==state.productId)return;
+      const latest=brief.requests.at(-1);
+      card.append(node('p',latest?.draftVersion===brief.draft?.version?'Edit instructions submitted; editing has not started':brief.draft?'Edit instructions draft saved':'No edit instructions yet','fine'));
+    }catch(e){card.append(node('p','Instruction status unavailable: '+e.message,'fine'));}
     card.append(node('p','Input: '+a.id+' · '+importStatus+' · '+mediaStatus,'fine'),choose);
     if(epoch!==state.mediaEpoch||productId!==state.productId)return;
     list.append(card);
@@ -727,6 +738,9 @@ async function operationLauncher(card,op,result){
     const explanation=node('p','','notice');form.append(explanation);
     const brandStatus=()=>{explanation.textContent=branded.checked&&!brands.value?'Choose an accepted Brand; branded preparation is blocked.':!branded.checked&&t.launch?.allowUnbranded===false?'This operation requires Brand.':'Brand is independent of the selected operation.';};brandStatus();branded.onchange=brandStatus;brands.onchange=brandStatus;
     const intent=node('textarea');intent.maxLength=20000;intent.setAttribute('aria-label','Additional instructions');intent.placeholder='Additional instructions (optional)';form.append(intent);
+    const includeBriefs=node('input');includeBriefs.type='checkbox';includeBriefs.checked=true;
+    const includeBriefsLabel=node('label','Include submitted photo edit instructions');includeBriefsLabel.append(includeBriefs);form.append(includeBriefsLabel);
+    form.append(node('p','Submitted notes and repair regions stay attached to each selected photo. Unsubmitted drafts are kept for further editing.','fine'));
     const sources=[],attachments=[],sourceBox=node('fieldset');sourceBox.append(node('legend','Retained inputs'));
     for(const d of t.inputs){
       const label=node('label',pretty(d.role)+(d.required?' (required)':' (optional)')),select=node('select');select.setAttribute('aria-label',d.role+' input');select.append(new Option('Choose retained input',''));
@@ -772,11 +786,27 @@ async function operationLauncher(card,op,result){
         if(j09Blocked(x=>x.operation==='operation.request'&&x.input?.productId===productId))throw Error('Reconcile the earlier request, or review and acknowledge its definite rejection before making another.');
         const refreshed=await post('/api/operation-preparation',{...query,branded:branded.checked,brandTemplateId:branded.checked?brands.value:null});if(!current())return;
         if(JSON.stringify(refreshed.operation.reference)!==JSON.stringify(initial.operation.reference))throw Error('The adopted operation changed. Refresh and review the settings again.');
-        const selectedSources=sources.flatMap(({declaration:d,select})=>{
-          if(!select.value){if(d.required)throw Error('Choose '+pretty(d.role)+' input.');return [];}
+        const selectedSources=[],photoNotes=[],briefCache=new Map();
+        for(const {declaration:d,select} of sources){
+          if(!select.value){if(d.required)throw Error('Choose '+pretty(d.role)+' input.');continue;}
           const found=data.entries.find(e=>e.artifact.id===select.value);if(!found)throw Error('Selected input is unavailable.');
-          return [{artifact:artifactRef(found.artifact),role:d.role,regions:[]}];
-        });
+          const source={artifact:artifactRef(found.artifact),role:d.role,regions:[]};
+          if(includeBriefs.checked&&found.artifact.origin==='import'){
+            if(!briefCache.has(found.artifact.id)){
+              const v=await post('/api/photo-brief',{action:'read',key:'read-only',input:{artifact:source.artifact}});
+              briefCache.set(found.artifact.id,v.requests.at(-1)??null);
+            }
+            const brief=briefCache.get(found.artifact.id);
+            if(brief){
+              source.regions=structuredClone(brief.regions);
+              if(brief.note&&!photoNotes.some(x=>x.artifactId===found.artifact.id))photoNotes.push({artifactId:found.artifact.id,note:brief.note});
+            }
+          }
+          selectedSources.push(source);
+        }
+        if(!current())return;
+        const operationIntent=[intent.value.trim()||'Prepare '+t.title+'.',...photoNotes.map(x=>'Photo '+x.artifactId+': '+x.note)].join('\n\n');
+        if(operationIntent.length>20000)throw Error('The combined photo instructions exceed the operation limit. Shorten them before saving.');
         const selectedAttachments=attachments.flatMap(({declaration:d,select})=>{if(!select.value){if(d.required)throw Error('Choose '+d.role+' attachment.');return [];}return [{reference:state.review.attachments.find(x=>x.reference.id===select.value).reference,role:d.role}];});
         const selection=Object.fromEntries(Object.entries(controls).map(([key,c])=>[key,c.definition.type==='boolean'?c.input.checked:c.definition.type==='number'?Number(c.input.value):c.input.value]));
         // J08 accepts only parameters of enabled output indices; hidden unused slots are not new work.
@@ -786,7 +816,7 @@ async function operationLauncher(card,op,result){
         const count=requestedOutputs.reduce((n,x)=>n+x.count,0);
         for(const key of Object.keys(selection)){const m=/^out(\d+)/.exec(key);if(m&&Number(m[1])>=count)delete selection[key];}
         if(!selectedSources.some(x=>x.role==='logo'))for(const key of Object.keys(selection))if(key.startsWith('logo')||/^out\d+logo/.test(key))delete selection[key];
-        const packet=buildOperationPacket(refreshed,{applicability:query.applicability,intent:intent.value,selection,preset:presets.value||null,sources:selectedSources,
+        const packet=buildOperationPacket(refreshed,{applicability:query.applicability,intent:operationIntent,selection,preset:presets.value||null,sources:selectedSources,
           attachments:selectedAttachments,requestedOutputs,parentArtifacts:[artifactRef(a)],parentRoundId:entry.branchRoundId??null});
         await sendJ09('/api/operation-request',packet,'Operation request');
         if(current()){say('Request saved. Execution has not started; resume the configured Conductor to commission it.');await renderPreparation();}

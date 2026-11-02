@@ -42,7 +42,7 @@ export async function serve(options={}){
       if(req.headers.origin&&req.headers.origin!==origin)throw new Fault('Cross-origin request rejected',403);
       const url=new URL(req.url,origin);
       const credential=req.headers.authorization?.replace(/^Bearer /,'');
-      if(req.method==='GET'&&['/','/app.js','/style.css','/products.html','/products.js','/products.css'].includes(url.pathname)){
+      if(req.method==='GET'&&['/','/app.js','/style.css','/products.html','/products.js','/products.css','/photo-brief-ui.js','/photo-geometry.js'].includes(url.pathname)){
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1),ext=path.split('.').at(-1);
         res.writeHead(200,{'Content-Type':({html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8'})[ext],
           'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"});
@@ -106,6 +106,9 @@ export async function serve(options={}){
       if(req.method==='POST'&&url.pathname==='/api/business'){
         const packet=await boundedJSON(req,128*1024),value=kernel.businessCommand(credential,packet);
         json(value.schemaVersion==='3djat.failure.v1'?409:200,value);return;
+      }
+      if(req.method==='POST'&&url.pathname==='/api/photo-brief'){
+        json(200,kernel.photoBrief(credential,await boundedJSON(req,512*1024)));return;
       }
       if(req.method==='POST'&&url.pathname==='/api/op'){
         const x=await boundedJSON(req,34*1024*1024);

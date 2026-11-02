@@ -8,3 +8,16 @@
 .decision-controls{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
 .content-card pre{white-space:pre-wrap;overflow-wrap:anywhere}
 #approved-list section{border-top:1px solid #ccd6d2;margin-top:1rem}
+
+/* Imported-photo brief workspace uses the image bounds for every overlay. */
+.photo-brief-dialog{width:min(1200px,96vw);max-height:94vh;overflow:auto;padding:24px;color:var(--ink,#e7e5df);background:var(--panel,#15191d);border:1px solid #6b7278;border-radius:12px}
+.photo-brief-dialog::backdrop{background:#000a}
+.photo-brief-dialog .actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0}
+.photo-brief-dialog label{display:block;margin:12px 0}
+.photo-brief-dialog textarea{display:block;box-sizing:border-box;width:100%;min-height:80px}
+.photo-brief-viewport{overflow:auto;max-height:55vh;background:#0d1013;border:1px solid #555}
+.photo-brief-stage{position:relative;width:100%;padding:0;margin:0;touch-action:none;line-height:0}
+.photo-brief-stage>img{display:block;width:100%;height:auto;max-width:none;max-height:none;margin:0}
+.photo-brief-overlays{position:absolute;inset:0;pointer-events:none}
+.photo-brief-box{position:absolute;box-sizing:border-box;border:2px solid #f0b850;background:#f0b85020;color:#fff;line-height:1.5;font-weight:bold}
+.photo-brief-region-form{padding:12px;background:#252a30}
