@@ -50,7 +50,7 @@ test('imported-photo editor: three images, region correction, zoom, cold recover
   for(const width of [1280,390]){
    await page.setViewportSize({width,height:900});await page.getByRole('button',{name:'Edit instructions',exact:true}).first().click();
    await dialog().locator('img').waitFor();await page.waitForFunction(()=>document.querySelector('.photo-brief-stage>img')?.naturalWidth>0);
-   await dialog().getByLabel('Photo zoom').fill('150');await dialog().getByLabel('Photo zoom').dispatchEvent('input');
+   await dialog().getByLabel('Photo zoom').evaluate(el=>{el.value='125';el.dispatchEvent(new Event('input',{bubbles:true}));});
    await drawRegion('Zoom test '+width);v=await saved(w.photos[0]);const r=v.draft.regions.at(-1);
    for(const [key,expected] of Object.entries({x:.1,y:.2,w:.3,h:.25}))assert.ok(Math.abs(r[key]-expected)<.015,key+' at '+width+': '+r[key]);
    await dialog().getByRole('button',{name:'Close',exact:true}).click();
@@ -61,6 +61,21 @@ test('imported-photo editor: three images, region correction, zoom, cold recover
   await open();assert.equal(await whole().inputValue(),'Preserve the print-layer texture');
   assert.equal(view(app,w.photos[1]).draft.note,'Second photo only');assert.equal(view(app,w.photos[2]).draft.note,'Third photo only');
   for(const kind of ['job','iteration','request','acceptance'])assert.equal(app.kernel.read(app.credentials.human,kind).length,0,kind);
-  assert.deepEqual(errors,[]);await cold.close();
+  assert.deepEqual(errors,[]);
+  const expectedBrief=view(app,w.photos[0]).requests.at(-1);
+  await dialog().getByRole('button',{name:'Close',exact:true}).click();
+  await page.getByRole('button',{name:'Use this photo in preparation',exact:true}).first().click();
+  await page.getByRole('button',{name:'Prepare this operation',exact:true}).first().click();
+  const form=page.locator('.operation-form');
+  await form.getByLabel('Branded',{exact:true}).uncheck();
+  await form.getByRole('button',{name:'Save operation request',exact:true}).click();
+  await page.locator('#notice').filter({hasText:'Request saved.'}).waitFor();
+  const selected=app.kernel.read(app.credentials.human,'request').filter(r=>r.selectionId);
+  assert.equal(selected.length,1);
+  const frozen=app.kernel.operationSelection(app.credentials.human,selected[0].id).body.run;
+  assert.match(frozen.intent,/Preserve the print-layer texture/);
+  assert.deepEqual(frozen.sources.find(s=>s.artifact.artifactId===w.photos[0].artifactId).regions,expectedBrief.regions);
+  for(const kind of ['job','iteration','acceptance'])assert.equal(app.kernel.read(app.credentials.human,kind).length,0,kind);
+  await cold.close();
  }finally{await browser.close();await app.stop();}
 });
