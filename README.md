@@ -14,7 +14,7 @@ The optional [prepared 3DJAT workspace integration candidate](docs/3DJAT-WORKSPA
 
 The [governed product dossier candidate](docs/3DJAT-PRODUCTS.md) adds independent file-owned creation, notes and human-reviewed source proposals through explicit local capabilities and narrow BVE delegation. The broader product UI remains a separate task.
 
-The [historical PNG import candidate](docs/3DJAT-IMPORTS.md) captures explicitly configured local originals into a durable SQLite inbox, verifies them without conversion, and retains import provenance independently of generation. Ordinary roots remain limited to 16MP/24MiB. The explicitly opt-in [20MP experiment](docs/IMG20.md) has a separate root safeguard and evidence harness; IMG20, attachments/previews and operating setup remain open.
+The [historical PNG import candidate](docs/3DJAT-IMPORTS.md) captures explicitly configured local originals into a durable SQLite inbox, verifies them without conversion, and retains import provenance independently of generation. [Original PNG support](docs/PNG-ORIGINALS.md) accepts 8- and 16-bit non-interlaced originals up to 20MP/160MiB and gives the photo editor a full-resolution view. Execution allowances and the opt-in [IMG20 experiment](docs/IMG20.md) remain separate.
 
 ```sh
 npm ci --omit=dev --ignore-scripts

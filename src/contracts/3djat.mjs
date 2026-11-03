@@ -1,5 +1,6 @@
 // Additive J01 contracts only. No runtime dispatch, I/O, authentication or hashing.
-export const LIMITS = Object.freeze({ pngPixels: 20_000_000, pngBytes: 24 * 1024 ** 2,
+import {ORIGINAL_BYTES} from '../image-policy.mjs';
+export const LIMITS = Object.freeze({ pngPixels: 20_000_000, pngBytes: ORIGINAL_BYTES,
   proposedPngPixels: 20_000_000, attachmentBytes: 256 * 1024 ** 2,
   candidates: 6, text: 20_000, list: 256, depth: 48, nodes: 30_000 });
 
@@ -149,7 +150,7 @@ schemas['historical-approval'] = obj({ origin: en('historical'), claimedApprover
 record('historical-import', { importId: uuid, productId: uuid, origin: en('import'),
   kind: en('historical-base', 'historical-creative'), filename: str(255, 1, 'filename'),
   source: S, sha256: hash, encodedBytes: num(1, LIMITS.pngBytes, true), format: en('image/png'),
-  width: num(1, 20_000_000, true), height: num(1, 20_000_000, true), bitDepth: en(8), interlaced: en(false),
+  width: num(1, 20_000_000, true), height: num(1, 20_000_000, true), bitDepth: en(8,16), interlaced: en(false),
   historicalParent: nullable(ref('artifact-ref')), historicalApproval: nullable(ref('historical-approval')),
   importedAt: time });
 record('attachment', { attachmentId: uuid, productId: uuid, sha256: hash,
@@ -585,7 +586,7 @@ function visitNested(v, p, add) {
   if (v.space === 'normalized-original' && (v.x + v.w > 1 || v.y + v.h > 1)) add('OUT_OF_BOUNDS', p, 'Region exceeds original');
   for (const [k, x] of Object.entries(v)) visitNested(x, `${p}/${k}`, add);
 }
-function image(v, p, add) { if (v.width * v.height > LIMITS.pngPixels) add('UNSUPPORTED_IMAGE', p, 'Candidate ceiling is 20MP; runtime opt-in and IMG20 evidence are required'); }
+function image(v, p, add) { if (v.width * v.height > LIMITS.pngPixels) add('UNSUPPORTED_IMAGE', p, 'Original reference exceeds the 20MP ceiling'); }
 function checkExperiment(template, experimentRef, outputs, c, add, p, completed) {
   const e = c.experiment;
   const v = e.record.variants.find(x => same(x.template, template));

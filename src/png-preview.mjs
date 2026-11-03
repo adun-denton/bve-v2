@@ -2,8 +2,10 @@
 import {createHash} from 'node:crypto';
 import {verifiedPNGData,crc32,hash} from './png.mjs';
 import {validate} from './contracts/3djat.mjs';
+import {ORIGINAL_PIXELS,ORIGINAL_BYTES} from './image-policy.mjs';
+import {unfilterPNG,samplePNG,toRGBA8} from './png-raster.mjs';
 export const PREVIEW_PROFILE=Object.freeze({method:'bve-png-nearest-stored.v1',maxEdge:384,sampling:'nearest-center-integer',orientation:'stored-raster',color:'unmanaged-samples',alpha:'straight',encoder:'rgba8-filter0-zlib-stored.v1'});
-export const PREVIEW_LIMITS=Object.freeze({pixels:16_000_000,encoded:24*1024**2,chunks:4096,metadata:16*1024,png:600000,response:1024**2,cacheEntries:16,cacheBytes:8*1024**2});
+export const PREVIEW_LIMITS=Object.freeze({pixels:ORIGINAL_PIXELS,encoded:ORIGINAL_BYTES,chunks:4096,metadata:16*1024,png:600000,response:1024**2,cacheEntries:16,cacheBytes:8*1024**2});
 const META_WARN=['COLOR_DECLARATIONS_UNINTERPRETED','ANCILLARY_FIELD_INVALID','COLOR_UNMANAGED','EXIF_UNINTERPRETED','TEXT_OMITTED'];
 const CODES=['ORIGINAL_MISSING','ORIGINAL_CORRUPT','PREVIEW_UNSUPPORTED','PREVIEW_LIMIT','PIXEL_POLICY','PREVIEW_FAILED'];
 const PRIVATE=['iCCP','eXIf','tEXt','zTXt','iTXt'];
@@ -35,11 +37,11 @@ function declarations(chunks){
   }fields[type]={state,chunk:type,value};
  }return {fields,invalid,first};
 }
-function transparency(chunks,color,first){
+function transparency(chunks,color,depth,first){
  const rows=chunks.filter(c=>c.type==='tRNS');if(!rows.length)return null;
  check(rows.length===1&&[0,2].includes(color),'PREVIEW_UNSUPPORTED');const row=rows[0],plte=first('PLTE');
  check(row.data.length===(color===0?2:6)&&row.index<first('IDAT')&&(plte===Infinity||row.index>plte),'PREVIEW_UNSUPPORTED');
- return Array.from({length:row.data.length/2},(_,i)=>row.data.readUInt16BE(i*2)&255);
+ return Array.from({length:row.data.length/2},(_,i)=>row.data.readUInt16BE(i*2)&(depth===16?65535:255));
 }
 function metadata(data,trns,dec){
  const {header:h,chunks,result}=data,privateAncillary=PRIVATE.map(type=>{
@@ -52,12 +54,6 @@ function metadata(data,trns,dec){
  if(chunks.some(c=>['iCCP','sRGB','gAMA','cHRM','cICP','mDCV','cLLI'].includes(c.type)))warnings.push('COLOR_DECLARATIONS_UNINTERPRETED');
  if(dec.invalid)warnings.push('ANCILLARY_FIELD_INVALID');if(present('eXIf'))warnings.push('EXIF_UNINTERPRETED');if(['tEXt','zTXt','iTXt'].some(present))warnings.push('TEXT_OMITTED');
  return {schemaVersion:'bve.png-metadata.v1',originalSHA256:result.sha256,readerVersion:'bve-png-metadata.v1',validation:'bve-subset-checked',ihdr:{width:h.width,height:h.height,bitDepth:h.depth,colorType:h.color,channels:({0:1,2:3,4:2,6:4})[h.color],interlace:0},transparency:{mode:[4,6].includes(h.color)?'alpha':trns?'tRNS':'none',trnsChecked:trns!==null},orientation:{policy:'stored-raster',exifPresent:present('eXIf'),value:null,state:present('eXIf')?'uninterpreted':'absent'},color:{policy:'unmanaged-samples',fidelity:'unverified',gamma:dec.fields.gAMA,srgbIntent:dec.fields.sRGB,chromaticity:dec.fields.cHRM,physicalPixels:dec.fields.pHYs},privateAncillary,chunks:{total:chunks.length,otherAncillaryCount:other.length,otherAncillaryEncodedBytes:other.reduce((n,c)=>n+c.data.length,0)},warnings:warnings.sort()};
-}
-function unfilter(raw,width,height,channels){const stride=width*channels+1;
- for(let y=0;y<height;y++){const f=raw[y*stride];for(let j=0;j<width*channels;j++){
-  const at=y*stride+1+j,a=j>=channels?raw[at-channels]:0,b=y?raw[at-stride]:0,c=y&&j>=channels?raw[at-stride-channels]:0,p=a+b-c,pa=Math.abs(p-a),pb=Math.abs(p-b),pc=Math.abs(p-c);
-  raw[at]=(raw[at]+(f===0?0:f===1?a:f===2?b:f===3?Math.floor((a+b)/2):pa<=pb&&pa<=pc?a:pb<=pc?b:c))&255;
- }}
 }
 function chunk(type,d){const b=Buffer.alloc(d.length+12);b.writeUInt32BE(d.length);b.write(type,4);d.copy(b,8);b.writeUInt32BE(crc32(b.subarray(4,-4)),b.length-4);return b;}
 function encode(rgba,w,h,key){
@@ -80,14 +76,14 @@ export function buildMedia(sourceBinding,input,{onInflate=()=>{}}={}){
  if(d.chunks.some(c=>['acTL','fcTL','fdAT'].includes(c.type)))return unavailableMedia(sourceBinding,'PREVIEW_UNSUPPORTED');
  const palettes=d.chunks.filter(c=>c.type==='PLTE');
  if(palettes.length&&(palettes.length!==1||[0,4].includes(d.header.color)||palettes[0].index>d.chunks.find(c=>c.type==='IDAT').index))return unavailableMedia(sourceBinding,'PREVIEW_UNSUPPORTED');
- const dec=declarations(d.chunks);let trns;try{trns=transparency(d.chunks,d.header.color,dec.first);}catch{return unavailableMedia(sourceBinding,'PREVIEW_UNSUPPORTED');}
+ const dec=declarations(d.chunks);let trns;try{trns=transparency(d.chunks,d.header.color,d.header.depth,dec.first);}catch{return unavailableMedia(sourceBinding,'PREVIEW_UNSUPPORTED');}
  const meta=metadata(d,trns,dec),metaBytes=Buffer.from(canonical(meta));check(metaBytes.length<=PREVIEW_LIMITS.metadata,'PREVIEW_LIMIT');
- const c=meta.ihdr.channels,stride=a.width*c+1,D=Math.max(a.width,a.height,384),w=Math.max(1,Math.floor(a.width*384/D)),h=Math.max(1,Math.floor(a.height*384/D));
- unfilter(d.raw,a.width,a.height,c);const rgba=Buffer.alloc(w*h*4);
+ const D=Math.max(a.width,a.height,384),w=Math.max(1,Math.floor(a.width*384/D)),h=Math.max(1,Math.floor(a.height*384/D));
+ unfilterPNG(d);const rgba=Buffer.alloc(w*h*4);
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-  const sy=Math.floor((2*y+1)*a.height/(2*h)),sx=Math.floor((2*x+1)*a.width/(2*w)),at=sy*stride+1+sx*c,to=(y*w+x)*4,gray=[0,4].includes(d.header.color);
-  rgba[to]=d.raw[at];rgba[to+1]=gray?d.raw[at]:d.raw[at+1];rgba[to+2]=gray?d.raw[at]:d.raw[at+2];
-  rgba[to+3]=[4,6].includes(d.header.color)?d.raw[at+c-1]:trns&&trns.every((v,i)=>v===d.raw[at+i])?0:255;
+  const sy=Math.floor((2*y+1)*a.height/(2*h)),sx=Math.floor((2*x+1)*a.width/(2*w));
+  rgba.set(toRGBA8(samplePNG(d,sx,sy),d.header,trns),(y*w+x)*4);
+
  }
  const key=mediaKey(sourceBinding),png=encode(rgba,w,h,key),sha256=hash(png);check(png.length<=PREVIEW_LIMITS.png&&sha256!==a.sha256);
  const result={schemaVersion:'bve.png-media.v1',sourceBinding:structuredClone(sourceBinding),profile:{...PREVIEW_PROFILE},state:'ready',errorCode:null,metadata:meta,metadataSHA256:hash(metaBytes),preview:{derivativeId:key,sha256,pixelSHA256:hash(rgba),width:w,height:h,encodedBytes:png.length,mediaType:'image/png',encoding:'base64',bytes:png.toString('base64'),role:'preview',isOriginal:false},warnings:[]};
@@ -97,7 +93,7 @@ function warningsOK(a,outer=false){return Array.isArray(a)&&a.length<=16&&new Se
 function metadataOK(m,binding){
  if(!exact(m,['schemaVersion','originalSHA256','readerVersion','validation','ihdr','transparency','orientation','color','privateAncillary','chunks','warnings'])||m.schemaVersion!=='bve.png-metadata.v1'||m.readerVersion!=='bve-png-metadata.v1'||m.validation!=='bve-subset-checked'||m.originalSHA256!==binding.artifact.sha256||!warningsOK(m.warnings)||canonical(m.warnings)!==canonical([...m.warnings].sort()))return false;
  const h=m.ihdr,t=m.transparency,o=m.orientation,c=m.color;
- if(!exact(h,['width','height','bitDepth','colorType','channels','interlace'])||h.width!==binding.artifact.width||h.height!==binding.artifact.height||h.width*h.height>PREVIEW_LIMITS.pixels||h.bitDepth!==8||h.interlace!==0||h.channels!==({0:1,2:3,4:2,6:4})[h.colorType]||!h.channels)return false;
+ if(!exact(h,['width','height','bitDepth','colorType','channels','interlace'])||h.width!==binding.artifact.width||h.height!==binding.artifact.height||h.width*h.height>PREVIEW_LIMITS.pixels||![8,16].includes(h.bitDepth)||h.interlace!==0||h.channels!==({0:1,2:3,4:2,6:4})[h.colorType]||!h.channels)return false;
  if(!exact(t,['mode','trnsChecked'])||typeof t.trnsChecked!=='boolean'||[4,6].includes(h.colorType)&&t.trnsChecked||t.mode!==([4,6].includes(h.colorType)?'alpha':t.trnsChecked?'tRNS':'none'))return false;
  if(!exact(o,['policy','exifPresent','value','state'])||o.policy!=='stored-raster'||typeof o.exifPresent!=='boolean'||o.value!==null||o.state!==(o.exifPresent?'uninterpreted':'absent'))return false;
  if(!exact(c,['policy','fidelity','gamma','srgbIntent','chromaticity','physicalPixels'])||c.policy!=='unmanaged-samples'||c.fidelity!=='unverified')return false;
@@ -121,6 +117,6 @@ export function checkMediaView(v,binding=v?.sourceBinding){
  check(v.state==='ready'&&v.errorCode===null&&metadataOK(v.metadata,binding)&&v.metadataSHA256===hash(Buffer.from(canonical(v.metadata))));
  const p=v.preview,a=binding.artifact,D=Math.max(a.width,a.height,384);check(exact(p,['derivativeId','sha256','pixelSHA256','width','height','encodedBytes','mediaType','encoding','bytes','role','isOriginal'])&&p.derivativeId===mediaKey(binding)&&digest(p.sha256)&&digest(p.pixelSHA256)&&p.sha256!==a.sha256&&p.width===Math.max(1,Math.floor(a.width*384/D))&&p.height===Math.max(1,Math.floor(a.height*384/D))&&integer(p.encodedBytes,1,600000)&&p.mediaType==='image/png'&&p.encoding==='base64'&&typeof p.bytes==='string'&&p.bytes.length<=800000&&p.role==='preview'&&p.isOriginal===false);
  const png=Buffer.from(p.bytes,'base64');check(png.length===p.encodedBytes&&png.toString('base64')===p.bytes&&hash(png)===p.sha256);
- const d=verifiedPNGData(png,{maxPixels:384**2,maxChunks:4});check(d.header.color===6&&d.result.width===p.width&&d.result.height===p.height&&d.chunks.map(c=>c.type).join(',')==='IHDR,tEXt,IDAT,IEND'&&d.chunks[1].data.equals(Buffer.from('BVE-Derivative\0'+p.derivativeId)));
+ const d=verifiedPNGData(png,{maxPixels:384**2,maxChunks:4});check(d.header.depth===8&&d.header.color===6&&d.result.width===p.width&&d.result.height===p.height&&d.chunks.map(c=>c.type).join(',')==='IHDR,tEXt,IDAT,IEND'&&d.chunks[1].data.equals(Buffer.from('BVE-Derivative\0'+p.derivativeId)));
  const pixels=createHash('sha256'),stride=p.width*4+1;for(let y=0;y<p.height;y++){check(d.raw[y*stride]===0);pixels.update(d.raw.subarray(y*stride+1,(y+1)*stride));}check(pixels.digest('hex')===p.pixelSHA256&&Buffer.byteLength(JSON.stringify(v))<=PREVIEW_LIMITS.response);return true;
 }

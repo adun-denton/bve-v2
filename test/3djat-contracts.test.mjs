@@ -215,8 +215,8 @@ test('candidate contract ceiling is 20MP with unchanged bytes/depth/interlace; r
   const i = imported(); i.width = 5000; i.height = 4000; i.encodedBytes = 24 * 1024 ** 2; ok(validate('historical-import', i));
   i.height = 4001; fails(validate('historical-import', i), 'UNSUPPORTED_IMAGE');
   i.width=4946;i.height=3278;ok(validate('historical-import',i));
-  mutate('historical-import', imported(), x => x.encodedBytes = 24 * 1024 ** 2 + 1, 'OUT_OF_BOUNDS');
-  mutate('historical-import', imported(), x => x.bitDepth = 16, 'INVALID_VALUE');
+  mutate('historical-import', imported(), x => x.encodedBytes = 160 * 1024 ** 2 + 1, 'OUT_OF_BOUNDS');
+  mutate('historical-import', imported(), x => x.bitDepth = 12, 'INVALID_VALUE');
   mutate('historical-import', imported(), x => x.interlaced = true, 'INVALID_VALUE');
 });
 test('attachments are bounded declarations, never verified image artifacts', () => {

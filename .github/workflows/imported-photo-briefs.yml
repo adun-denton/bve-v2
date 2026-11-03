@@ -24,4 +24,5 @@ jobs:
           node --check src/server.mjs
           node --check public/products.js
           node --check public/photo-brief-ui.js
-          node --test test/photo-briefs.test.mjs test/photo-brief-browser.test.mjs
+          node --test test/photo-briefs.test.mjs test/photo-brief-browser.test.mjs test/photo-contrast-browser.test.mjs test/png16-*.test.mjs
+          node --test test/3djat-import*.test.mjs test/3djat-preview*.test.mjs test/3djat-contracts.test.mjs test/img20.test.mjs

@@ -115,7 +115,7 @@ export async function dispatchPNGServices(kernel,owner,jobIds,{hook=()=>{}}={}){
    await verifyTool(context.tool);
    const guard=stageGuard(context,{create:true}),command=commandFor(context),inputs=kernel.serviceInputs(token);
    for(const [name,ref] of [['scene.png',command.recipe.scene],...(command.recipe.logo?[['logo.png',command.recipe.logo]]:[])]){
-    const b=inputs.find(x=>x.reference.artifactId===ref.artifactId)?.bytes;check(b&&sha(b)===ref.sha256,'INPUT_HASH_MISMATCH');const v=verifyPNG(b);check(v.width===ref.width&&v.height===ref.height,'INPUT_MISMATCH');write(guard,name,b);
+    const b=inputs.find(x=>x.reference.artifactId===ref.artifactId)?.bytes;check(b&&sha(b)===ref.sha256,'INPUT_HASH_MISMATCH');const v=verifyPNG(b);check(b[24]===8,'PNG_RECIPE_REQUIRES_8_BIT_SOURCE');check(v.width===ref.width&&v.height===ref.height,'INPUT_MISMATCH');write(guard,name,b);
    }
    write(guard,'command.json',Buffer.from(stable(command)+'\n'),1024**2);
    hook('before-start',{jobId,context});

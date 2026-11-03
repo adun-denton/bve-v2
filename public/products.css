@@ -15,6 +15,11 @@
 .photo-brief-dialog .actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0}
 .photo-brief-dialog label{display:block;margin:12px 0}
 .photo-brief-dialog textarea{display:block;box-sizing:border-box;width:100%;min-height:80px}
+.photo-brief-dialog button,.photo-brief-dialog textarea{color:#24322a;background:#fafbf6}
+.photo-brief-dialog button:hover:not(:disabled){background:#dfe8db}
+.photo-brief-dialog button:disabled{color:#53604f;background:#dce2d8;border-color:#aab7a5;opacity:1;cursor:not-allowed}
+.photo-brief-dialog .fine{color:#b4beb7}
+.photo-brief-dialog :is(button,textarea,input):focus-visible{outline:2px solid #f0b850;outline-offset:2px}
 .photo-brief-viewport{overflow:auto;max-height:55vh;background:#0d1013;border:1px solid #555}
 .photo-brief-stage{position:relative;width:100%;padding:0;margin:0;touch-action:none;line-height:0}
 .photo-brief-stage>img{display:block;width:100%;height:auto;max-width:none;max-height:none;margin:0}

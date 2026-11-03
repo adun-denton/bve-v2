@@ -1,17 +1,21 @@
 import { inflateSync, deflateSync } from 'node:zlib';
-import {PNG_PIXELS,IMG20_PIXELS} from './image-policy.mjs';
+import {ORIGINAL_PIXELS,ORIGINAL_BYTES} from './image-policy.mjs';
 import { createHash } from 'node:crypto';
 export const hash = b => createHash('sha256').update(b).digest('hex');
+const crcTable=Uint32Array.from({length:256},(_,i)=>{
+  let c=i;for(let k=0;k<8;k++)c=(c>>>1)^(0xedb88320&-(c&1));return c;
+});
 export function crc32(bytes) {
   let c = 0xffffffff;
-  for (const byte of bytes) { c ^= byte; for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xedb88320 & -(c & 1)); }
+  for(let i=0;i<bytes.length;i++)c=(c>>>8)^crcTable[(c^bytes[i])&255];
   return (c ^ 0xffffffff) >>> 0;
 }
 const signature = Buffer.from([137,80,78,71,13,10,26,10]);
-function checkedPNG(input,{maxPixels=PNG_PIXELS,maxChunks=Infinity,onInflate=()=>{}}={},collect=false) {
-  if(!Number.isInteger(maxPixels)||maxPixels<1||maxPixels>IMG20_PIXELS)throw Error('Invalid PNG pixel limit');
-  const b = Buffer.from(input);
-  if (b.length > 24 * 1024 * 1024 || !b.subarray(0,8).equals(signature)) throw Error('Unsupported or oversized image: PNG required');
+function checkedPNG(input,{maxPixels=ORIGINAL_PIXELS,maxChunks=32768,onInflate=()=>{}}={},collect=false) {
+  if(!Number.isInteger(maxPixels)||maxPixels<1||maxPixels>ORIGINAL_PIXELS)throw Error('Invalid PNG pixel limit');
+  if(!input || input.length>ORIGINAL_BYTES)throw Error('Unsupported or oversized image: PNG required');
+  const b = Buffer.isBuffer(input)?input:Buffer.from(input);
+  if (!b.subarray(0,8).equals(signature)) throw Error('Unsupported or oversized image: PNG required');
   let p = 8, header, ended = false, idatEnded = false, idats = [], count=0;
   const chunks=collect?[]:null;
   while (p < b.length) {
@@ -26,7 +30,7 @@ function checkedPNG(input,{maxPixels=PNG_PIXELS,maxChunks=Infinity,onInflate=()=
     if (type === 'IHDR') {
       if (header || n !== 13) throw Error('Invalid PNG header');
       header = {width:d.readUInt32BE(0),height:d.readUInt32BE(4),depth:d[8],color:d[9]};
-      if (!header.width || !header.height || header.width*header.height > maxPixels || d[8] !== 8 || ![0,2,4,6].includes(d[9]) || d[10] || d[11] || d[12]) throw Error(`Unsupported PNG: 8-bit non-interlaced grayscale/RGB/RGBA, at most ${maxPixels} pixels`);
+      if (!header.width || !header.height || header.width*header.height > maxPixels || ![8,16].includes(d[8]) || ![0,2,4,6].includes(d[9]) || d[10] || d[11] || d[12]) throw Error(`Unsupported PNG: 8/16-bit non-interlaced grayscale/RGB/RGBA, at most ${maxPixels} pixels`);
     } else if (type === 'IDAT') {
       if (idatEnded) throw Error('Noncontiguous PNG data');
       idats.push(d);
@@ -39,20 +43,21 @@ function checkedPNG(input,{maxPixels=PNG_PIXELS,maxChunks=Infinity,onInflate=()=
     p = end;
   }
   if (!ended) throw Error('Missing PNG end');
-  const channels = ({0:1,2:3,4:2,6:4})[header.color], stride = header.width * channels + 1;
-  // For all supported channels, decoded bytes <= 4*pixels + height <= 5*maxPixels.
+  const channels = ({0:1,2:3,4:2,6:4})[header.color], stride = header.width * channels * (header.depth/8) + 1;
+  // RGBA16 requires eight bytes per pixel plus one filter byte per row.
   // This includes one filter byte for every narrow/tall row; no side cap is needed.
   const decodedBytes=stride*header.height;
-  if(!Number.isSafeInteger(decodedBytes)||decodedBytes>5*maxPixels)throw Error('Unsafe PNG allocation');
-  onInflate();const raw = inflateSync(Buffer.concat(idats), {maxOutputLength: decodedBytes});
+  if(!Number.isSafeInteger(decodedBytes)||decodedBytes>9*maxPixels)throw Error('Unsafe PNG allocation');
+  onInflate();const compressed=idats.length===1?idats[0]:Buffer.concat(idats);
+  const {buffer:raw,engine}=inflateSync(compressed,{maxOutputLength:decodedBytes,info:true});
+  if(engine.bytesWritten!==compressed.length)throw Error('Trailing PNG compressed data');
   if (raw.length !== decodedBytes) throw Error('Invalid PNG pixel length');
   for (let y = 0; y < header.height; y++) if (raw[y*stride] > 4) throw Error('Invalid PNG filter');
   const result={sha256:hash(b),width:header.width,height:header.height,mediaType:'image/png',size:b.length};
   return collect?{result,header,chunks,raw}:result;
 }
-// Legacy verification keeps its exact acceptance and result. Preview-only
-// bounds/inspection are isolated from default original/import validation.
-export function verifyPNG(input,{maxPixels=PNG_PIXELS}={}){return checkedPNG(input,{maxPixels});}
+// Preserve the original-byte result contract; never transcode during validation.
+export function verifyPNG(input,{maxPixels=ORIGINAL_PIXELS}={}){return checkedPNG(input,{maxPixels});}
 export function verifiedPNGData(input,options={}){return checkedPNG(input,{...options,maxChunks:options.maxChunks??4096},true);}
 function chunk(type, bytes) {
   const t = Buffer.from(type), b = Buffer.alloc(bytes.length+12);

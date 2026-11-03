@@ -4,7 +4,7 @@ import {candidateAction,candidateActionReference as contentActionReference,decis
 import {PNG_SERVICE,recipesForRun,recipeHash,stable as recipeStable} from './executors/png-recipes.mjs';
 import {serviceTool,readServiceClosure} from './executors/pillow.mjs';
 import {verifyServiceRecords} from './executors/service-records.mjs';
-import {databasePixelLimit} from './image-policy.mjs';
+import {databasePixelLimit,databaseOriginalPixelLimit} from './image-policy.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { isProxy } from 'node:util/types';
 import { DatabaseSync } from 'node:sqlite';
@@ -12,6 +12,7 @@ import { randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdirSync, existsSync, readFileSync, writeFileSync, chmodSync, readdirSync, renameSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { hash, verifyPNG } from './png.mjs';
+import {fullResolutionPNG8} from './png-raster.mjs';
 import {PREVIEW_LIMITS,checkMediaQuery,checkMediaView,buildMedia,mediaKey,canonical,unavailableMedia} from './png-preview.mjs';
 import { DomainProducts, decisionActionReference } from './domain-products.mjs';
 import { DomainTemplates, templateDecisionActionReference } from './domain-templates.mjs';
@@ -1534,7 +1535,7 @@ export class Kernel {
     const b=maxBytes===null?this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data:
       this.#db.prepare('SELECT data FROM bytes WHERE hash=? AND length(data)<=?').get(a.sha256,maxBytes)?.data;
     requireThat(b,`Missing original: ${a.id}`,409);let v;
-    try{v=verifyPNG(b,{maxPixels:databasePixelLimit(this.#db)});}catch(e){throw new Fault(`Corrupt original ${a.id}: ${e.message}`,409);}
+    try{v=verifyPNG(b,{maxPixels:databaseOriginalPixelLimit(this.#db)});}catch(e){throw new Fault(`Corrupt original ${a.id}: ${e.message}`,409);}
     requireThat(v.sha256===a.sha256&&v.width===a.width&&v.height===a.height,`Original hash or dimensions mismatch: ${a.id}`,409);return v;
   }
   reconcile(token){
@@ -1547,7 +1548,7 @@ export class Kernel {
           if(d.outcome==='uncertain'){j.state='uncertain';j.reason='Executor reports uncertain outcome; no additional attempt';}
           else if(d.outcome==='failure'){j.state='failed';j.reason='Executor reported failure';}
           else{
-            const bytes=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(d.sha256)?.data,v=verifyPNG(bytes,{maxPixels:databasePixelLimit(this.#db)});
+            const bytes=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(d.sha256)?.data,v=verifyPNG(bytes,{maxPixels:databaseOriginalPixelLimit(this.#db)});
             requireThat(v.sha256===d.sha256,'Intake hash mismatch');const spec=j.specification;
             requireThat(v.size<=spec.hardLimits.maxBytes&&v.width*v.height<=spec.hardLimits.maxPixels,'Output exceeds frozen hard limit');
             if(spec.output.width)requireThat(v.width===spec.output.width,'Output width violates hard expectation');
@@ -1649,7 +1650,7 @@ export class Kernel {
     }
     return clone({...safe,specification:j.specification,state:j.state,...(operationSelection?{operationSelection}:{}),...(a.executorKind==='service'?{resultReport}:{} )});
   }
-  // Read-only source resolution is distinct from raster decoding: experimental
+  // Read-only source resolution is distinct from raster decoding: over-limit
   // refs decline before inflate/cache, and a cache hit still verifies the BLOB.
   #mediaSource(token,q){
     checkMediaQuery(q);const role=this.#role(token),session=this.#session(token);
@@ -1662,6 +1663,14 @@ export class Kernel {
     const row=this.#db.prepare('SELECT data FROM bytes WHERE hash=? AND length(data)<=?').get(a.sha256,PREVIEW_LIMITS.encoded);
     if(!row)return {sourceBinding,errorCode:this.#db.prepare('SELECT 1 FROM bytes WHERE hash=?').get(a.sha256)?'ORIGINAL_CORRUPT':'ORIGINAL_MISSING'};
     const bytes=Buffer.from(row.data);return {sourceBinding,bytes,errorCode:hash(bytes)===a.sha256?null:'ORIGINAL_CORRUPT'};
+  }
+  artifactRaster(token,q,{working8=false}={}){
+    const {bytes,errorCode}=this.#mediaSource(token,q);
+    requireThat(!errorCode,errorCode,409);
+    try{
+      if(working8)return fullResolutionPNG8(bytes);
+      return {bytes,sha256:q.sha256,sourceSHA256:q.sha256,isOriginal:true};
+    }catch(e){throw new Fault(e.message,422);}
   }
   artifactMedia(token,q){
     let source;try{source=this.#mediaSource(token,q);}catch(e){if(e instanceof Fault)throw e;throw new Fault(e.code==='INVALID_VALUE'?'Invalid media query':'Media unavailable',e.code==='INVALID_VALUE'?400:409);}

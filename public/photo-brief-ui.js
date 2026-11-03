@@ -9,7 +9,7 @@ export function createPhotoBriefEditor({api}){
  const zoom=make('input');zoom.type='range';zoom.min=25;zoom.max=300;zoom.value=100;zoom.setAttribute('aria-label','Photo zoom');
  const zoomLabel=make('label','Zoom');zoomLabel.append(zoom);
  const draw=make('button','Draw a repair region'),viewport=make('div','','photo-brief-viewport'),stage=make('div','','photo-brief-stage'),img=make('img'),overlays=make('div','','photo-brief-overlays');
- img.draggable=false;stage.append(img,overlays);viewport.append(stage);
+ img.draggable=false;img.style.imageOrientation='none';stage.append(img,overlays);viewport.append(stage);
  const wholeLabel=make('label','Instructions for this photo'),whole=make('textarea');whole.maxLength=20000;whole.dir='auto';wholeLabel.append(whole);
  const regionLabel=make('label','Instruction for the selected region'),regionText=make('textarea');regionText.maxLength=2000;regionText.dir='auto';regionLabel.append(regionText);
  const add=make('button','Keep region'),cancelRegion=make('button','Cancel region'),regionForm=make('div','','photo-brief-region-form');regionForm.hidden=true;regionForm.append(regionLabel,add,cancelRegion);
@@ -19,7 +19,7 @@ export function createPhotoBriefEditor({api}){
  dialog.append(heading,nav,status,message,recovery,viewport,wholeLabel,regionForm,regions,actions,
   make('p','These instructions describe a later edit. Submission does not start generation, change image bytes, or approve an output.','fine'));
  document.body.append(dialog);
- let photos=[],index=0,current=null,epoch=0,url=null,start=null,box=null,drawing=false,editing=null,timer;
+ let photos=[],index=0,current=null,epoch=0,url=null,start=null,box=null,drawing=false,editing=null,timer,imageRequest;
  const entries=new Map();
  const storageKey=(e,kind)=>'bve:photo-brief:'+e.artifact.productId+':'+e.artifact.artifactId+':'+e.artifact.sha256+':'+kind;
  const stored=(e,kind)=>{try{return JSON.parse(localStorage.getItem(storageKey(e,kind)))}catch{throw Error('A browser recovery record is unreadable; preserve it before continuing.');}};
@@ -124,7 +124,7 @@ export function createPhotoBriefEditor({api}){
  }
  function resetRegion(){start=null;box=null;drawing=false;editing=null;regionForm.hidden=true;regionText.value='';draw.textContent='Draw a repair region';if(current)renderOverlays();}
  async function openAt(n){
-  const ticket=++epoch;clearTimeout(timer);
+  const ticket=++epoch;clearTimeout(timer);imageRequest?.abort();
   if(current?.dirty&&!current.conflict&&!stored(current,'submit'))flush(current).catch(showError);
   resetRegion();recovery.replaceChildren();message.textContent='';save.disabled=true;submit.disabled=true;previous.disabled=true;next.disabled=true;
   const photo=photos[n],artifact=ref(photo);let e=entries.get(photo.id);
@@ -140,11 +140,22 @@ export function createPhotoBriefEditor({api}){
   render();if(e.conflict)conflictChoice(e,view);
   previous.disabled=photos.length<2;next.disabled=photos.length<2;
   try{
-   const q=new URLSearchParams({view:'media',productId:artifact.productId,id:artifact.artifactId,version:artifact.version,sha256:artifact.sha256,width:artifact.width,height:artifact.height});
-   const media=await api('/api/original?'+q);if(ticket!==epoch)return;
-   if(media.state!=='ready')throw Error('Photo preview unavailable: '+media.errorCode);
-   url=URL.createObjectURL(new Blob([Uint8Array.from(atob(media.preview.bytes),c=>c.charCodeAt(0))],{type:'image/png'}));img.src=url;
-  }catch(error){showError(error);}
+   const request=new AbortController();imageRequest=request;
+   const q=new URLSearchParams({view:'full',productId:artifact.productId,id:artifact.artifactId,version:artifact.version,sha256:artifact.sha256,width:artifact.width,height:artifact.height});
+   const setImage=async blob=>{
+    if(ticket!==epoch)return;
+    if(url)URL.revokeObjectURL(url);
+    url=URL.createObjectURL(blob);img.src=url;await img.decode();
+    if(ticket===epoch&&(img.naturalWidth!==artifact.width||img.naturalHeight!==artifact.height))throw Error('Photo dimensions differ from the original');
+   };
+   const original=await api('/api/original?'+q,{image:true,signal:request.signal});
+   try{await setImage(original);}catch(error){
+    if(ticket!==epoch)return;
+    q.set('view','working8');await setImage(await api('/api/original?'+q,{image:true,signal:request.signal}));
+   }
+
+
+  }catch(error){if(ticket===epoch){img.removeAttribute('src');showError(error);}}
   if(stored(e,'save')&&!e.conflict)flush(e).catch(showError);
  }
  whole.oninput=changed;zoom.oninput=()=>{stage.style.width=zoom.value+'%';};
@@ -171,7 +182,7 @@ export function createPhotoBriefEditor({api}){
  retry.onclick=()=>{const e=current;(stored(e,'submit')?submitEntry(e):flush(e)).catch(showError);};
  previous.onclick=()=>openAt((index-1+photos.length)%photos.length).catch(showError);
  next.onclick=()=>openAt((index+1)%photos.length).catch(showError);
- function leave(){clearTimeout(timer);++epoch;resetRegion();if(current?.dirty&&!current.conflict&&!stored(current,'submit'))flush(current).catch(showError);}
+ function leave(){clearTimeout(timer);++epoch;imageRequest?.abort();if(url){URL.revokeObjectURL(url);url=null;}img.removeAttribute('src');resetRegion();if(current?.dirty&&!current.conflict&&!stored(current,'submit'))flush(current).catch(showError);}
  close.onclick=()=>{leave();dialog.close();};dialog.addEventListener('cancel',leave);
  window.addEventListener('beforeunload',event=>{if([...entries.values()].some(e=>e.dirty||e.busy)){event.preventDefault();event.returnValue='';}});
  return {open:async(items,artifactId)=>{photos=items.slice();const n=photos.findIndex(a=>a.id===artifactId);if(n<0)throw Error('Photo unavailable');await openAt(n);}};

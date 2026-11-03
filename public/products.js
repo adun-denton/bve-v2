@@ -67,8 +67,9 @@ function renderPending(){
     card.append(check,retry);box.append(card);
   }
 }
-async function api(path,{method='GET',body}={}){
-  const r=await fetch(path,{method,headers:{Authorization:'Bearer '+state.token,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+async function api(path,{method='GET',body,image=false,signal}={}){
+  const r=await fetch(path,{method,signal,headers:{Authorization:'Bearer '+state.token,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+  if(image&&r.ok&&r.headers.get('Content-Type')==='image/png')return r.blob();
   const value=await r.json();if(!r.ok||value.schemaVersion==='3djat.failure.v1'){
     const code=value.error?.code??value.error??'READ_UNAVAILABLE';
     throw Object.assign(Error(notes[code]??String(code)),{code,result:value});

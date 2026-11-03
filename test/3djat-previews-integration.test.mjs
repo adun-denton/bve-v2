@@ -38,8 +38,8 @@ test('import provenance changes reject cache; staged captures are not artifacts;
  // Explicit trusted authored legacy row, not claimed generated/native provenance.
  const legacy=seed(w,f.bytes),before=snapshot(w),r=w.k.artifactMedia(w.c.human,legacy);assert.equal(r.sourceBinding.origin.kind,'produced');assert.equal(r.sourceBinding.origin.jobId,null);assert.deepEqual(snapshot(w),before);const pending=staged(w,f);assert.throws(()=>w.k.artifactMedia(w.c.human,{...q,artifactId:pending.importId}),e=>e.status===404);
 });
-test('matched declared over16MP fixture declines before source inflate or cache lookup',t=>{
- let inflates=0,cache=0;const w=setup(t,{hook(s){if(s==='media-source-inflate')inflates++;if(s==='media-before-cache')cache++;}}),q=seed(w,png().bytes,{width:4001,height:4000});assert.equal(w.k.artifactMedia(w.c.human,q).errorCode,'PIXEL_POLICY');assert.equal(inflates,0);assert.equal(cache,0);
+test('over-20MP reference declines before source inflate or cache lookup',t=>{
+ let inflates=0,cache=0;const w=setup(t,{hook(s){if(s==='media-source-inflate')inflates++;if(s==='media-before-cache')cache++;}}),q=seed(w,png().bytes,{width:5001,height:4000});assert.throws(()=>w.k.artifactMedia(w.c.human,q),/Invalid media query/);assert.equal(inflates,0);assert.equal(cache,0);
 });
 for(const at of ['media-before-compute','media-after-compute','media-before-cache-publish','media-after-cache-publish','media-before-response'])test(`ephemeral exception at ${at} retains first outcome and durable state, original request recovers`,t=>{
  let armed=false;const w=setup(t,{hook(s){if(armed&&s===at){armed=false;throw Object.assign(Error('AUTHORED_P1_FAULT_'+at),{code:'EIO'});}}}),q=imported(w),before=snapshot(w);armed=true;assert.throws(()=>w.k.artifactMedia(w.c.human,q),new RegExp('AUTHORED_P1_FAULT_'+at));fs.writeFileSync(path.join(w.dir,'FIRST-CAUSE.txt'),'AUTHORED_P1_FAULT_'+at+'\n');assert.deepEqual(snapshot(w),before);assert.equal(w.k.artifactMedia(w.c.human,q).state,'ready');assert.deepEqual(snapshot(w),before);
