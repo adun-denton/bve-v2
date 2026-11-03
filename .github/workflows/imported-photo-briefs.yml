@@ -1,0 +1,28 @@
+name: Imported photo brief checks
+on:
+  push:
+    branches: [codex/imported-photo-briefs]
+  pull_request:
+    branches: [3djat/mahsa-v1]
+permissions:
+  contents: read
+jobs:
+  photo-briefs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Check syntax and storage, HTTP, geometry and recovery contracts
+        run: |
+          node --check src/kernel.mjs
+          node --check src/server.mjs
+          node --check public/products.js
+          node --check public/photo-brief-ui.js
+          node --test test/photo-briefs.test.mjs test/photo-brief-browser.test.mjs test/photo-contrast-browser.test.mjs test/png16-*.test.mjs
+          node --test test/3djat-import*.test.mjs test/3djat-preview*.test.mjs test/3djat-contracts.test.mjs test/img20.test.mjs

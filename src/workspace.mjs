@@ -1,4 +1,4 @@
-import {knownImageMarker} from './image-policy.mjs';
+import {knownImageMarker,ORIGINAL_BYTES} from './image-policy.mjs';
 // Trusted local setup/integration. Business authority remains in DomainStore.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -80,7 +80,7 @@ export function inspectRuntime(root) {
 export function databaseFingerprint(db) {
   const h=createHash('sha256');let count=0;
   for(const query of ['SELECT kind,id,doc FROM records ORDER BY kind,id','SELECT scope,key,fingerprint,doc FROM receipts ORDER BY scope,key','SELECT hash,data FROM bytes ORDER BY hash']) {
-    h.update(query);for(const row of db.prepare(query).iterate()) {check(++count<=100000,'CAPACITY');for(const v of Object.values(row)){const b=typeof v==='string'?Buffer.from(v):Buffer.from(v);check(b.length<=48*1024**2,'OVERSIZE');h.update(String(b.length)+':');h.update(b);}}
+    h.update(query);for(const row of db.prepare(query).iterate()) {check(++count<=100000,'CAPACITY');for(const v of Object.values(row)){const b=typeof v==='string'?Buffer.from(v):Buffer.from(v);check(b.length<=(query.startsWith('SELECT hash,data')?ORIGINAL_BYTES:48*1024**2),'OVERSIZE');h.update(String(b.length)+':');h.update(b);}}
   }return h.digest('hex');
 }
 export function verifyLegacyMigration(root,backupRoot,confirmedQuiescent) {

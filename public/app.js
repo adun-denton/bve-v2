@@ -53,7 +53,13 @@ const artifacts=()=>state.data.artifact.filter(a=>a.iterationId===state.iteratio
 const jobOf=a=>state.data.job.find(j=>j.id===a.jobId);
 async function renderCards(target,images,{library=false}={}){
   target.replaceChildren();
-  const jobs=library?images.map(a=>jobOf(a)):state.data.job.filter(j=>j.iterationId===state.iteration?.id);
+  if(library)for(const a of images.filter(a=>!jobOf(a))){
+    const card=el('article',undefined,'card'),photo=el('img');photo.alt='Imported original';
+    try{photo.src=await imageURL(a);}catch(e){card.append(el('p',e.message,'notice'));}
+    const link=el('a','Open photo edit instructions');link.href='/products.html#'+new URLSearchParams({product:a.projectId,tab:'photos'});
+    card.append(photo,el('p','Imported original / no generation job'),link);target.append(card);
+  }
+  const jobs=library?images.map(a=>jobOf(a)).filter(Boolean):state.data.job.filter(j=>j.iterationId===state.iteration?.id);
   for(const [n,j] of jobs.entries()){
     const a=images.find(a=>a.jobId===j.id),card=el('article',undefined,'card');card.dataset.jobId=j.id;
     if(a){

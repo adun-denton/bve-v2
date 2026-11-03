@@ -1,6 +1,6 @@
 import {verifyContentDecisions} from './content-review.mjs';
 import {verifyServiceRecords,serviceStagingFiles} from './executors/service-records.mjs';
-import {knownImageMarker,databasePixelLimit} from './image-policy.mjs';
+import {knownImageMarker,databaseOriginalPixelLimit,ORIGINAL_BYTES} from './image-policy.mjs';
 // Private combined recovery only. Never a public domain export or command router.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -62,11 +62,11 @@ export function verifyOperational(db,workspaceId) {
     for(const [field,kind] of Object.entries({projectId:'project',iterationId:'iteration',jobId:'job',assignmentId:'assignment',roundId:'round',statementId:'statement'}))if(v[field])getRecord(db,kind,v[field]);
     if(row.kind==='domainSelection')verifySelection(v);
     if(row.kind==='project'&&v.domainWorkspaceId)check(v.domainWorkspaceId===workspaceId,'WORKSPACE_MISMATCH');
-    if(row.kind==='artifact') {const raw=db.prepare('SELECT length(data) AS size FROM bytes WHERE hash=?').get(v.sha256);check(raw&&raw.size<=24*1024**2,'MISSING_ORIGINAL');
-      const bytes=db.prepare('SELECT data FROM bytes WHERE hash=?').get(v.sha256).data,measured=verifyPNG(bytes,{maxPixels:databasePixelLimit(db)});check(measured.sha256===v.sha256&&measured.width===v.width&&measured.height===v.height,'HASH_MISMATCH');}
+    if(row.kind==='artifact') {const raw=db.prepare('SELECT length(data) AS size FROM bytes WHERE hash=?').get(v.sha256);check(raw&&raw.size<=ORIGINAL_BYTES,'MISSING_ORIGINAL');
+      const bytes=db.prepare('SELECT data FROM bytes WHERE hash=?').get(v.sha256).data,measured=verifyPNG(bytes,{maxPixels:databaseOriginalPixelLimit(db)});check(measured.sha256===v.sha256&&measured.width===v.width&&measured.height===v.height,'HASH_MISMATCH');}
   }
   n=0;for(const row of db.prepare('SELECT scope,key,fingerprint,doc FROM receipts').iterate()){check(++n<=100000&&row.scope.length<=1000&&row.key.length<=200&&/^[0-9a-f]{64}$/.test(row.fingerprint)&&Buffer.byteLength(row.doc)<=48*1024**2,'CAPACITY');JSON.parse(row.doc);}
-  n=0;for(const row of db.prepare('SELECT hash,length(data) AS size FROM bytes').iterate()){check(++n<=100000&&row.size<=24*1024**2,'CAPACITY');check(sha(db.prepare('SELECT data FROM bytes WHERE hash=?').get(row.hash).data)===row.hash,'HASH_MISMATCH');}
+  n=0;for(const row of db.prepare('SELECT hash,length(data) AS size FROM bytes').iterate()){check(++n<=100000&&row.size<=ORIGINAL_BYTES,'CAPACITY');check(sha(db.prepare('SELECT data FROM bytes WHERE hash=?').get(row.hash).data)===row.hash,'HASH_MISMATCH');}
   verifyImports(db);
   return meta;
 }

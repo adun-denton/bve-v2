@@ -1,4 +1,4 @@
-import {knownImageMarker,databasePixelLimit,IMG20_PIXELS,IMG20_FEATURES} from './image-policy.mjs';
+import {knownImageMarker,databasePixelLimit,databaseOriginalPixelLimit,ORIGINAL_BYTES,IMG20_PIXELS,IMG20_FEATURES} from './image-policy.mjs';
 // SQLite-owned import inbox/provenance. No generation, domain mutation or conversion.
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -8,7 +8,7 @@ import {validate,validateCommand,ERROR_CODES} from './contracts/3djat.mjs';
 import {RootGuard,contains,databaseFingerprint,check,fail} from './workspace.mjs';
 import {verifyCombined} from './workspace-backup.mjs';
 const OPS=new Set(['asset.import.stage','asset.import.commit']);
-export const IMPORT_LIMITS=Object.freeze({count:256,stagedBytes:256*1024**2,encodedBytes:24*1024**2});
+export const IMPORT_LIMITS=Object.freeze({count:256,stagedBytes:256*1024**2,encodedBytes:ORIGINAL_BYTES});
 const stable=x=>JSON.stringify(x,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 const bytes=x=>Buffer.from(stable(x)+'\n');
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -99,7 +99,7 @@ export function verifyImports(db){
     check(s.schemaVersion==='bve.asset-import.v1'&&['staged','failed','committed'].includes(s.state)&&[1,2].includes(s.revision),'UNSUPPORTED_SCHEMA');
     const d=value(db,'importDeclaration',s.id);shape('historical-import',d.payload);check(d.payload.productId===s.projectId&&d.payload.importId===s.id&&same(d.reference,s.declaration),'EVIDENCE_MISMATCH');
     const raw=db.prepare('SELECT data FROM bytes WHERE hash=?').get(d.payload.sha256)?.data;check(raw&&raw.length===d.payload.encodedBytes&&hash(raw)===d.payload.sha256,'MISSING_ORIGINAL');total+=raw.length;check(total<=IMPORT_LIMITS.stagedBytes,'CAPACITY');
-    if(s.state==='committed'){const a=get(db,'artifact',s.artifactId);check(a,'MISSING_ORIGINAL');verifyImportedArtifact(db,a);const v=verifyPNG(raw,{maxPixels:databasePixelLimit(db)});check(v.width===a.width&&v.height===a.height,'HASH_MISMATCH');}
+    if(s.state==='committed'){const a=get(db,'artifact',s.artifactId);check(a,'MISSING_ORIGINAL');verifyImportedArtifact(db,a);const v=verifyPNG(raw,{maxPixels:databaseOriginalPixelLimit(db)});check(v.width===a.width&&v.height===a.height&&raw[24]===d.payload.bitDepth,'HASH_MISMATCH');}
     else check(!s.artifactId,'EVIDENCE_MISMATCH');
     const receipt=value(db,'importReceipt',s.stageReceipt.id);check(same(receipt.reference,s.stageReceipt)&&receipt.payload.operation==='asset.import.stage'&&receipt.payload.importId===s.id&&receipt.payload.principalId===s.principalId&&receipt.payload.productId===s.projectId&&same(receipt.payload.reference,s.declaration),'EVIDENCE_MISMATCH');
     if(s.state==='committed'){check(s.commitReceipt,'EVIDENCE_MISMATCH');const c=value(db,'importReceipt',s.commitReceipt.id),a=value(db,'importArtifact',s.artifactId);check(same(c.reference,s.commitReceipt)&&c.payload.operation==='asset.import.commit'&&c.payload.importId===s.id&&c.payload.principalId===s.principalId&&same(c.payload.reference,a.reference),'EVIDENCE_MISMATCH');}
@@ -150,10 +150,10 @@ export function inspectCommittedImport(db,root,requested,workspaceId,budget,chec
   const d=typed('importDeclaration',s.id,s.declaration);
   shape('historical-import',d.payload);
   check(d.payload.importId===s.id&&d.payload.productId===a.projectId&&d.payload.origin==='import'&&
-    d.payload.format==='image/png'&&d.payload.bitDepth===8&&d.payload.interlaced===false&&
+    d.payload.format==='image/png'&&d.payload.interlaced===false&&
     d.payload.sha256===a.sha256&&d.payload.source.sha256===a.sha256&&
     d.payload.width===a.width&&d.payload.height===a.height&&d.payload.encodedBytes===a.size,'EVIDENCE_MISMATCH');
-  check(a.width*a.height<=databasePixelLimit(db),'UNSUPPORTED_IMAGE');
+  check(a.width*a.height<=databaseOriginalPixelLimit(db),'UNSUPPORTED_IMAGE');
   check(d.payload.historicalParent===null,'CAPABILITY_UNAVAILABLE');
   check(same(a.importRecord,d.reference),'EVIDENCE_MISMATCH');
   const art=typed('importArtifact',a.id,null),origin=typed('importOrigin',a.id,null);
@@ -195,9 +195,9 @@ export function inspectCommittedImport(db,root,requested,workspaceId,budget,chec
   const raw=db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data;
   check(raw&&raw.length===length.n&&hash(raw)===a.sha256,'HASH_MISMATCH');
   budget.originalBytes+=raw.length;
-  let measured;try{measured=verifyPNG(raw,{maxPixels:databasePixelLimit(db)});}catch{fail('UNSUPPORTED_IMAGE');}
+  let measured;try{measured=verifyPNG(raw,{maxPixels:databaseOriginalPixelLimit(db)});}catch{fail('UNSUPPORTED_IMAGE');}
   check(measured.sha256===a.sha256&&measured.width===a.width&&measured.height===a.height&&
-    measured.size===a.size&&measured.mediaType===a.mediaType,'HASH_MISMATCH');
+    measured.size===a.size&&measured.mediaType===a.mediaType&&raw[24]===d.payload.bitDepth,'HASH_MISMATCH');
   checkpoint('after-imported-original-bytes');sameRows();
   retain();
   return {importId:s.id,declaration:d.reference,stageReceipt,commitReceipt,artifactReference:art.reference,
@@ -229,7 +229,7 @@ export class AssetImports {
         const v=validateCommand(packet,{authenticatedCaller:p.role,projectId:productId,currentHead:view.reference,currentRevision:stage?.revision??0});if(!v.ok)fail(v.errors[0].code);
         if(packet.operation==='asset.import.stage')return this.#tx(()=>{
           const again=replay();if(again)return again;check(!get(this.#db,'assetImport',packet.input.importId),'IMPORT_CONFLICT');this.#principal(token,productId);
-          const d=packet.input;check(d.width*d.height<=databasePixelLimit(this.#db),'UNSUPPORTED_IMAGE');const configured=this.#sources.get(d.source.sourceId);check(d.source.kind==='file'&&configured,'MISSING_SOURCE');
+          const d=packet.input;check(d.width*d.height<=databaseOriginalPixelLimit(this.#db),'UNSUPPORTED_IMAGE');const configured=this.#sources.get(d.source.sourceId);check(d.source.kind==='file'&&configured,'MISSING_SOURCE');
           let raw;try{const source=typeof configured==='string'?new RootGuard(configured):configured;this.#sources.set(d.source.sourceId,source);raw=source.read(d.source.location,IMPORT_LIMITS.encodedBytes);}catch(e){if(['ENOENT','MISSING_ROOT'].includes(e.code))fail('MISSING_SOURCE');if(e.code==='OVERSIZE')fail('UNSUPPORTED_IMAGE');throw e;}
           check(raw.length===d.encodedBytes&&hash(raw)===d.sha256,'HASH_MISMATCH');
           const stages=list(this.#db,'assetImport');check(stages.length<IMPORT_LIMITS.count&&stages.reduce((n,s)=>n+value(this.#db,'importDeclaration',s.id).payload.encodedBytes,0)+raw.length<=IMPORT_LIMITS.stagedBytes,'OUT_OF_BOUNDS');
@@ -241,7 +241,7 @@ export class AssetImports {
         });
         check(stage?.principalId===p.id,'INVALID_SCOPE');check(stage.state==='staged','IMPORT_CONFLICT');check(same(stage.stageReceipt,packet.input.stageReceipt),'EVIDENCE_MISMATCH');
         const d=value(this.#db,'importDeclaration',stage.id).payload;check(d.sha256===packet.input.sha256,'HASH_MISMATCH');const raw=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(d.sha256)?.data;check(raw&&raw.length===d.encodedBytes&&hash(raw)===d.sha256,'MISSING_SOURCE');
-        let measured;try{measured=verifyPNG(raw,{maxPixels:databasePixelLimit(this.#db)});check(measured.width===d.width&&measured.height===d.height,'HASH_MISMATCH');}catch(e){
+        let measured;try{measured=verifyPNG(raw,{maxPixels:databaseOriginalPixelLimit(this.#db)});check(measured.width===d.width&&measured.height===d.height&&raw[24]===d.bitDepth,'HASH_MISMATCH');}catch(e){
           const error=this.#failure(packet,{code:ERROR_CODES.includes(e.code)?e.code:'UNSUPPORTED_IMAGE'},stage.stageReceipt);return this.#tx(()=>{stage.state='failed';stage.revision=2;stage.error=error.error.code;put(this.#db,'assetImport',stage);this.#db.prepare('INSERT INTO receipts VALUES(?,?,?,?)').run(scope,packet.key,fp,JSON.stringify(error));return error;});
         }
         this.#hook('after-import-verify',{importId:stage.id});
@@ -259,10 +259,10 @@ export class AssetImports {
       this.#hook(packet.operation==='asset.import.stage'?'after-import-stage':'after-import-commit',{importId:packet.input.importId,result});this.#hook('before-import-response',{});return clone(result);
     }catch(e){return this.#failure(packet,e,known);}
   }
-  #parent(d){if(!d.historicalParent)return;const a=get(this.#db,'artifact',d.historicalParent.artifactId);check(a&&same(artifactRef(a),d.historicalParent)&&a.projectId===d.productId,'EVIDENCE_MISMATCH');if(a.origin==='import')verifyImportedArtifact(this.#db,a);const raw=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data;check(raw,'MISSING_SOURCE');const m=verifyPNG(raw,{maxPixels:databasePixelLimit(this.#db)});check(m.sha256===a.sha256&&m.width===a.width&&m.height===a.height,'HASH_MISMATCH');}
+  #parent(d){if(!d.historicalParent)return;const a=get(this.#db,'artifact',d.historicalParent.artifactId);check(a&&same(artifactRef(a),d.historicalParent)&&a.projectId===d.productId,'EVIDENCE_MISMATCH');if(a.origin==='import')verifyImportedArtifact(this.#db,a);const raw=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data;check(raw,'MISSING_SOURCE');const m=verifyPNG(raw,{maxPixels:databaseOriginalPixelLimit(this.#db)});check(m.sha256===a.sha256&&m.width===a.width&&m.height===a.height,'HASH_MISMATCH');}
   review(token,importId){this.#root.assert();const s=get(this.#db,'assetImport',importId);check(s,'MISSING_SOURCE');this.#principal(token,s.projectId);const d=value(this.#db,'importDeclaration',s.id),receipt=value(this.#db,'importReceipt',s.stageReceipt.id);
     return {format:'bve.import-review.v1',stage:clone(s),declaration:clone(d),stageReceipt:clone(receipt),commitReceipt:s.commitReceipt?clone(value(this.#db,'importReceipt',s.commitReceipt.id)):null,artifact:s.artifactId?clone(get(this.#db,'artifact',s.artifactId)):null,artifactReference:s.artifactId?clone(value(this.#db,'importArtifact',s.artifactId)):null,origin:s.artifactId?clone(value(this.#db,'importOrigin',s.artifactId)):null,sourceEvidence:{status:'captured-bytes-hash-matched',historicalClaims:'unverified'},freshAcceptance:false};}
-  portable(token,artifactId){this.#root.assert();const a=get(this.#db,'artifact',artifactId);check(a?.origin==='import','INVALID_SCOPE');this.#principal(token,a.projectId);const provenance=verifyImportedArtifact(this.#db,a),raw=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data;check(raw,'MISSING_SOURCE');const m=verifyPNG(raw,{maxPixels:databasePixelLimit(this.#db)});check(m.sha256===a.sha256&&m.width===a.width&&m.height===a.height,'HASH_MISMATCH');this.#hook('before-import-export',{});
+  portable(token,artifactId){this.#root.assert();const a=get(this.#db,'artifact',artifactId);check(a?.origin==='import','INVALID_SCOPE');this.#principal(token,a.projectId);const provenance=verifyImportedArtifact(this.#db,a),raw=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data;check(raw,'MISSING_SOURCE');const m=verifyPNG(raw,{maxPixels:databaseOriginalPixelLimit(this.#db)});check(m.sha256===a.sha256&&m.width===a.width&&m.height===a.height,'HASH_MISMATCH');this.#hook('before-import-export',{});
     const encoded=Buffer.from(raw).toString('base64');this.#hook('during-import-export',{});
     return {format:'bve.import-portable.v1',artifact:artifactRef(a),origin:provenance.origin,declaration:provenance.declaration,original:{sha256:a.sha256,mediaType:'image/png',bytes:encoded},historicalClaims:'unverified',freshAcceptance:false};}
 }

@@ -48,13 +48,13 @@ test('trusted local source map rejects absent unmapped Drive and symlink paths b
   const drive=structuredClone(p);drive.input.source={kind:'drive',sourceId:'authored-png',revision:'r1',sha256:p.input.sha256,fileId:'authored-drive',modifiedAt:'2026-01-01T00:00:00.000Z',locator:p.input.source.locator,observedAt:'2026-01-01T00:00:00.000Z'};failure(w.k.assetCommand(w.c.human,drive),'MISSING_SOURCE');
   const outside=path.join(w.dir,'outside.png');fs.writeFileSync(outside,png());const link=path.join(w.sourceRoot,'escape');fs.symlinkSync(w.dir,link,process.platform==='win32'?'junction':'dir');p.input.source.location='escape/outside.png';failure(w.k.assetCommand(w.c.human,p),'UNSAFE_PATH');
 });
-test('16MP and 24MiB effective ceilings stay frozen; actual larger bytes cannot hide behind safe metadata',t=>{
+test('20MP and 160MiB original ceilings are enforced; actual larger bytes cannot hide behind safe metadata',t=>{
   const w=importSetup(t);assert.equal(LIMITS.pngPixels,20_000_000);assert.equal(LIMITS.proposedPngPixels,20_000_000);
   const boundary=png({width:4000,height:4000,color:0,metadata:false});importOne(w,boundary,{width:4000,height:4000});
-  const plus=importPacket(w,png(),{width:16_000_001,height:1});failure(w.k.assetCommand(w.c.human,plus),'UNSUPPORTED_IMAGE');
-  const over=importPacket(w,png(),{width:4946,height:3278});failure(w.k.assetCommand(w.c.human,over),'UNSUPPORTED_IMAGE');
-  const raw=png({width:4001,height:4000,color:0,metadata:false}),p=importPacket(w,raw),s=success(w.k.assetCommand(w.c.human,p));failure(w.k.assetCommand(w.c.human,commitPacket(w,s,p)),'UNSUPPORTED_IMAGE');
-  const oversized=importPacket(w,png(),{encodedBytes:24*1024**2+1});failure(w.k.assetCommand(w.c.human,oversized),'OUT_OF_BOUNDS');
+  const plus=importPacket(w,png(),{width:5001,height:4000});failure(w.k.assetCommand(w.c.human,plus),'UNSUPPORTED_IMAGE');
+
+  const raw=png({width:5001,height:4000,color:0,metadata:false}),p=importPacket(w,raw),s=success(w.k.assetCommand(w.c.human,p));failure(w.k.assetCommand(w.c.human,commitPacket(w,s,p)),'UNSUPPORTED_IMAGE');
+  const oversized=importPacket(w,png(),{encodedBytes:LIMITS.pngBytes+1});failure(w.k.assetCommand(w.c.human,oversized),'OUT_OF_BOUNDS');
 });
 test('committed and pending imports survive complete separate combined restore with exact dossiers and original hashes',async t=>{
   const w=importSetup(t),one=importOne(w,png(),{historicalApproval:{origin:'historical',claimedApprover:null,claimedAt:null,evidence:[w.ref]}});

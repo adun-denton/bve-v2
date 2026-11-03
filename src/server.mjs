@@ -42,7 +42,7 @@ export async function serve(options={}){
       if(req.headers.origin&&req.headers.origin!==origin)throw new Fault('Cross-origin request rejected',403);
       const url=new URL(req.url,origin);
       const credential=req.headers.authorization?.replace(/^Bearer /,'');
-      if(req.method==='GET'&&['/','/app.js','/style.css','/products.html','/products.js','/products.css'].includes(url.pathname)){
+      if(req.method==='GET'&&['/','/app.js','/style.css','/products.html','/products.js','/products.css','/photo-brief-ui.js','/photo-geometry.js'].includes(url.pathname)){
         const path=url.pathname==='/'?'index.html':url.pathname.slice(1),ext=path.split('.').at(-1);
         res.writeHead(200,{'Content-Type':({html:'text/html; charset=utf-8',js:'text/javascript; charset=utf-8',css:'text/css; charset=utf-8'})[ext],
           'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"});
@@ -59,10 +59,16 @@ export async function serve(options={}){
       if(req.method==='GET'&&url.pathname==='/api/original'){
         if(url.searchParams.has('view')){
           const keys=['view','productId','id','version','sha256','width','height'];
-          if(Buffer.byteLength(url.search)>1024||url.searchParams.get('view')!=='media'||[...url.searchParams.keys()].length!==keys.length||keys.some(k=>url.searchParams.getAll(k).length!==1)||[...url.searchParams.keys()].some(k=>!keys.includes(k)))throw new Fault('Invalid media query',400);
+          if(Buffer.byteLength(url.search)>1024||!['media','full','working8'].includes(url.searchParams.get('view'))||[...url.searchParams.keys()].length!==keys.length||keys.some(k=>url.searchParams.getAll(k).length!==1)||[...url.searchParams.keys()].some(k=>!keys.includes(k)))throw new Fault('Invalid media query',400);
           for(const k of ['version','width','height'])if(!/^[1-9][0-9]{0,9}$/.test(url.searchParams.get(k)))throw new Fault('Invalid media query',400);
           const q={productId:url.searchParams.get('productId'),artifactId:url.searchParams.get('id'),version:Number(url.searchParams.get('version')),sha256:url.searchParams.get('sha256'),width:Number(url.searchParams.get('width')),height:Number(url.searchParams.get('height'))};
-          json(200,kernel.artifactMedia(credential,q));return;
+          const view=url.searchParams.get('view');
+          if(view==='media'){json(200,kernel.artifactMedia(credential,q));return;}
+          const raster=kernel.artifactRaster(credential,q,{working8:view==='working8'});
+          res.writeHead(200,{'Content-Type':'image/png','Content-Length':raster.bytes.length,'Cache-Control':'no-store',
+            'X-Content-Type-Options':'nosniff','X-BVE-Image-Role':raster.isOriginal?'original':'working8',
+            'X-BVE-Source-SHA256':raster.sourceSHA256,'X-BVE-Image-SHA256':raster.sha256});
+          res.end(raster.bytes);return;
         }
         const bytes=kernel.original(credential,url.searchParams.get('id'));
         res.writeHead(200,{'Content-Type':'image/png','Cache-Control':'private, max-age=31536000, immutable','X-Content-Type-Options':'nosniff'});res.end(bytes);return;
@@ -106,6 +112,9 @@ export async function serve(options={}){
       if(req.method==='POST'&&url.pathname==='/api/business'){
         const packet=await boundedJSON(req,128*1024),value=kernel.businessCommand(credential,packet);
         json(value.schemaVersion==='3djat.failure.v1'?409:200,value);return;
+      }
+      if(req.method==='POST'&&url.pathname==='/api/photo-brief'){
+        json(200,kernel.photoBrief(credential,await boundedJSON(req,512*1024)));return;
       }
       if(req.method==='POST'&&url.pathname==='/api/op'){
         const x=await boundedJSON(req,34*1024*1024);

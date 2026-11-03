@@ -20,7 +20,7 @@ const imported=(w,raw,extra={})=>{const p=importPacket(w,raw,extra),s=success(w.
 for(const color of [0,2,4,6])test(`authored channel ${color}: full resolution and exact candidate ceiling`,()=>{
   for(const [width,height] of [[4946,3278],[5000,4000]]){
     const b=png({width,height,color,metadata:false});assert.equal(verifyPNG(b,candidate).width,width);
-    assert.throws(()=>verifyPNG(b),/16000000 pixels/);
+    assert.throws(()=>verifyPNG(b,{maxPixels:16_000_000}),/16000000 pixels/);
   }
 });
 test('narrow and tall boundaries include row-filter allocation; over-cap IHDR rejects before inflate',()=>{
@@ -33,7 +33,7 @@ test('narrow and tall boundaries include row-filter allocation; over-cap IHDR re
   assert.throws(()=>verifyPNG(png({width:3,height:6_666_667,color:6,metadata:false}),candidate),/20000000 pixels/);
   assert.throws(()=>verifyPNG(png(),{maxPixels:20_000_001}),/Invalid PNG pixel limit/);
 });
-test('noisy below/at/above encoded boundary and malformed payloads remain bounded',()=>{
+test('noisy PNGs and malformed payloads remain bounded',()=>{
   // Fixed xorshift pixels, authored independently; no private/model data.
   const w=2800,h=2800,raw=Buffer.alloc((w*3+1)*h);let seed=0x53110;
   for(let y=0;y<h;y++)for(let x=1;x<=w*3;x++){seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;raw[y*(w*3+1)+x]=seed&255;}
@@ -42,16 +42,16 @@ test('noisy below/at/above encoded boundary and malformed payloads remain bounde
   assert(b.length<24*1024**2);assert.equal(verifyPNG(b,candidate).width,w);
   const pad=Buffer.alloc(24*1024**2-b.length-12,97);pad.write('Padding\0');
   const at=Buffer.concat([b.subarray(0,-12),chunk('tEXt',pad),b.subarray(-12)]);assert.equal(at.length,24*1024**2);verifyPNG(at,candidate);
-  assert.throws(()=>verifyPNG(Buffer.concat([at,Buffer.from([0])]),candidate),/oversized/);
+  assert.throws(()=>verifyPNG(Buffer.concat([at,Buffer.from([0])]),candidate),/Invalid PNG end/);
   const broken=Buffer.from(b);broken[broken.length-1]^=1;assert.throws(()=>verifyPNG(broken,candidate),/CRC/);
   assert.throws(()=>verifyPNG(b.subarray(0,-1),candidate),/Truncated|Invalid/);
   assert.throws(()=>verifyPNG(png({rawExtra:1}),candidate),/length|larger/);
   const invalidFilter=Buffer.alloc(5);invalidFilter[0]=5;const ih1=Buffer.from(ih);ih1.writeUInt32BE(1);ih1.writeUInt32BE(1,4);ih1[9]=6;
   assert.throws(()=>verifyPNG(Buffer.concat([b.subarray(0,8),chunk('IHDR',ih1),chunk('IDAT',deflateSync(invalidFilter)),chunk('IEND',Buffer.alloc(0))]),candidate),/filter/);
 });
-test('candidate opt-in round trips actual HTTP/portable/complete separate restore; ordinary roots stay 16MP',async t=>{
+test('candidate opt-in round trips actual HTTP/portable/complete separate restore; ordinary roots retain full-size originals without promotion',async t=>{
   const ordinary=importSetup(t),b=png({width:4946,height:3278,color:6});
-  assert.equal(ordinary.k.assetCommand(ordinary.c.human,importPacket(ordinary,b,{width:4946,height:3278})).error.code,'UNSUPPORTED_IMAGE');
+  const normal=imported(ordinary,b,{width:4946,height:3278});assert.deepEqual(ordinary.k.original(ordinary.c.human,normal.r.reference.id),b);
   const w=importSetup(t,{experimentalPng20:true}),one=imported(w,b,{width:4946,height:3278});assert.equal(JSON.parse(fs.readFileSync(path.join(w.runtime,'bve-v2-root.json'))).version,3);
   w.k.close();const app=await serve({root:w.runtime,port:0});w.k=app.kernel;
   try{const headers={authorization:'Bearer '+w.c.human};assert.deepEqual(Buffer.from(await(await fetch(app.origin+'/api/original?id='+one.r.reference.id,{headers})).arrayBuffer()),b);

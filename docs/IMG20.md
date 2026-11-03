@@ -1,5 +1,7 @@
 # Conditional PNG ceiling experiment
 
+This document records the earlier experiment. See [original PNG support](PNG-ORIGINALS.md) for the current import and inspection limits; frozen execution allowances remain separate.
+
 Status: SOURCE/HARNESS READY, IMG20 OPEN. This branch does not establish a safe
 20MP operating limit. Ordinary roots and the standalone verifier still default
 to 16,000,000 pixels. No operating installation or native image call is supplied.

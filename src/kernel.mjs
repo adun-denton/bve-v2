@@ -1,9 +1,10 @@
+import {briefInput,briefCheck} from './photo-briefs.mjs';
 import * as cal from './calibration.mjs';
 import {candidateAction,candidateActionReference as contentActionReference,decisionReference,verifyContentDecisions,deriveContent} from './content-review.mjs';
 import {PNG_SERVICE,recipesForRun,recipeHash,stable as recipeStable} from './executors/png-recipes.mjs';
 import {serviceTool,readServiceClosure} from './executors/pillow.mjs';
 import {verifyServiceRecords} from './executors/service-records.mjs';
-import {databasePixelLimit} from './image-policy.mjs';
+import {databasePixelLimit,databaseOriginalPixelLimit} from './image-policy.mjs';
 import { isDeepStrictEqual } from 'node:util';
 import { isProxy } from 'node:util/types';
 import { DatabaseSync } from 'node:sqlite';
@@ -11,6 +12,7 @@ import { randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdirSync, existsSync, readFileSync, writeFileSync, chmodSync, readdirSync, renameSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { hash, verifyPNG } from './png.mjs';
+import {fullResolutionPNG8} from './png-raster.mjs';
 import {PREVIEW_LIMITS,checkMediaQuery,checkMediaView,buildMedia,mediaKey,canonical,unavailableMedia} from './png-preview.mjs';
 import { DomainProducts, decisionActionReference } from './domain-products.mjs';
 import { DomainTemplates, templateDecisionActionReference } from './domain-templates.mjs';
@@ -860,6 +862,43 @@ export class Kernel {
     }finally{release();}
   }
 
+  // Imported-source instructions are independent of generation iterations and reviews.
+  // The existing records/receipts transaction stores drafts and immutable submissions.
+  photoBrief(token,packet){
+    briefCheck(packet&&Object.keys(packet).length===3&&['action','key','input'].every(k=>Object.hasOwn(packet,k)));
+    const {action,key}=packet,x=briefInput(action,packet.input),ref=x.artifact;
+    briefCheck(typeof key==='string'&&key.length>0&&key.length<=200);
+    const role=this.#role(token),session=this.#session(token);
+    briefCheck(['human','conductor'].includes(role)&&(!session||session.projectId===ref.productId),'INVALID_SCOPE');
+    briefCheck(action==='read'||role==='human'&&!session,'INVALID_SCOPE');
+    briefCheck(this.#workspace&&this.#operations,'CAPABILITY_UNAVAILABLE');
+    const release=this.#workspace.lockDomain();
+    try{
+      const head=this.#contentAuthority(token,ref.productId),a=this.#get('artifact',ref.artifactId);
+      briefCheck(a.origin==='import'&&a.projectId===ref.productId&&a.version===ref.version&&a.sha256===ref.sha256&&a.width===ref.width&&a.height===ref.height,'EVIDENCE_MISMATCH');
+      this.#verifyArtifact(a);
+      const fence=()=>{briefCheck(sameRef(this.#workspace.read().reference,head),'REVISION_CONFLICT');this.#contentAuthority(token,ref.productId);};
+      const draft=()=>this.#list('photoBriefDraft').find(d=>d.id===a.id)??null;
+      const requests=()=>this.#list('photoEditRequest').filter(d=>d.artifact.artifactId===a.id&&d.projectId===ref.productId);
+      if(action==='read'){fence();return clone({artifact:ref,draft:draft(),requests:requests()});}
+      return clone(this.#tx(()=>this.#once('photoBrief:'+role+':'+action,key,x,()=>{
+        fence();
+        const previous=draft();
+        if(action==='save'){
+          briefCheck((previous?.version??0)===x.expectedVersion,'REVISION_CONFLICT');
+          return this.#put('photoBriefDraft',{schemaVersion:'bve.photo-brief-draft.v1',id:a.id,projectId:ref.productId,artifact:ref,version:x.expectedVersion+1,note:x.note,regions:x.regions,savedAt:now()});
+        }
+        briefCheck(previous&&previous.version===x.draftVersion,'PHOTO_BRIEF_DRAFT_CHANGED');
+        briefInput('save',{artifact:previous.artifact,expectedVersion:previous.version,note:previous.note,regions:previous.regions});
+        briefCheck(previous.note.trim().length>0||previous.regions.length>0,'PHOTO_BRIEF_EMPTY');
+        const existing=requests().find(r=>r.draftVersion===previous.version);
+        if(existing)return existing;
+        return this.#put('photoEditRequest',{schemaVersion:'bve.photo-edit-request.v1',id:id(),projectId:ref.productId,artifact:ref,draftVersion:previous.version,note:previous.note,regions:previous.regions,
+          source:{artifact:ref,role:'scene',regions:previous.regions},status:'instructions-submitted',submittedAt:now()});
+      })));
+    }finally{release();}
+  }
+
   #contentAuthority(token,productId){
     domainCheck(this.#operations&&this.#workspace,'CAPABILITY_UNAVAILABLE');
     const role=this.#role(token),session=this.#session(token);
@@ -1496,7 +1535,7 @@ export class Kernel {
     const b=maxBytes===null?this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(a.sha256)?.data:
       this.#db.prepare('SELECT data FROM bytes WHERE hash=? AND length(data)<=?').get(a.sha256,maxBytes)?.data;
     requireThat(b,`Missing original: ${a.id}`,409);let v;
-    try{v=verifyPNG(b,{maxPixels:databasePixelLimit(this.#db)});}catch(e){throw new Fault(`Corrupt original ${a.id}: ${e.message}`,409);}
+    try{v=verifyPNG(b,{maxPixels:databaseOriginalPixelLimit(this.#db)});}catch(e){throw new Fault(`Corrupt original ${a.id}: ${e.message}`,409);}
     requireThat(v.sha256===a.sha256&&v.width===a.width&&v.height===a.height,`Original hash or dimensions mismatch: ${a.id}`,409);return v;
   }
   reconcile(token){
@@ -1509,7 +1548,7 @@ export class Kernel {
           if(d.outcome==='uncertain'){j.state='uncertain';j.reason='Executor reports uncertain outcome; no additional attempt';}
           else if(d.outcome==='failure'){j.state='failed';j.reason='Executor reported failure';}
           else{
-            const bytes=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(d.sha256)?.data,v=verifyPNG(bytes,{maxPixels:databasePixelLimit(this.#db)});
+            const bytes=this.#db.prepare('SELECT data FROM bytes WHERE hash=?').get(d.sha256)?.data,v=verifyPNG(bytes,{maxPixels:databaseOriginalPixelLimit(this.#db)});
             requireThat(v.sha256===d.sha256,'Intake hash mismatch');const spec=j.specification;
             requireThat(v.size<=spec.hardLimits.maxBytes&&v.width*v.height<=spec.hardLimits.maxPixels,'Output exceeds frozen hard limit');
             if(spec.output.width)requireThat(v.width===spec.output.width,'Output width violates hard expectation');
@@ -1611,7 +1650,7 @@ export class Kernel {
     }
     return clone({...safe,specification:j.specification,state:j.state,...(operationSelection?{operationSelection}:{}),...(a.executorKind==='service'?{resultReport}:{} )});
   }
-  // Read-only source resolution is distinct from raster decoding: experimental
+  // Read-only source resolution is distinct from raster decoding: over-limit
   // refs decline before inflate/cache, and a cache hit still verifies the BLOB.
   #mediaSource(token,q){
     checkMediaQuery(q);const role=this.#role(token),session=this.#session(token);
@@ -1624,6 +1663,14 @@ export class Kernel {
     const row=this.#db.prepare('SELECT data FROM bytes WHERE hash=? AND length(data)<=?').get(a.sha256,PREVIEW_LIMITS.encoded);
     if(!row)return {sourceBinding,errorCode:this.#db.prepare('SELECT 1 FROM bytes WHERE hash=?').get(a.sha256)?'ORIGINAL_CORRUPT':'ORIGINAL_MISSING'};
     const bytes=Buffer.from(row.data);return {sourceBinding,bytes,errorCode:hash(bytes)===a.sha256?null:'ORIGINAL_CORRUPT'};
+  }
+  artifactRaster(token,q,{working8=false}={}){
+    const {bytes,errorCode}=this.#mediaSource(token,q);
+    requireThat(!errorCode,errorCode,409);
+    try{
+      if(working8)return fullResolutionPNG8(bytes);
+      return {bytes,sha256:q.sha256,sourceSHA256:q.sha256,isOriginal:true};
+    }catch(e){throw new Fault(e.message,422);}
   }
   artifactMedia(token,q){
     let source;try{source=this.#mediaSource(token,q);}catch(e){if(e instanceof Fault)throw e;throw new Fault(e.code==='INVALID_VALUE'?'Invalid media query':'Media unavailable',e.code==='INVALID_VALUE'?400:409);}

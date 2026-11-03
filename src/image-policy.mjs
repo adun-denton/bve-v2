@@ -1,5 +1,8 @@
 // Candidate ceiling is opt-in private runtime metadata, never a request permission.
 export const PNG_PIXELS = 16_000_000;
+// Original storage/inspection is independent of frozen execution allowances.
+export const ORIGINAL_PIXELS = 20_000_000;
+export const ORIGINAL_BYTES = 160 * 1024 ** 2;
 export const IMG20_PIXELS = 20_000_000;
 export const IMG20_FEATURES = Object.freeze(['historical-import.v1','png20-experiment.v1']);
 export const OPERATION_FEATURES = Object.freeze(['historical-import.v1','operation-selection.v1']);
@@ -17,4 +20,8 @@ export function databasePixelLimit(db) {
   if(v.schemaVersion!=='bve.png20-experiment.v1'||v.version!==1||v.maxPixels!==IMG20_PIXELS)
     throw Object.assign(new Error('UNSUPPORTED_SCHEMA'),{code:'UNSUPPORTED_SCHEMA'});
   return IMG20_PIXELS;
+}
+export function databaseOriginalPixelLimit(db) {
+  databasePixelLimit(db); // Still validate any persisted experimental policy.
+  return ORIGINAL_PIXELS;
 }
