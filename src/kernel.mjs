@@ -887,9 +887,9 @@ export class Kernel {
           briefCheck((previous?.version??0)===x.expectedVersion,'REVISION_CONFLICT');
           return this.#put('photoBriefDraft',{schemaVersion:'bve.photo-brief-draft.v1',id:a.id,projectId:ref.productId,artifact:ref,version:x.expectedVersion+1,note:x.note,regions:x.regions,savedAt:now()});
         }
-        briefCheck(previous&&previous.version===x.draftVersion,'REVISION_CONFLICT');
+        briefCheck(previous&&previous.version===x.draftVersion,'PHOTO_BRIEF_DRAFT_CHANGED');
         briefInput('save',{artifact:previous.artifact,expectedVersion:previous.version,note:previous.note,regions:previous.regions});
-        briefCheck(previous.note.trim().length>0||previous.regions.length>0,'INVALID_VALUE');
+        briefCheck(previous.note.trim().length>0||previous.regions.length>0,'PHOTO_BRIEF_EMPTY');
         const existing=requests().find(r=>r.draftVersion===previous.version);
         if(existing)return existing;
         return this.#put('photoEditRequest',{schemaVersion:'bve.photo-edit-request.v1',id:id(),projectId:ref.productId,artifact:ref,draftVersion:previous.version,note:previous.note,regions:previous.regions,

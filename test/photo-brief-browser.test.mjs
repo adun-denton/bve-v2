@@ -20,7 +20,8 @@ test('imported-photo editor: three images, region correction, zoom, cold recover
  }
  async function saved(artifact){await page.waitForFunction(()=>document.querySelector('.photo-brief-dialog [role=status]')?.textContent==='Draft saved');return view(app,artifact);}
  try{
-  await open();await whole().fill('Preserve the print-layer texture');await drawRegion('Repair the broken leg');await drawRegion('Keep this edge');
+  await open();assert.equal(await dialog().getByRole('button',{name:'Submit edit instructions',exact:true}).isDisabled(),true);
+  await whole().fill('Preserve the print-layer texture');await drawRegion('Repair the broken leg');await drawRegion('Keep this edge');
   let v=await saved(w.photos[0]);assert.equal(v.draft.regions.length,2);assert.equal(v.draft.note,'Preserve the print-layer texture');
   await dialog().getByLabel('Region 1 instructions').fill('Repair the lower leg only');
   await dialog().getByRole('button',{name:'Remove region',exact:true}).nth(1).click();
@@ -30,6 +31,17 @@ test('imported-photo editor: three images, region correction, zoom, cold recover
   }
   await dialog().getByRole('button',{name:'Next photo',exact:true}).click();await page.waitForFunction(()=>document.querySelector('.photo-brief-dialog h2')?.textContent.includes('(1 / 3)'));
   assert.equal(await whole().inputValue(),'Preserve the print-layer texture');
+  const originalDraft=view(app,w.photos[0]).draft;
+  app.kernel.photoBrief(app.credentials.human,{action:'save',key:randomUUID(),input:{artifact:w.photos[0],
+   expectedVersion:originalDraft.version,note:'Saved in another window',regions:originalDraft.regions}});
+  const submit=dialog().getByRole('button',{name:'Submit edit instructions',exact:true});
+  await submit.click();
+  await dialog().getByRole('alert').filter({hasText:'The saved draft changed.'}).waitFor();
+  assert.equal(await whole().inputValue(),'Saved in another window');
+  assert.equal(await dialog().getByRole('button',{name:'Reconcile pending action',exact:true}).count(),0);
+  assert.equal(view(app,w.photos[0]).requests.length,0);
+  await whole().fill(originalDraft.note);
+  await saved(w.photos[0]);
   // Simulate an effect committed on the server but its response lost in transport.
   let lost=true;await page.route('**/api/photo-brief',async route=>{
    const packet=route.request().postDataJSON();

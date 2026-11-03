@@ -41,7 +41,7 @@ test('brief writes reject foreign identity, stale version, fake review links and
  const w=threePhotos(t),artifact=w.photos[0],input={artifact,expectedVersion:0,note:'Keep texture',regions:[region()]};
  call(w,'save',input);
  assert.throws(()=>call(w,'save',input),e=>e.code==='REVISION_CONFLICT');
- assert.throws(()=>call(w,'submit',{artifact,draftVersion:2}),e=>e.code==='REVISION_CONFLICT');
+ assert.throws(()=>call(w,'submit',{artifact,draftVersion:2}),e=>e.code==='PHOTO_BRIEF_DRAFT_CHANGED');
  for(const key of ['productId','artifactId','version','sha256','width','height']){
   const value=key==='productId'?'cccccccc-cccc-4ccc-8ccc-cccccccccccc':key==='artifactId'?w.photos[1].artifactId:key==='sha256'?'0'.repeat(64):artifact[key]+1;
   assert.throws(()=>call(w,'read',{artifact:{...artifact,[key]:value}}));

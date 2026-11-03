@@ -28,10 +28,11 @@ export function createPhotoBriefEditor({api}){
  const request=(action,key,input)=>api('/api/photo-brief',{method:'POST',body:{action,key,input}});
  const read=e=>request('read','read-only',{artifact:e.artifact});
  const payload=e=>({note:e.note,regions:e.regions});
+ const hasInstructions=e=>Boolean(e.note.trim()||e.regions.length);
  function buffered(e){put(e,'buffer',{...copy(payload(e)),baseVersion:e.version});}
  function renderStatus(){
   const e=current;if(!e)return;
-  retry.hidden=!stored(e,'save')&&!stored(e,'submit');save.disabled=e.busy||e.conflict;submit.disabled=e.busy||e.conflict||Boolean(stored(e,'submit'));
+  retry.hidden=!stored(e,'save')&&!stored(e,'submit');save.disabled=e.busy||e.conflict;submit.disabled=e.busy||e.conflict||!hasInstructions(e)||Boolean(stored(e,'submit'));
   status.textContent=e.conflict?'Recovery needs your choice':e.dirty?'Draft changes pending':e.latest?.draftVersion===e.version?'Instructions submitted; editing has not started':e.version?'Draft saved':'No saved instructions yet';
  }
  function changed(){
@@ -76,13 +77,31 @@ export function createPhotoBriefEditor({api}){
   if(e.busy||e.conflict)return;
   clearTimeout(timer);
   const pending=stored(e,'submit');
-  if(!pending){await flush(e);if(e.dirty)throw Error('Save the latest draft before submission.');}
+  if(!pending){
+   if(!hasInstructions(e))return;
+   await flush(e);if(e.dirty)throw Error('Save the latest draft before submission.');
+  }
   e.busy=true;if(e===current)renderStatus();
   try{
    const packet=pending??{action:'submit',key:crypto.randomUUID(),input:{artifact:e.artifact,draftVersion:e.version}};
    put(e,'submit',packet);
    e.latest=await request(packet.action,packet.key,packet.input);remove(e,'submit');
    if(e===current)message.textContent='Edit instructions recorded. Image editing has not started.';
+  }catch(error){
+   if(error.code==='PHOTO_BRIEF_EMPTY'){
+    remove(e,'submit');
+    throw Error('Add an instruction before submitting.');
+   }
+   if(error.code!=='PHOTO_BRIEF_DRAFT_CHANGED')throw error;
+   const view=await read(e);
+   remove(e,'submit');e.latest=view.requests.at(-1)??null;
+   if(e.dirty){
+    if(e===current)conflictChoice(e,view);else e.conflict=true;
+   }else{
+    applyDraft(e,view.draft);
+    if(e===current)render();
+   }
+   throw Error('The saved draft changed. Review it before submitting again.');
   }finally{e.busy=false;if(e===current)renderStatus();}
  }
  function renderOverlays(){
@@ -112,7 +131,7 @@ export function createPhotoBriefEditor({api}){
   if(e?.saving)await e.saving.catch(()=>{});
   const view=await read({artifact});if(ticket!==epoch)return;
   if(!e){e={artifact,version:0,note:'',regions:[],dirty:false,busy:false,conflict:false,saving:null};entries.set(photo.id,e);}
-  applyDraft(e,view.draft);e.latest=view.requests.at(-1)??null;const buffer=stored(e,'buffer');
+  applyDraft(e,view.draft);e.conflict=false;e.latest=view.requests.at(-1)??null;const buffer=stored(e,'buffer');
   if(buffer){e.note=buffer.note;e.regions=buffer.regions;e.dirty=true;e.conflict=buffer.baseVersion!==e.version;}
   current=e;index=n;heading.textContent=(photo.briefLabel??'Imported photo')+' ('+(n+1)+' / '+photos.length+')';
   whole.value=e.note;img.alt=photo.briefLabel??'Imported photo';zoom.value=100;stage.style.width='100%';
