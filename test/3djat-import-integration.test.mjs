@@ -52,10 +52,10 @@ test('identical bytes in two products share storage but never product artifact o
   assert.notEqual(r.reference.id,u.reference.id);const db=new DatabaseSync(path.join(w.runtime,'workspace.sqlite'),{readOnly:true});try{assert.equal(db.prepare('SELECT count(*) AS n FROM bytes WHERE hash=?').get(p.input.sha256).n,1);}finally{db.close();}
   const c=commitPacket(w,tStage,q);c.input.stageReceipt=s.receipt;assert.equal(w.k.assetCommand(w.c.human,c).schemaVersion,'3djat.failure.v1');
 });
-test('exact encoded 24MiB succeeds with ancillary bytes intact; encoded bound plus one refuses',t=>{
-  const w=importSetup(t),base=png({metadata:false}),padding=Buffer.alloc(24*1024**2-base.length-12,0x61);padding.write('Padding\0');const raw=Buffer.concat([base.subarray(0,-12),chunk('tEXt',padding),base.subarray(-12)]);assert.equal(raw.length,24*1024**2);
+test('above the old encoded limit preserves ancillary bytes; current limit plus one refuses',t=>{
+  const w=importSetup(t),base=png({metadata:false}),padding=Buffer.alloc(24*1024**2+1-base.length-12,0x61);padding.write('Padding\0');const raw=Buffer.concat([base.subarray(0,-12),chunk('tEXt',padding),base.subarray(-12)]);assert.equal(raw.length,24*1024**2+1);
   const p=importPacket(w,raw),s=success(w.k.assetCommand(w.c.human,p)),r=success(w.k.assetCommand(w.c.human,commitPacket(w,s,p)));assert.deepEqual(w.k.original(w.c.human,r.reference.id),raw);
-  const q=importPacket(w,Buffer.concat([raw,Buffer.from([0])]),{encodedBytes:raw.length});assert.equal(w.k.assetCommand(w.c.human,q).error.code,'UNSUPPORTED_IMAGE');
+  const q=importPacket(w,base,{filename:'oversized.png'});fs.truncateSync(path.join(w.sourceRoot,q.input.filename),160*1024**2+1);assert.equal(w.k.assetCommand(w.c.human,q).error.code,'UNSUPPORTED_IMAGE');
 });
 test('legacy JSON route shares strict Unicode decoding while retaining its envelope and cap',async t=>{
   const w=importSetup(t);w.k.close();const app=await serve({root:w.runtime,port:0});w.k=app.kernel;
